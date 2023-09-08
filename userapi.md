@@ -52,6 +52,8 @@
         "message": "User successfully login!!!"
         }
 
+**note :**The auth cookies must set `HttpOnly`.
+
 - `HTTP Status :` 400
   - **Data Type** :
     - `application/json`
@@ -64,7 +66,24 @@
         {
         "message": "Email or password is not correct, please check again."
         }
-- `HTTP Status :` 400
+
+## User Sign out
+- **Endpoint** :
+  - `/logout`
+
+- **HTTP Method**
+  - `POST`
+
+- **Description** :
+  - User can logout in `Recipe_social_media_name` with this API.
+  - After post this api, clear cookies.
+
+- **Request**
+
+  - None
+
+- **Response**
+- `HTTP Status :` 200
   - **Data Type** :
     - `application/json`
   - **Body** :
@@ -72,7 +91,34 @@
         | Name     |     Type    | Required |
         |----------|-------------|----------|
         | Message  | Json string |   Yes    |
+
   - `example :`
         {
-        "message": "Email or password is not correct, please check again."
+        "message": "User successfully Logout!!!"
+        }
+- `HTTP Status :` 408
+  - **Data Type** :
+    - `application/json`
+  - **Body** :
+
+        | Name     |     Type    | Required |
+        |----------|-------------|----------|
+        | Message  | Json string |   Yes    |
+
+  - `example :`
+        {
+        "message": "Time Out!"
+        }
+- `HTTP Status :` 500
+  - **Data Type** :
+    - `application/json`
+  - **Body** :
+
+        | Name     |     Type    | Required |
+        |----------|-------------|----------|
+        | Message  | Json string |   Yes    |
+
+  - `example :`
+        {
+        "message": "Internal Server Error"
         }
