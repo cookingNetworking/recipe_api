@@ -22,10 +22,7 @@
         | password | string  | Yes      |
         - `example :`
 
-        {
-                "email": "login@example.com",
-                "password": "loginpassword"
-                }
+        {"email": "login@example.com", "password": "loginpassword"}
 
 - **Response**
 
@@ -93,9 +90,7 @@
         | Message  | Json string |   Yes    |
 
   - `example :`
-        {
-        "message": "User successfully Logout!!!"
-        }
+        {"message": "User successfully Logout!!!"}
 - `HTTP Status :` 408
   - **Data Type** :
     - `application/json`
@@ -106,9 +101,7 @@
         | Message  | Json string |   Yes    |
 
   - `example :`
-        {
-        "message": "Time Out!"
-        }
+        {"message": "Time Out!"}
 - `HTTP Status :` 500
   - **Data Type** :
     - `application/json`
@@ -119,6 +112,4 @@
         | Message  | Json string |   Yes    |
 
   - `example :`
-        {
-        "message": "Internal Server Error"
-        }
+        {"message": "Internal Server Error"}
