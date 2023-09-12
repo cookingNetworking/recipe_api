@@ -78,11 +78,11 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("DB_NAME"),
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("PASSWORD"),
+        "PASSWORD": os.environ.get("DB_PASS"),
     }
 }
 
@@ -100,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
             "min_length": 8,
         },
     },
-    {   
+    {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
