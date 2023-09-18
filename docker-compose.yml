@@ -22,6 +22,7 @@ services:
       - DEBUG=1
     depends_on:
       - db
+      - cache
   db:
     image: postgres:13-alpine
     volumes:
@@ -30,6 +31,10 @@ services:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=changeme
+  cache:
+    image: redis:7.2.1-alpine
+    ports:
+      - 6379:6379
 
 volumes:
   dev-db-data:

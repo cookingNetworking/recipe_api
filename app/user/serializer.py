@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["email","password","username","is_active","is_staff","role"]
+        fields = ["email","password","username","role"]
         extra_kwargs = {"password":{'write_only':True, "min_length" : 8}}
 
     def create(self, validated_data):
@@ -16,7 +16,10 @@ class UserSerializer(serializers.ModelSerializer):
         return get_user_model().objects.create_user(**validated_data)
 
 
-
+class Created201serializer(serializers.Serializer):
+    message = serializers.CharField()
+    token = serializers.CharField()
+    
 class Error400Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField()

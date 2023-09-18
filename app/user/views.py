@@ -9,9 +9,15 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view
 from drf_spectacular.utils import extend_schema,OpenApiExample
 
-from user.utils import delete_unactivate_user
+import datetime
+
+
+
+from user.utils import delete_unactivate_user, create_jwt, sending_mail
+
 from user.serializer import (
         UserSerializer,
+        Created201serializer,
         Error400Serializer,
         Error500Serializer,
         CheckEmailResponseSerializer,
@@ -20,14 +26,20 @@ from user.serializer import (
         UsernameSerializer,
         )
 @extend_schema( responses={
-                        201: UserSerializer,
+                        201: Created201serializer,
                         400: Error400Serializer,
                         500: Error500Serializer,
                     },
                     examples=[
+                         OpenApiExample(
+                        'User created!',
+                        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Bear token'},
+                        response_only=True,
+                        status_codes=['201']
+                        ),
                     OpenApiExample(
-                        'Email Error',
-                        value={'error': 'Email field is required!!!', 'detail': 'Please provide an email.'},
+                        'Email or password Error',
+                        value={'error': 'Email or password field is required!!!', 'detail': 'Please provide an email or password.'},
                         response_only=True,
                         status_codes=['400']
                     ),
@@ -47,14 +59,31 @@ class CreateUserView(generics.CreateAPIView):
         """Add customerized status code."""
         try:
             email = request.data.get('email')
-            print(request)
-            print(request.data)
-            if not email or len(email)==0:
+            password = request.data.get('password')
+            if not email or len(email) == 0:
                 return Response({'error':'Email field is required!!!','detail': 'Please provide an email.'}, status=status.HTTP_400_BAD_REQUEST)
-            delete_unactivate_user.apply_async((request.data.get('email')), countdown=15*60)
-            return super().create(request, *args, **kwargs)
+            if not password or len(password) == 0:
+                 return Response({'error':'Password field is required!!!','detail': 'Please provide password.'}, status=status.HTTP_400_BAD_REQUEST)
+            super().create(request, *args, **kwargs)
+            print(1)
+            delete_unactivate_user.apply_async((email,), countdown=15*60)
+            print(2)
+            payload = {
+                "email": email,
+                "exp" : int(datetime.datetime.now()/1000) + (15*60)
+            }
+            print(payload)
+            token = create_jwt(payload)
+            link = f"http://cookNetwork/vertify?token={token}"
+            content = {
+                 "subject": "Activate your account", 
+                 "message":f"Click the link to activate your account at cooNetwork!!\n{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
+                 }     
+            sending_mail(content, email)
+            return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'Bear {token}'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
+            get_user_model().objects.filter(email=email).delete()
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(
