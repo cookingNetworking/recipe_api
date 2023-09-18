@@ -7,16 +7,19 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view
-from drf_spectacular.utils import extend_schema,OpenApiExample
+from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter
+
 
 from datetime import datetime
 from user.tasks import delete_unactivate_user
 
-from user.utils import  create_jwt, sending_mail 
+from user.utils import  create_jwt, sending_mail, decode_jwt
 from user.serializer import (
         UserSerializer,
+        Ok200serializer,
         Created201serializer,
         Error400Serializer,
+        Error401Serializer,
         Error500Serializer,
         CheckEmailResponseSerializer,
         CheckUsernameResponseSerializer,
@@ -31,7 +34,7 @@ from user.serializer import (
                     examples=[
                          OpenApiExample(
                         'User created!',
-                        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Bear token'},
+                        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
                         response_only=True,
                         status_codes=['201']
                         ),
@@ -67,16 +70,16 @@ class CreateUserView(generics.CreateAPIView):
             delete_unactivate_user.apply_async((email,), countdown=3)
             payload = {
                 "email": email,
-                "exp" : current_time + (1 * 60)
+                "exp" : current_time + (15 * 60)
             }
             token = create_jwt(**payload)
             link = f"http://cookNetwork/vertify?token={token}"
             content = {
-                 "subject": "Activate your account", 
+                 "subject": "Activate your account",
                  "message":f"Click the link to activate your account at cooNetwork!!\n{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
-                 }     
+                 }
             sending_mail(email, **content)
-            return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'Bear {token}'}, status=status.HTTP_201_CREATED)
+            return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
             get_user_model().objects.filter(email=email).delete()
@@ -159,3 +162,71 @@ def check_username_replicate(request):
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@extend_schema(
+                parameters=[
+                            OpenApiParameter(
+                            name='token',
+                            type=str,
+                            location=OpenApiParameter.QUERY,
+                            description='Your token description here',
+                            required=True
+                            ),
+                ],
+                responses={
+                            200: Ok200serializer,
+                            400: Error400Serializer,
+                            401: Error401Serializer,
+                            500: Error500Serializer,},
+                            examples=[
+                                 OpenApiExample(
+                                    'Email exist Error',
+                                    value={'error': 'User is been actived!!!', 'detail': 'Redirect to login page, please login cookNetwoking with your email and password!'},
+                                    response_only=True,
+                                    status_codes=['200']
+                                ),
+                                OpenApiExample(
+                                    'Email exist Error',
+                                    value={'error': 'Email has not been sign up , please check again!!!', 'detail': 'Please sign up again.'},
+                                    response_only=True,
+                                    status_codes=['400']
+                                ),
+                                OpenApiExample(
+                                    'Email exist Error',
+                                    value={'error': 'Username is already existed !!!', 'detail': 'Please use another username.'},
+                                    response_only=True,
+                                    status_codes=['401']
+                                ),
+                                OpenApiExample(
+                                    'Internal Error',
+                                    value={'error': 'Internal server error'},
+                                    response_only=True,
+                                    status_codes=['500']
+                                )
+                                ],
+                description='Checks activate link is correctly or not, the link will present like [/signupVertify?token="token"] ',
+            )
+@api_view(['GET'])
+def sign_up_vertify(request):
+    """Vertify token is leagal or not!"""
+    try:
+        token = request.query_params.get("token","")
+        result = decode_jwt(token)
+        user = get_user_model().objects.filter(email=result["email"])
+        if not user:
+            return Response(
+                    {'error':'Email has not been sign up , please check again!!!','detail': 'Please sign up again.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+        current_time = int(datetime.now().timestamp())
+        if current_time > result["exp"]:
+            return Response(
+                            {'error':'Token is expired.','detail': 'Please sign up again.'},
+                            status=status.HTTP_401_UNAUTHORIZED
+                            )
+        user.is_active = True
+        user.save()
+        return Response({'message': 'User is been actived!!', "detail": "Redirect to login page, please login cookNetwoking with your email and password!"}, status=status.HTTP_200_OK)
+    except Exception as e:
+            print(e)
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

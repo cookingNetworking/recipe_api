@@ -16,10 +16,19 @@ class UserSerializer(serializers.ModelSerializer):
         return get_user_model().objects.create_user(**validated_data)
 
 
+
+class Ok200serializer(serializers.Serializer):
+    message = serializers.CharField()
+    detail = serializers.CharField()
+
 class Created201serializer(serializers.Serializer):
     message = serializers.CharField()
     token = serializers.CharField()
-    
+
+class Error401Serializer(serializers.Serializer):
+    error = serializers.CharField()
+    detail = serializers.CharField()
+
 class Error400Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField()
@@ -27,12 +36,14 @@ class Error400Serializer(serializers.Serializer):
 class Error500Serializer(serializers.Serializer):
     error = serializers.CharField()
 
+class SignUpSerializer(serializers.Serializer):
+    token = serializers.CharField()
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 class UsernameSerializer(serializers.Serializer):
-    email = serializers.CharField()
+    username = serializers.CharField()
 
 class CheckEmailResponseSerializer(serializers.Serializer):
     message = serializers.CharField()

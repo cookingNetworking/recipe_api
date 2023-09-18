@@ -17,9 +17,14 @@ def create_jwt(**payload):
     return encoded
 
 
+def decode_jwt(token):
+    """Decode  jwt token"""
+    key = os.environ.get('secret_key')
+    decode = jwt.decode(token, str(key), algorithm='HS256')
+    return decode
 def sending_mail(toeamil, **content):
-    """Function to send email . """    
-    try:    
+    """Function to send email . """
+    try:
         send_mail(
         f"{content['subject']}",
         f"{content['message']}",
@@ -27,7 +32,6 @@ def sending_mail(toeamil, **content):
         [f"{toeamil}"],
         fail_silently=False,
         )
-        return 
+        return
     except Exception as e:
         return e
-        
