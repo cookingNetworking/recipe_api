@@ -1,8 +1,9 @@
 pyjwt[crypto]
 Django>=3.2.4,<3.3
 djangorestframework>=3.12.4,<3.13
+django-cors-headers
 drf-spectacular>=0.15.1,<0.16
-celery
 django-celery-results
 django-redis
+celery
 psycopg2==2.9.3

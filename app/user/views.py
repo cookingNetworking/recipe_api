@@ -1,19 +1,18 @@
 """
 Views for user API.
 """
-from django.http import JsonResponse
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter
-
-
+from django.core.cache import cache
 from datetime import datetime
-from user.tasks import delete_unactivate_user
-
-from user.utils import  create_jwt, sending_mail, decode_jwt
+from celery.result import AsyncResult
+from celery.contrib.abortable import AbortableAsyncResult
+from user.tasks import delete_unactivate_user, sending_mail, celery_app
+from user.utils import  create_jwt, decode_jwt
 from user.serializer import (
         UserSerializer,
         Ok200serializer,
@@ -55,7 +54,6 @@ from user.serializer import (
 class CreateUserView(generics.CreateAPIView):
     """Create user API."""
     serializer_class = UserSerializer
-
     def create(self, request, *args, **kwargs):
         """Add customerized status code."""
         try:
@@ -67,7 +65,8 @@ class CreateUserView(generics.CreateAPIView):
                  return Response({'error':'Password field is required!!!','detail': 'Please provide password.'}, status=status.HTTP_400_BAD_REQUEST)
             super().create(request, *args, **kwargs)
             current_time = int(datetime.now().timestamp())
-            delete_unactivate_user.apply_async((email,), countdown=3)
+            result = delete_unactivate_user.apply_async((email,), countdown=15*60)
+            cache.set(f'del_unactive_{email}', result.id, 9000)
             payload = {
                 "email": email,
                 "exp" : current_time + (15 * 60)
@@ -78,10 +77,11 @@ class CreateUserView(generics.CreateAPIView):
                  "subject": "Activate your account",
                  "message":f"Click the link to activate your account at cooNetwork!!\n{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
                  }
-            sending_mail(email, **content)
+            sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
             return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
+            celery_app.control.revoke(result.id, terminate=True, signal='SIGKILL')
             get_user_model().objects.filter(email=email).delete()
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -209,10 +209,11 @@ def check_username_replicate(request):
 @api_view(['GET'])
 def sign_up_vertify(request):
     """Vertify token is leagal or not!"""
+    
     try:
-        token = request.query_params.get("token","")
+        token = request.query_params.get("token") 
         result = decode_jwt(token)
-        user = get_user_model().objects.filter(email=result["email"])
+        user = get_user_model().objects.get(email=result["email"])
         if not user:
             return Response(
                     {'error':'Email has not been sign up , please check again!!!','detail': 'Please sign up again.'},
@@ -226,7 +227,16 @@ def sign_up_vertify(request):
                             )
         user.is_active = True
         user.save()
+        task_id = cache.get(f'del_unactive_{result["email"]}')
+        res = AbortableAsyncResult(task_id)
+        res.abort()
+        if res.state == 'REVOKED' or res.state == 'ABORTED':
+            print("Taks canceled")
+        else:
+            print(f"task staus: {result.state}")
         return Response({'message': 'User is been actived!!', "detail": "Redirect to login page, please login cookNetwoking with your email and password!"}, status=status.HTTP_200_OK)
     except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

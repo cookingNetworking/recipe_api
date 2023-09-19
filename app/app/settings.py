@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     #extention app
     "rest_framework",
     'drf_spectacular',
+    'corsheaders',
     #project app
     "core",
     'user',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -166,6 +168,9 @@ AUTH_USER_MODEL = 'core.User'
 REST_FRAMEWORK = {
     # YOUR SETTINGS
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES':{
+        'rest_framework.authentication.SessionAuthentication'
+    }
 }
 
 SPECTACULAR_SETTINGS = {
@@ -186,3 +191,6 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Taipei'
+
+
+CROS_ORIGIN_ALLOW_ALL = True
