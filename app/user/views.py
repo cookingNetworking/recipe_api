@@ -1,16 +1,20 @@
 """
 Views for user API.
 """
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from rest_framework import status, generics, permissions
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter
+
 from django.core.cache import cache
-from datetime import datetime
-from celery.result import AsyncResult
+from django.contrib.auth import get_user_model
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.utils.decorators import method_decorator
+
 from celery.contrib.abortable import AbortableAsyncResult
+from datetime import datetime
+
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
 from user.serializer import (
@@ -25,6 +29,8 @@ from user.serializer import (
         EmailSerializer,
         UsernameSerializer,
         )
+
+
 @extend_schema( responses={
                         201: Created201serializer,
                         400: Error400Serializer,
@@ -51,8 +57,10 @@ from user.serializer import (
                     )
                     ],
                     description='Create a new user',)
+@method_decorator(csrf_protect, name='dispatch')
 class CreateUserView(generics.CreateAPIView):
     """Create user API."""
+    permission_classes = [permissions.AllowAny]
     serializer_class = UserSerializer
     def create(self, request, *args, **kwargs):
         """Add customerized status code."""
@@ -209,9 +217,9 @@ def check_username_replicate(request):
 @api_view(['GET'])
 def sign_up_vertify(request):
     """Vertify token is leagal or not!"""
-    
+
     try:
-        token = request.query_params.get("token") 
+        token = request.query_params.get("token")
         result = decode_jwt(token)
         user = get_user_model().objects.get(email=result["email"])
         if not user:
@@ -239,4 +247,10 @@ def sign_up_vertify(request):
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class GetCsrfToken(APIView):
+    """Get csrf_token protect from csrf attact!!!"""
+    permission_classes = [permissions.AllowAny]
 
+    def get(self, request, format=None):
+        return Response({'success':'CSRF cookie set'})
