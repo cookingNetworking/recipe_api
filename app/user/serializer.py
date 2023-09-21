@@ -3,8 +3,8 @@ Serialzier for User model.
 """
 
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-
+from django.contrib.auth import get_user_model, authenticate
+from django.utils.translation import gettext as _
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
@@ -15,6 +15,32 @@ class UserSerializer(serializers.ModelSerializer):
         """Create user and return user with encrypted password"""
         return get_user_model().objects.create_user(**validated_data)
 
+
+class LoginSerializer(serializers.Serializer):
+    """Serializer for login !"""
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        style={'input_type':'password'},
+        trim_whitespace=False,
+    )
+    
+    def validate(self, attrs):
+        user = authenticate(
+            request=self.context.get('request'),
+            username=attrs.get('email'), 
+            password=attrs.get('password')
+            )
+        
+        if not user:
+            msg = _('Incorrect email or password.')
+            raise serializers.ValidationError(msg, code='authorization')
+
+        if not user.is_active:
+            msg = _('User is disabled.')
+            raise serializers.ValidationError(msg, code='authorization')
+
+        attrs['user'] = user
+        return attrs
 
 
 class Ok200serializer(serializers.Serializer):

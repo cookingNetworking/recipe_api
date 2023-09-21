@@ -28,5 +28,5 @@ urlpatterns = [
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('user/',include('user.urls')),
     path('signupVertify',view=user_views.sign_up_vertify, name='signupvertify' ),
-    path('getCsrfToken',user_views.GetCsrfToken.as_view(), name='getCsrfToken')
+    path('getCsrfToken/',user_views.GetCsrfToken.as_view(), name='getCsrfToken')
 ]
