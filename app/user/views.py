@@ -33,14 +33,14 @@ from user.serializer import (
         )
 
 
-@extend_schema(  
+@extend_schema(
     parameters=[
-                OpenApiParameter(
-               name='X-CSRFToken',
-               type=OpenApiTypes.STR,
-               location=OpenApiParameter.HEADER,
-               required=True,
-               description='CSRF token for request'
+            OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
           ),
     ],
     responses={
@@ -49,7 +49,7 @@ from user.serializer import (
         500: Error500Serializer,
     },
     examples=[
-            OpenApiExample(
+        OpenApiExample(
         'User created!',
         value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
         response_only=True,
@@ -113,13 +113,34 @@ class CreateUserView(generics.CreateAPIView):
                type=OpenApiTypes.STR,
                location=OpenApiParameter.HEADER,
                required=True,
-               description='CSRF token for request'
-          ),
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken')
     ],
     request=LoginSerializer,
     responses={
+        200: Ok200serializer,
         400: Error400Serializer,
-    }
+    },
+    examples=[
+        OpenApiExample(
+        'User created!',
+        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
+        response_only=True,
+        status_codes=['201']
+        ),
+    OpenApiExample(
+        'Email or password Error',
+        value={'error': 'Email or password field is required!!!', 'detail': 'Please provide an email or password.'},
+        response_only=True,
+        status_codes=['400']
+    ),
+    OpenApiExample(
+        'Internal Error',
+        value={'error': 'Internal server error'},
+        response_only=True,
+        status_codes=['500']
+    )
+    ],
+    description='Create a new user',
 )
 @method_decorator(csrf_protect, name='dispatch')
 class LoginView(APIView):
@@ -129,27 +150,48 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
-        print(request)
         if serializer.is_valid():
-            print(serializer.validated_data)
+            print(serializer.data,2)
             user = serializer.validated_data['user']
             login(request, user)
+            print(user)
+
             rotate_token(request)
             csrf_token = request.META.get('CSRF_COOKIE', '')
-            print(request.META)
             session_id = request.session.session_key
-            print(csrf_token)
-            print(type(csrf_token))
-            print(type(session_id))
-            return Response({'session_id': session_id, 'csrf_token': csrf_token}, status=status.HTTP_200_OK)
-        
+            return Response({'message':'Login successed!','detail':{'session_id': session_id, 'csrf_token': csrf_token,'user':user}}, status=status.HTTP_200_OK)
+
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(
+    parameters=[
+          OpenApiParameter(
+               name='X-CSRFToken',
+               type=OpenApiTypes.STR,
+               location=OpenApiParameter.HEADER,
+               required=True,
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken')
+    ],
+    responses={
+
+        400: Error400Serializer,
+    }
+)
 @method_decorator(csrf_protect, name='dispatch')
 class LogoutView(APIView):
+    """Clear session id from cookies!"""
     def post(self, request):
-        logout(request)
-        return Response({'message':"Successed logout."}, status=status.HTTP_200_OK)
+        try:
+            print(request.headers)
+            if not request.headers['X-CSRFToken']:
+                return Response({"error":"Loss CSRFToken in request header!","detail":"Please get csrftoken again!"}, status=status.HTTP_403_FORBIDDEN)
+            logout(request)
+            return Response({'message':"Successed logout.",'detail':"Session id remove from "}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
 @extend_schema(
@@ -159,9 +201,9 @@ class LogoutView(APIView):
             type=OpenApiTypes.STR,
             location=OpenApiParameter.HEADER,
             required=True,
-            description='CSRF token for request'
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
         ),
-    ],    
+    ],
     request = EmailSerializer,
     responses={
                 200: CheckEmailResponseSerializer,
@@ -209,7 +251,7 @@ def check_email_replicate(request):
                type=OpenApiTypes.STR,
                location=OpenApiParameter.HEADER,
                required=True,
-               description='CSRF token for request'
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
           ),
     ],
     request = UsernameSerializer,

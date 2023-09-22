@@ -23,14 +23,17 @@ class LoginSerializer(serializers.Serializer):
         style={'input_type':'password'},
         trim_whitespace=False,
     )
-    
+
     def validate(self, attrs):
+        print(attrs,0)
         user = authenticate(
             request=self.context.get('request'),
-            username=attrs.get('email'), 
+            username=attrs.get('email'),
             password=attrs.get('password')
             )
-        
+        print(user,1)
+        print(type(user))
+
         if not user:
             msg = _('Incorrect email or password.')
             raise serializers.ValidationError(msg, code='authorization')
