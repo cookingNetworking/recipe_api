@@ -15,6 +15,11 @@ class UserSerializer(serializers.ModelSerializer):
         """Create user and return user with encrypted password"""
         return get_user_model().objects.create_user(**validated_data)
 
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["email","username","role","is_staff",'last_login']
+        extra_kwargs = {'last_login':{'read_only':True}}
 
 class LoginSerializer(serializers.Serializer):
     """Serializer for login !"""
@@ -42,11 +47,7 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
-class UserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ["email","username","role","is_staff",'last_login']
-        extra_kwargs = {'last_login':{'read_only':True}}
+
 
 
 class Ok200serializer(serializers.Serializer):
