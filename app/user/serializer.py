@@ -8,18 +8,26 @@ from django.utils.translation import gettext as _
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["email","password","username","role"]
-        extra_kwargs = {"password":{'write_only':True, "min_length" : 8}}
+        fields = ["email","password","username","role","is_staff",'last_login']
+        extra_kwargs = {
+                        "password":{'write_only':True, "min_length" : 8},
+                        'last_login':{'read_only':True},
+                        "is_staff": {'read_only': True},
+                        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'request' in self.context and self.context['reuqest'].method in ['GET']:
+            self.fields.pop('password', None)
 
     def create(self, validated_data):
         """Create user and return user with encrypted password"""
         return get_user_model().objects.create_user(**validated_data)
-
-class UserDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ["email","username","role","is_staff",'last_login']
-        extra_kwargs = {'last_login':{'read_only':True}}
+    
+    def update(self, validated_data):
+        """Upadte and return user."""
+        validated_data.pop('password', None)
+        user = super().update(isinstance, validated_data)
+        return user
 
 class LoginSerializer(serializers.Serializer):
     """Serializer for login !"""

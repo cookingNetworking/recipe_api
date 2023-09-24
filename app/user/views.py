@@ -118,7 +118,14 @@ class CreateUserView(generics.CreateAPIView):
             get_user_model().objects.filter(email=email).delete()
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    """Manage the user detail."""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        """Retrieve and return the authenticated user."""
+        return self.request.user
 @extend_schema(
     parameters=[
           OpenApiParameter(
