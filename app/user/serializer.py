@@ -25,15 +25,11 @@ class LoginSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        print(attrs,0)
         user = authenticate(
             request=self.context.get('request'),
             username=attrs.get('email'),
             password=attrs.get('password')
             )
-        print(user,1)
-        print(type(user))
-
         if not user:
             msg = _('Incorrect email or password.')
             raise serializers.ValidationError(msg, code='authorization')
@@ -44,6 +40,13 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["email","username","role","is_staff",'last_login']
+        extra_kwargs = {'last_login':{'read_only':True}}
 
 
 class Ok200serializer(serializers.Serializer):

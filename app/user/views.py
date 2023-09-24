@@ -3,6 +3,7 @@ Views for user API.
 """
 from rest_framework import status, generics, permissions, authentication
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
@@ -15,6 +16,7 @@ from django.middleware.csrf import rotate_token
 
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
+from jwt.exceptions import ExpiredSignatureError
 
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
@@ -46,6 +48,7 @@ from user.serializer import (
     responses={
         201: Created201serializer,
         400: Error400Serializer,
+        403: 'CSRF token missing or incorrect.',
         500: Error500Serializer,
     },
     examples=[
@@ -60,6 +63,12 @@ from user.serializer import (
         value={'error': 'Email or password field is required!!!', 'detail': 'Please provide an email or password.'},
         response_only=True,
         status_codes=['400']
+    ),
+    OpenApiExample(
+        "Request forbbiden",
+        value={'error': 'CSRF token missing or incorrect.'},
+        response_only=True,
+        status_codes=['403']
     ),
     OpenApiExample(
         'Internal Error',
@@ -99,9 +108,13 @@ class CreateUserView(generics.CreateAPIView):
                  }
             sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
             return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+        # Handle validation errors (like email already exists) here
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            if 'result' in locals():
+                celery_app.control.revoke(result.id, terminate=True, signal='SIGKILL')
             print(e)
-            celery_app.control.revoke(result.id, terminate=True, signal='SIGKILL')
             get_user_model().objects.filter(email=email).delete()
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -119,19 +132,29 @@ class CreateUserView(generics.CreateAPIView):
     responses={
         200: Ok200serializer,
         400: Error400Serializer,
+        403: 'CSRF token missing or incorrect.',
+        500: Error500Serializer 
     },
     examples=[
         OpenApiExample(
-        'User created!',
-        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
+        'User login!',
+        value={'message': 'Login successed!', 'detail': "user detai example: {'email': 'superuser@django.com', 'username': 'example', 'role': 'user'}"},
+        description = "When login successed, server would response new csrftoken and session id in set-cookies",
         response_only=True,
-        status_codes=['201']
+        status_codes=['200']
         ),
     OpenApiExample(
-        'Email or password Error',
-        value={'error': 'Email or password field is required!!!', 'detail': 'Please provide an email or password.'},
+        "Value or field error",
+        value={'error': 'Error message ', 'detail': 'Please login again.'},
+        description="Probably have these error :{'field_name': ['This field is required.']},{'char_field': ['Ensure this field has no more than X characters.']}",
         response_only=True,
         status_codes=['400']
+    ),
+    OpenApiExample(
+        "Request forbbiden",
+        value={'error': 'CSRF token missing or incorrect.'},
+        response_only=True,
+        status_codes=['403']
     ),
     OpenApiExample(
         'Internal Error',
@@ -154,12 +177,12 @@ class LoginView(APIView):
             print(serializer.data,2)
             user = serializer.validated_data['user']
             login(request, user)
-            print(user)
-
             rotate_token(request)
+            user_json = UserSerializer(user)
+            print(user_json.data)
             csrf_token = request.META.get('CSRF_COOKIE', '')
             session_id = request.session.session_key
-            return Response({'message':'Login successed!','detail':{'session_id': session_id, 'csrf_token': csrf_token,'user':user}}, status=status.HTTP_200_OK)
+            return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -173,9 +196,30 @@ class LoginView(APIView):
                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken')
     ],
     responses={
-
-        400: Error400Serializer,
-    }
+        200: Ok200serializer,
+        403 :'CSRF token missing or incorrect.',
+        500: Error500Serializer
+    },
+    examples=[
+    OpenApiExample(
+    "Logout succeed",
+    value={'message':"Successed logout.",'detail':"Session id remove from "},
+    response_only=True,
+    status_codes=['200']
+    ),        
+    OpenApiExample(
+    "Request forbbiden",
+    value={'error': 'CSRF token missing or incorrect.'},
+    response_only=True,
+    status_codes=['403']
+    ),
+    OpenApiExample(
+        'Internal Error',
+        value={'error': 'Internal server error'},
+        response_only=True,
+        status_codes=['500']
+    )
+    ]
 )
 @method_decorator(csrf_protect, name='dispatch')
 class LogoutView(APIView):
@@ -208,13 +252,26 @@ class LogoutView(APIView):
     responses={
                 200: CheckEmailResponseSerializer,
                 400: Error400Serializer,
+                403 :'CSRF token missing or incorrect.',
                 500: Error500Serializer,},
                  examples=[
+                     OpenApiExample(
+                        "Logout succeed",
+                        value={'message':"Email check ok!",'detail':"User could use this email!"},
+                        response_only=True,
+                        status_codes=['200']
+                    ),
                     OpenApiExample(
                         'Email exist Error',
                         value={'error': 'Email is already existed !!!', 'detail': 'Please use another email.'},
                         response_only=True,
                         status_codes=['400']
+                    ),
+                    OpenApiExample(
+                        "Request forbbiden",
+                        value={'error': 'CSRF token missing or incorrect.'},
+                        response_only=True,
+                        status_codes=['403']
                     ),
                     OpenApiExample(
                         'Internal Error',
@@ -258,14 +315,27 @@ def check_email_replicate(request):
     responses={
                 200: CheckUsernameResponseSerializer,
                 400: Error400Serializer,
+                403 :'CSRF token missing or incorrect.',
                 500: Error500Serializer,},
                 examples=[
+                     OpenApiExample(
+                        "Logout succeed",
+                        value={'message':"Email check ok!",'detail':"User could use this email!"},
+                        response_only=True,
+                        status_codes=['200']
+                    ),
                     OpenApiExample(
                         'Email exist Error',
                         value={'error': 'Username is already existed !!!', 'detail': 'Please use another username.'},
                         response_only=True,
                         status_codes=['400']
                     ),
+                    OpenApiExample(
+                        "Request forbbiden",
+                        value={'error': 'CSRF token missing or incorrect.'},
+                        response_only=True,
+                        status_codes=['403']
+                    ),                    
                     OpenApiExample(
                         'Internal Error',
                         value={'error': 'Internal server error'},
@@ -341,18 +411,12 @@ def sign_up_vertify(request):
     try:
         token = request.query_params.get("token")
         result = decode_jwt(token)
-        user = get_user_model().objects.get(email=result["email"])
+        user = get_user_model().objects.filter(email=result["email"]).first()
         if not user:
             return Response(
                     {'error':'Email has not been sign up , please check again!!!','detail': 'Please sign up again.'},
                     status=status.HTTP_400_BAD_REQUEST
                     )
-        current_time = int(datetime.now().timestamp())
-        if current_time > result["exp"]:
-            return Response(
-                            {'error':'Token is expired.','detail': 'Please sign up again.'},
-                            status=status.HTTP_401_UNAUTHORIZED
-                            )
         user.is_active = True
         user.save()
         task_id = cache.get(f'del_unactive_{result["email"]}')
@@ -361,8 +425,13 @@ def sign_up_vertify(request):
         if res.state == 'REVOKED' or res.state == 'ABORTED':
             print("Taks canceled")
         else:
-            print(f"task staus: {result.state}")
+            print(f"task staus: {res.state}")
         return Response({'message': 'User is been actived!!', "detail": "Redirect to login page, please login cookNetwoking with your email and password!"}, status=status.HTTP_200_OK)
+    except ExpiredSignatureError:
+        return Response(
+            {'error': 'Token is expired.', 'detail': 'Please sign up again.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
     except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

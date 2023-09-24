@@ -21,14 +21,15 @@ class ModelTests(TestCase):
     def test_create_user_with_normalize_email(self):
         """Test create user with normalized email."""
         sample_emails = [
-            ['test1@EXAMPLE.com', 'test1@example.com'],
+            ['test5@EXAMPLE.com', 'test5@example.com'],
             ['Test2@Example.com', 'Test2@example.com'],
             ['TEST3@EXAMPLE.com', 'TEST3@example.com'],
             ['test4@example.COM', 'test4@example.com'],
         ]
         for email, excepted in sample_emails:
-            user = get_user_model().objects.create_user(email, 'password123')
+            user = get_user_model().objects.create_user(email=email,password='password123')
             self.assertEqual(user.email, excepted)
+
 
     def test_create_user_without_email_raise_error(self):
         """Test create user without email."""

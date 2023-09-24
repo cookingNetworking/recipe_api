@@ -3,7 +3,7 @@ Replicated function.
 """
 import os
 import jwt
-
+from jwt.exceptions import ExpiredSignatureError
 
 def create_jwt(**payload):
     """Generate a jwt token ."""
@@ -13,7 +13,7 @@ def create_jwt(**payload):
 
 
 def decode_jwt(token):
-    """Decode  jwt token"""
+    """Decode  jwt token""" 
     key = os.environ.get('secret_key')
     decode = jwt.decode(token, str(key), algorithms=['HS256'])
     return decode
