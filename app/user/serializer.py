@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["email","password","username","role","is_staff",'last_login']
+        fields = ["email","password","username","role","birthday","is_staff","last_login"]
         extra_kwargs = {
                         "password":{'write_only':True, "min_length" : 8},
                         'last_login':{'read_only':True},
@@ -16,18 +16,26 @@ class UserSerializer(serializers.ModelSerializer):
                         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'request' in self.context and self.context['reuqest'].method in ['GET']:
+        if 'request' in self.context and self.context['request'].method in ['GET','PUT','PATCH']:
             self.fields.pop('password', None)
+    
 
     def create(self, validated_data):
         """Create user and return user with encrypted password"""
+        validated_data.pop('last_login', None)
+        validated_data.pop('is_staff', None)
         return get_user_model().objects.create_user(**validated_data)
     
-    def update(self, validated_data):
+    def update(self, instance, validated_data):
         """Upadte and return user."""
         validated_data.pop('password', None)
-        user = super().update(isinstance, validated_data)
+        user = super().update(instance, validated_data)
         return user
+
+class UserDetailResponseSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        fields = ["email", "username", "role","birthday", "is_staff", "last_login"]
+
 
 class LoginSerializer(serializers.Serializer):
     """Serializer for login !"""

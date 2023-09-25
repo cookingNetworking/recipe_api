@@ -41,9 +41,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     role = models.CharField(choices=ROLL,max_length=10,default='user')
-
+    birthday = models.DateField(null=True,blank=True)
+    
     objects = UserManager()
-
     USERNAME_FIELD = 'email'
 
     def __str__(self):

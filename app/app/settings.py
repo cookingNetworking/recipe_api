@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     #extention app
     "rest_framework",
     'drf_spectacular',
+    "drf_standardized_errors",
     'corsheaders',
     #project app
     "core",
@@ -171,7 +172,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':[
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication'
-    ]
+    ],
+
 }
 
 SPECTACULAR_SETTINGS = {
@@ -179,9 +181,8 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Your project description',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': True,
-    # OTHER SETTINGS
+    
 }
-
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 

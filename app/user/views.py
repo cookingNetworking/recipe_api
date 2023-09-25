@@ -13,7 +13,6 @@ from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
-
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
@@ -22,6 +21,7 @@ from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
 from user.serializer import (
         UserSerializer,
+        UserDetailResponseSerializer,
         LoginSerializer,
         Ok200serializer,
         Created201serializer,
@@ -33,6 +33,35 @@ from user.serializer import (
         EmailSerializer,
         UsernameSerializer,
         )
+@extend_schema(
+    parameters=[
+         OpenApiParameter(
+            name='Session_id',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.COOKIE,
+            required=True,
+            description='Session id'
+            )
+        ], 
+        responses={
+        200: UserSerializer,     
+        403: 'You do not have permission to perform this action.',
+
+    },
+        examples=[
+        OpenApiExample(
+            "Request forbbiden",
+            value={'detail': 'You do not have permission to perform this action.'},
+            response_only=True,
+            status_codes=['403']
+            ),
+        ]
+)
+class UserListView(generics.ListAPIView):
+    """List all user API.\t Only admin user can access this API!"""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = UserSerializer
+    queryset = get_user_model().objects.all()
 
 
 @extend_schema(
@@ -122,7 +151,81 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     """Manage the user detail."""
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                },
+            examples=[
+                OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            ]
+            )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
     
+    @extend_schema(
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                500:Error500Serializer
+                },
+            examples=[
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"detail":"Authentication credentials were not provided."},
+                    response_only=True,
+                    status_codes=['403']
+                ),
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"error":"Inernal error messages"},
+                    response_only=True,
+                    status_codes=['500']
+                ),
+            ]   
+            )
+    @method_decorator(csrf_protect, name='dispatch')
+    def put(self, request, *args, **kwargs):
+        try:
+            return super().put(request, *args, **kwargs)
+        except Exception as e:
+            return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @extend_schema(
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                500:Error500Serializer
+                },
+            examples=[
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"detail":"Authentication credentials were not provided."},
+                    response_only=True,
+                    status_codes=['403']
+                ),
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"error":"Inernal error messages"},
+                    response_only=True,
+                    status_codes=['500']
+                ),
+            ]   
+            )
+    @method_decorator(csrf_protect, name='dispatch')
+    def patch(self, request, *args, **kwargs):
+        try:
+            return super().patch(request, *args, **kwargs)
+        except Exception as e:
+            return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
@@ -233,11 +336,11 @@ class LogoutView(APIView):
     """Clear session id from cookies!"""
     def post(self, request):
         try:
-            print(request.headers)
+            print(request)
             if not request.headers['X-CSRFToken']:
                 return Response({"error":"Loss CSRFToken in request header!","detail":"Please get csrftoken again!"}, status=status.HTTP_403_FORBIDDEN)
             logout(request)
-            return Response({'message':"Successed logout.",'detail':"Session id remove from "}, status=status.HTTP_200_OK)
+            return Response({'message':"Successed logout.",'detail':"Session id remove from cookies!"}, status=status.HTTP_200_OK)
         except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
