@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     #extention app
     "rest_framework",
     'drf_spectacular',
-    "drf_standardized_errors",
     'corsheaders',
     #project app
     "core",

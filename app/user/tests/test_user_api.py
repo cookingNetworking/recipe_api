@@ -15,7 +15,7 @@ import jwt
 import datetime
 import os
 
-CREATE_USER_URL = reverse("user:create")
+CREATE_USER_URL = reverse("user:user_create")
 GET_CSRF_TOKEN_URL = reverse("getCsrfToken")
 ACTIVATE_USER_URL = reverse("signupvertify")
 

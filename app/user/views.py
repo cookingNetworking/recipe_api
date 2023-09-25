@@ -1,6 +1,8 @@
 """
 Views for user API.
 """
+import random
+
 from rest_framework import status, generics, permissions, authentication
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -40,7 +42,7 @@ from user.serializer import (
             type=OpenApiTypes.STR,
             location=OpenApiParameter.COOKIE,
             required=True,
-            description='Session id'
+            description='Ensure ession id is in cookie!'
             )
         ], 
         responses={
@@ -73,6 +75,13 @@ class UserListView(generics.ListAPIView):
             required=True,
             description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
           ),
+          OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
     ],
     responses={
         201: Created201serializer,
@@ -152,6 +161,15 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
+            parameters=[
+                OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
+            ], 
             request=UserDetailResponseSerializer, 
             responses={
                 200:UserDetailResponseSerializer,
@@ -170,6 +188,22 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return super().get(request, *args, **kwargs)
     
     @extend_schema(
+            parameters=[
+                OpenApiParameter(
+                    name='X-CSRFToken',
+                    type=OpenApiTypes.STR,
+                    location=OpenApiParameter.HEADER,
+                    required=True,
+                    description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               ),
+                OpenApiParameter(
+                    name='Session_id',
+                    type=OpenApiTypes.STR,
+                    location=OpenApiParameter.COOKIE,
+                    required=True,
+                    description='Ensure ession id is in cookie!'
+                )
+            ], 
             request=UserDetailResponseSerializer, 
             responses={
                 200:UserDetailResponseSerializer,
@@ -199,6 +233,22 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @extend_schema(
+            parameters=[
+               OpenApiParameter(
+               name='X-CSRFToken',
+               type=OpenApiTypes.STR,
+               location=OpenApiParameter.HEADER,
+               required=True,
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               ),
+                OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
+            ],             
             request=UserDetailResponseSerializer, 
             responses={
                 200:UserDetailResponseSerializer,
@@ -236,7 +286,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                type=OpenApiTypes.STR,
                location=OpenApiParameter.HEADER,
                required=True,
-               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken')
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               )            
     ],
     request=LoginSerializer,
     responses={
@@ -566,3 +617,18 @@ class GetCsrfToken(APIView):
 
     def get(self, request, format=None):
         return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method '}, status=status.HTTP_200_OK)
+
+class EmailVertificationView(APIView):
+    """Forget password first step, check email is existed then send email with vertifi code!"""
+    def post(self, request):
+        """Check the exmail and send vertifi-code!"""
+        email = request.data.get('email')
+        if get_user_model().objects.filter(email=email).exists():
+            vertifi_code = random.randint(100000,999999)
+            content = {
+                 "subject": "Your vertify code for change password",
+                 "message":f"Vertify Code:{vertifi_code}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
+                 }
+            sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
+            return Response({"message":'Vertify code is sending to your mail!'}, status=status.HTTP_200_OK)
+        return Response({"error":'Email is not existed!,please try again'},)
