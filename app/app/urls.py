@@ -27,6 +27,8 @@ urlpatterns = [
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('user/',include('user.urls')),
-    path('signupVertify',view=user_views.sign_up_vertify, name='signupvertify' ),
-    path('getCsrfToken/',user_views.GetCsrfToken.as_view(), name='getCsrfToken')
+    path('signupVertify', view=user_views.sign_up_vertify, name='signupvertify' ),
+    path('getCsrfToken/', user_views.GetCsrfToken.as_view(), name='getCsrfToken'),
+    path('forget-password/', user_views.EmailVertificationView.as_view(), name='foregetpassword'),
+    path('reset-password/', user_views.ResetPasswordView.as_view(), name='resetpassword')
 ]

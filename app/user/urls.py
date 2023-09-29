@@ -16,5 +16,6 @@ urlpatterns = [
     path('check_username/',views.check_username_replicate, name='check_username_replicate'),
     path('login/',views.LoginView.as_view(), name='login'),
     path('logout/',views.LogoutView.as_view(), name='logout'),
-    path('detail/',views.UserDetailView.as_view(), name='user_detail')
+    path('detail/',views.UserDetailView.as_view(), name='user_detail'),
+    path('change-password/', views.ChangePassword.as_view(), name='changepassword')
 ]

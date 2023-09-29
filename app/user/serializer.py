@@ -62,25 +62,28 @@ class LoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
+class PasswordSerialzier(serializers.Serializer):
+    password = serializers.CharField(required=True)
 
-
-
-
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
 class Ok200serializer(serializers.Serializer):
     message = serializers.CharField()
-    detail = serializers.CharField()
+    detail = serializers.CharField(allow_null=True)
+    reidrect = serializers.CharField(allow_null=True)
 
 class Created201serializer(serializers.Serializer):
     message = serializers.CharField()
-    token = serializers.CharField()
+    token = serializers.CharField(allow_null=True)
 
 class Error401Serializer(serializers.Serializer):
     error = serializers.CharField()
-    detail = serializers.CharField()
-
+    detail = serializers.CharField(allow_null=True)
+    reidrect = serializers.CharField(allow_null=True)
 class Error400Serializer(serializers.Serializer):
     error = serializers.CharField()
-    detail = serializers.CharField()
+    detail = serializers.CharField(allow_null=True)
 
 class Error500Serializer(serializers.Serializer):
     error = serializers.CharField()
@@ -88,16 +91,13 @@ class Error500Serializer(serializers.Serializer):
 class SignUpSerializer(serializers.Serializer):
     token = serializers.CharField()
 
-class EmailSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
 class UsernameSerializer(serializers.Serializer):
     username = serializers.CharField()
 
 class CheckEmailResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
-    detail = serializers.CharField()
+    detail = serializers.CharField(allow_null=True)
 
 class CheckUsernameResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
-    detail = serializers.CharField()
+    detail = serializers.CharField(allow_null=True)
