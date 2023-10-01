@@ -133,7 +133,7 @@ class CreateUserView(generics.CreateAPIView):
         200: Ok200serializer,
         400: Error400Serializer,
         403: 'CSRF token missing or incorrect.',
-        500: Error500Serializer 
+        500: Error500Serializer
     },
     examples=[
         OpenApiExample(
@@ -206,7 +206,7 @@ class LoginView(APIView):
     value={'message':"Successed logout.",'detail':"Session id remove from "},
     response_only=True,
     status_codes=['200']
-    ),        
+    ),
     OpenApiExample(
     "Request forbbiden",
     value={'error': 'CSRF token missing or incorrect.'},
@@ -234,6 +234,7 @@ class LogoutView(APIView):
         except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
@@ -335,7 +336,7 @@ def check_email_replicate(request):
                         value={'error': 'CSRF token missing or incorrect.'},
                         response_only=True,
                         status_codes=['403']
-                    ),                    
+                    ),
                     OpenApiExample(
                         'Internal Error',
                         value={'error': 'Internal server error'},
