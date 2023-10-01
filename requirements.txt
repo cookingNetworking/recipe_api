@@ -2,7 +2,8 @@ pyjwt[crypto]
 Django>=3.2.4,<3.3
 djangorestframework>=3.12.4,<3.13
 django-cors-headers
-drf-spectacular>=0.15.1,<0.16
+drf-spectacular
+drf-standardized-errors[openapi]
 django-celery-results
 django-redis
 celery

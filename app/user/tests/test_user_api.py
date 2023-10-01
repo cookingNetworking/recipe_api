@@ -15,7 +15,7 @@ import jwt
 import datetime
 import os
 
-CREATE_USER_URL = reverse("user:create")
+CREATE_USER_URL = reverse("user:user_create")
 GET_CSRF_TOKEN_URL = reverse("getCsrfToken")
 ACTIVATE_USER_URL = reverse("signupvertify")
 
@@ -76,6 +76,7 @@ class TestUser(TestCase):
         create_user(**params)
         
         res = self.client.post(CREATE_USER_URL, params)
+        
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
     
 
@@ -143,7 +144,7 @@ class TestUser(TestCase):
 
                 # Perform the sign up verify
                 res = self.client.get(ACTIVATE_USER_URL + f'?token={token}')
-
+                
                 self.assertEqual(res.status_code, status.HTTP_200_OK)
     
 

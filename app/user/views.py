@@ -1,6 +1,8 @@
 """
 Views for user API.
 """
+import random
+
 from rest_framework import status, generics, permissions, authentication
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -13,7 +15,6 @@ from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
-
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
@@ -22,6 +23,8 @@ from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
 from user.serializer import (
         UserSerializer,
+        UserDetailResponseSerializer,
+        PasswordSerialzier,
         LoginSerializer,
         Ok200serializer,
         Created201serializer,
@@ -33,6 +36,35 @@ from user.serializer import (
         EmailSerializer,
         UsernameSerializer,
         )
+@extend_schema(
+    parameters=[
+         OpenApiParameter(
+            name='Session_id',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.COOKIE,
+            required=True,
+            description='Ensure ession id is in cookie!'
+            )
+        ], 
+        responses={
+        200: UserSerializer,     
+        403: 'You do not have permission to perform this action.',
+
+    },
+        examples=[
+        OpenApiExample(
+            "Request forbbiden",
+            value={'detail': 'You do not have permission to perform this action.'},
+            response_only=True,
+            status_codes=['403']
+            ),
+        ]
+)
+class UserListView(generics.ListAPIView):
+    """List all user API.\t Only admin user can access this API!"""
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = UserSerializer
+    queryset = get_user_model().objects.all()
 
 
 @extend_schema(
@@ -44,6 +76,13 @@ from user.serializer import (
             required=True,
             description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
           ),
+          OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
     ],
     responses={
         201: Created201serializer,
@@ -118,7 +157,129 @@ class CreateUserView(generics.CreateAPIView):
             get_user_model().objects.filter(email=email).delete()
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    """Manage the user detail."""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(
+            parameters=[
+                OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
+            ], 
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                },
+            examples=[
+                OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            ]
+            )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
+    @extend_schema(
+            parameters=[
+                OpenApiParameter(
+                    name='X-CSRFToken',
+                    type=OpenApiTypes.STR,
+                    location=OpenApiParameter.HEADER,
+                    required=True,
+                    description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               ),
+                OpenApiParameter(
+                    name='Session_id',
+                    type=OpenApiTypes.STR,
+                    location=OpenApiParameter.COOKIE,
+                    required=True,
+                    description='Ensure ession id is in cookie!'
+                )
+            ], 
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                500:Error500Serializer
+                },
+            examples=[
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"detail":"Authentication credentials were not provided."},
+                    response_only=True,
+                    status_codes=['403']
+                ),
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"error":"Inernal error messages"},
+                    response_only=True,
+                    status_codes=['500']
+                ),
+            ]   
+            )
+    @method_decorator(csrf_protect, name='dispatch')
+    def put(self, request, *args, **kwargs):
+        try:
+            return super().put(request, *args, **kwargs)
+        except Exception as e:
+            return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @extend_schema(
+            parameters=[
+               OpenApiParameter(
+               name='X-CSRFToken',
+               type=OpenApiTypes.STR,
+               location=OpenApiParameter.HEADER,
+               required=True,
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               ),
+                OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure ession id is in cookie!'
+                )
+            ],             
+            request=UserDetailResponseSerializer, 
+            responses={
+                200:UserDetailResponseSerializer,
+                403:"Authentication credentials were not provided.",
+                500:Error500Serializer
+                },
+            examples=[
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"detail":"Authentication credentials were not provided."},
+                    response_only=True,
+                    status_codes=['403']
+                ),
+                OpenApiExample(
+                    "Request forbbiden",
+                    value={"error":"Inernal error messages"},
+                    response_only=True,
+                    status_codes=['500']
+                ),
+            ]   
+            )
+    @method_decorator(csrf_protect, name='dispatch')
+    def patch(self, request, *args, **kwargs):
+        try:
+            return super().patch(request, *args, **kwargs)
+        except Exception as e:
+            return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def get_object(self):
+        """Retrieve and return the authenticated user."""
+        return self.request.user
 @extend_schema(
     parameters=[
           OpenApiParameter(
@@ -126,7 +287,8 @@ class CreateUserView(generics.CreateAPIView):
                type=OpenApiTypes.STR,
                location=OpenApiParameter.HEADER,
                required=True,
-               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken')
+               description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+               )            
     ],
     request=LoginSerializer,
     responses={
@@ -226,11 +388,11 @@ class LogoutView(APIView):
     """Clear session id from cookies!"""
     def post(self, request):
         try:
-            print(request.headers)
+            print(request)
             if not request.headers['X-CSRFToken']:
                 return Response({"error":"Loss CSRFToken in request header!","detail":"Please get csrftoken again!"}, status=status.HTTP_403_FORBIDDEN)
             logout(request)
-            return Response({'message':"Successed logout.",'detail':"Session id remove from "}, status=status.HTTP_200_OK)
+            return Response({'message':"Successed logout.",'detail':"Session id remove from cookies!"}, status=status.HTTP_200_OK)
         except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -283,12 +445,13 @@ class LogoutView(APIView):
                     ],
     description='Checks if an email is already taken',
 )
-@method_decorator(csrf_protect, name='dispatch')
 @api_view(['POST'])
+@csrf_protect
 def check_email_replicate(request):
     """Check create user request email and password is existed or not."""
 
     try:
+        print(request.headers)
         if get_user_model().objects.filter(email=request.data.get('email')).exists():
             return Response(
                 {'error':'Email is already existed !!!','detail': 'Please use another email.'},
@@ -347,10 +510,12 @@ def check_email_replicate(request):
     description='Checks if an email is already taken',
 )
 @api_view(['POST'])
+@csrf_protect
 def check_username_replicate(request):
     """Check create user request email and password is existed or not."""
 
     try:
+        print(request.headers)
         if get_user_model().objects.filter(username=request.data.get('username')).exists():
             return Response(
                 {'error':'Username is already existed !!!','detail': 'Please use another username.'},
@@ -457,3 +622,203 @@ class GetCsrfToken(APIView):
 
     def get(self, request, format=None):
         return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method '}, status=status.HTTP_200_OK)
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class ChangePassword(APIView):
+    """Change password for authenticated user."""
+    permission_classes = [permissions.IsAuthenticated,]
+    authentication_classes = [authentication.SessionAuthentication,]
+    
+    @extend_schema(
+    parameters=[
+                OpenApiParameter(
+                    name='token',
+                    type=str,
+                    location=OpenApiParameter.QUERY,
+                    description='Your token description here',
+                    required=True
+                ),
+                OpenApiParameter(
+                    name='Session_id',
+                    type=OpenApiTypes.STR,
+                    location=OpenApiParameter.COOKIE,
+                    required=True,
+                    description='Ensure ession id is in cookie!'
+                )
+
+        ],
+    request=PasswordSerialzier,
+    responses={
+                200: Ok200serializer,
+                401: Error401Serializer,
+                403 :'CSRF token missing or incorrect.',
+                500 :Error500Serializer
+               },
+     examples=[
+                    OpenApiExample(
+                        'Send email success!',
+                        value={'message':'Change password success','detail':'Please use new password login again!','redirect':'/user/login/'},
+                        response_only=True,
+                        status_codes=['200']
+                    ),
+                     OpenApiExample(
+                        'not authenticated',
+                        value={'error':'User is not authenticated!','detal':'Please login','redirect':'/user/login'},
+                        response_only=True,
+                        status_codes=['401']
+                    ),
+                    OpenApiExample(
+                        "Request forbbiden",
+                        value={'error': 'CSRF token missing or incorrect.'},
+                        response_only=True,
+                        status_codes=['403']
+                    ), 
+                    OpenApiExample(
+                        'Internal error',
+                        value={'message': 'Internal error message!'},
+                        response_only=True,
+                        status_codes=['500']
+                    ),],
+         description='Change user password, please check password and recheck password is the same.Post password with hash to this api.'
+)
+    @method_decorator(ensure_csrf_cookie, name='dispatch')
+    def post(self, request):
+        try:
+            if request.user.is_authenticated == False:
+                return Response({'error':'User is not authenticated!','detal':'Please login','redirect':'/user/login'}, status=status.HTTP_401_UNAUTORIZED)
+            password = request.data.get('new_password')
+            user = request.user
+            user.set_password(password)
+            user.saved()
+            return Response({'message':'Change password success','detail':'Please use new password login again!','redirect':'/user/login/'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+                print(e)
+                return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@extend_schema(
+    request=EmailSerializer,
+    responses={
+                200: Ok200serializer,
+                403 :'CSRF token missing or incorrect.',
+                400: Error400Serializer
+               },
+               examples=[
+                    OpenApiExample(
+                        'Send email success!',
+                        value={'message': 'Vertify code is sending to your mail!', 'detail': 'please reset password in 15 min!'},
+                        response_only=True,
+                        status_codes=['200']
+                    ),
+                     OpenApiExample(
+                        'getToken success',
+                        value={'message': 'Email is not existed!,please try again!'},
+                        response_only=True,
+                        status_codes=['400']
+                    ),
+                    OpenApiExample(
+                        "Request forbbiden",
+                        value={'error': 'CSRF token missing or incorrect.'},
+                        response_only=True,
+                        status_codes=['403']
+                    ), 
+                    OpenApiExample(
+                        'getToken success',
+                        value={'message': 'Internal error message!'},
+                        response_only=True,
+                        status_codes=['500']
+                    ),]
+                )
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class EmailVertificationView(APIView):
+    """(Anonymous user)Forget password first step, check email is existed then send email with reset password link!"""
+    def post(self, request):
+        """Check the exmail and send vertifi-code!"""
+        try:
+            email = request.data.get('email')
+            if get_user_model().objects.filter(email=email).exists():
+                current_time = int(datetime.now().timestamp())
+                payload = {
+                    "email": email,
+                    "exp" : current_time + (15 * 60),
+                    "usuage": 'reset_password'
+                }
+                token = create_jwt(**payload)
+                link = f"http://cookNetwork/reset-password?code={token}" 
+                content = {
+                    "subject": "Your vertify code for change password",
+                    "message":f"Reset password link:{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
+                    }
+                sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
+                cache.set(f'Rest_password_{email}', email, 9000)
+                return Response({"message":'Vertify code is sending to your mail!','detail':'please reset password in 15 min!'}, status=status.HTTP_200_OK)
+            return Response({"error":'Email is not existed!,please try again'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as val_err:
+            print(val_err)
+            return Response({'error':f'{val_err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@extend_schema(
+    request=PasswordSerialzier,
+    responses={
+                200: Ok200serializer,
+                401: Error401Serializer,
+                403 :'CSRF token missing or incorrect.',
+                500 :Error500Serializer
+               },
+     examples=[
+                    OpenApiExample(
+                        'Send email success!',
+                        value={'message': 'Vertify code is sending to your mail!', 'detail': 'please reset password in 15 min!'},
+                        response_only=True,
+                        status_codes=['200']
+                    ),
+                     OpenApiExample(
+                        'getToken success',
+                        value={'message': 'Email is not existed!,please try again!'},
+                        response_only=True,
+                        status_codes=['400']
+                    ),
+                    OpenApiExample(
+                        "Request forbbiden",
+                        value={'error': 'CSRF token missing or incorrect.'},
+                        response_only=True,
+                        status_codes=['403']
+                    ), 
+                    OpenApiExample(
+                        'getToken success',
+                        value={'message': 'Internal error message!'},
+                        response_only=True,
+                        status_codes=['500']
+                    ),]
+        
+)
+@method_decorator(ensure_csrf_cookie, name='dispatch')    
+class ResetPasswordView(APIView):
+    """(Anonymous user)check token is correct or not ,if correct then user can reset password! """
+    
+    def post(self, request):
+        token = request.query_params.get('code')
+        try:
+            content = decode_jwt(token)
+            if content.get('usuage') != 'reset_password':
+                return Response({'error':'Wrong token with usuage '}, status=status.HTTP_401_UNAUTHORIZED)
+            email = content.get('email')
+            if cache.get(f'Rest_password_{email}') == None:
+                return Response({'error':'Wrong token with email !'}, status=status.HTTP_401_UNAUTHORIZED)
+            user = get_user_model().objects.filter(email=email).first()
+            if not user:
+                return Response({'error':'Wrong token with user!'}, status=status.HTTP_401_UNAUTHORIZED)
+            password = request.data.get('password')
+            user.set_password(password)
+            user.save()
+            cache.delete(f'Rest_password_{email}')
+            return Response({'message':'Reset password success','detal':'Use new password login again!','redirect':'/user/login/'}, status=status.HTTP_200_OK)
+        except ExpiredSignatureError:
+            return Response(
+                {'error': 'Token is expired.', 'detail': 'Please sign up again.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except Exception as e:
+                print(e)
+                return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
