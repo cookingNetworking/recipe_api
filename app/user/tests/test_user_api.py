@@ -18,6 +18,7 @@ import os
 CREATE_USER_URL = reverse("user:user_create")
 GET_CSRF_TOKEN_URL = reverse("getCsrfToken")
 ACTIVATE_USER_URL = reverse("signupvertify")
+LOGIN_URL = reverse("user:login")
 
 def create_user(**params):
     """Create user and return."""
@@ -27,7 +28,7 @@ def create_user(**params):
 def create_wrong_token(email=None,time=None):
     if  not email:
         email = 'wrong.email@example.com'
-    if not time:      
+    if not time:
        time = int(datetime.datetime.now().timestamp()+(15*60))
     payload={
         "email": email,
@@ -42,29 +43,29 @@ class TestUser(TestCase):
     """Test every api for /user."""
     def setUp(self):
         self.client = APIClient()
-    
+
 
     def test_create_user_success(self, ):
         """Testing creating a user is successful."""
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
             mock_sending_mail.return_value = None
-            
+
             params = {
                 "email": "test1@example.com",
                 "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
             }
-            
+
             # Perform user creation
             res = self.client.post(CREATE_USER_URL, params)
             self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-            
+
             user = get_user_model().objects.get(email=params["email"])
 
             self.assertTrue(user.check_password(params["password"]))
             self.assertNotIn('password', res.data)
-    
+
     def test_email_already_exist(self):
         """Test email already exist."""
         params = {
@@ -72,28 +73,28 @@ class TestUser(TestCase):
                 "password":"test1123123123",
                 "username":"testuser1",
                 }
-        
+
         create_user(**params)
-        
+
         res = self.client.post(CREATE_USER_URL, params)
-        
+
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
 
     def test_create_user_without_email(self):
         """Test creating a user without email."""
         params = {
                 "password":"test1123123123",
-                "username":"testuser1"} 
-        res = self.client.post(CREATE_USER_URL, params)   
+                "username":"testuser1"}
+        res = self.client.post(CREATE_USER_URL, params)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         params1 = {
                 "email": "",
                 "password":"test1123123123",
-                "username":"testuser1"} 
-        res = self.client.post(CREATE_USER_URL, params1)   
+                "username":"testuser1"}
+        res = self.client.post(CREATE_USER_URL, params1)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
 
     def test_create_user_password_tooshort(self):
         """Test creat a user with invalide password!"""
@@ -103,9 +104,9 @@ class TestUser(TestCase):
                 "username":"testuser1",
                 }
         res = self.client.post(CREATE_USER_URL, params)
-        
+
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_create_user_without_csrftoken(self):
         """Test create user without csrftoken."""
         self.client = APIClient(enforce_csrf_checks=True)
@@ -116,20 +117,20 @@ class TestUser(TestCase):
                 }
         res = self.client.post(CREATE_USER_URL, params)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-    
+
 
     def test_activate_user(self):
         """Test activating the user just created."""
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
             mock_sending_mail.return_value = None
-            
+
             params = {
                 "email": "test1@example.com",
                 "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
             }
-            
+
             # Perform user creation
             res =self.client.post(CREATE_USER_URL, params)
             result = res.json()
@@ -144,42 +145,42 @@ class TestUser(TestCase):
 
                 # Perform the sign up verify
                 res = self.client.get(ACTIVATE_USER_URL + f'?token={token}')
-                
+
                 self.assertEqual(res.status_code, status.HTTP_200_OK)
-    
+
 
     def test_active_user_wrong_token(self):
         """Test active user with wrong token."""
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
             mock_sending_mail.return_value = None
-            
+
             params = {
                 "email": "test1@example.com",
                 "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
             }
-            
+
             # Perform user creation
             res = self.client.post(CREATE_USER_URL, params)
-            res_token = res.json().get('token')         
-            token = "vmfdskl;jgiowj jivoasjodvpkl;vnikao;nvikosa;dnv"   
+            res_token = res.json().get('token')
+            token = "vmfdskl;jgiowj jivoasjodvpkl;vnikao;nvikosa;dnv"
             self.assertNotEqual(token, res_token)
             res = self.client.get(ACTIVATE_USER_URL + f'?token={token}')
             self.assertEqual(res.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 
     def test_active_with_wrong_email_token(self):
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
             mock_sending_mail.return_value = None
-            
+
             params = {
                 "email": "test1@example.com",
                 "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
             }
-            
+
             # Perform user creation
             self.client.post(CREATE_USER_URL, params)
             token = create_wrong_token()
@@ -187,20 +188,20 @@ class TestUser(TestCase):
             secret_key = os.environ.get('secret_key')
             decode_token = jwt.decode(token, str(secret_key), algorithms=['HS256'])
             self.assertNotEqual(decode_token['email'], "test1@example.com")
-            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST) 
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_active_with_expired_token(self):
         """Test active suer with expired token!"""
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
             mock_sending_mail.return_value = None
-            
+
             params = {
                 "email": "test1@example.com",
                 "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
             }
-            
+
             # Perform user creation
             self.client.post(CREATE_USER_URL, params)
             with patch('user.views.AbortableAsyncResult') as MockedAsyncResultClass:
@@ -209,16 +210,34 @@ class TestUser(TestCase):
                 mock_instance.state = 'REVOKED'  # Or any state you want for your test case
                 MockedAsyncResultClass.return_value = mock_instance
                 current_time =str(int(datetime.datetime.now().timestamp()))
-                token = create_wrong_token("test1@example.com", current_time)       
+                token = create_wrong_token("test1@example.com", current_time)
                 res = self.client.get(ACTIVATE_USER_URL + f'?token={token}')
                 self.assertEqual(res.json().get("error"), 'Token is expired.')
                 self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_get_csrf_token(self):
-        """Test get csrf Token work or not!""" 
+        """Test get csrf Token work or not!"""
         res = self.client.get(GET_CSRF_TOKEN_URL)
-        
+
         cookies = self.client.cookies
         self.assertIn("csrftoken", cookies)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        
+
+    def test_login_successed(self):
+        """Test login successed!"""
+        params = {
+                "email": "test1@example.com",
+                "password": "123564qefqwgqawegdef",
+                "username": "testuser1",
+                "is_active": True
+            }
+        get_user_model().objects.create(**params)
+        print(get_user_model().objects.filter(email="test1@example.com").exists())
+        payload = {
+            "email": "test1@example.com",
+            "password": "123564qefqwgqawegdef"
+        }
+        res = self.client.post(LOGIN_URL, payload)
+        print(res.content)
+        print(res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
