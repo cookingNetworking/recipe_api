@@ -6,14 +6,9 @@ services:
       context: .
       args:
         - DEV=true
-    ports:
-      - "8000:8000"
     volumes:
       - ./app:/app
-    command: >
-      sh -c " python manage.py wait_for_db &&
-              python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8000"
+      - dev-static-data:/vol/web
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
@@ -30,7 +25,7 @@ services:
         - DEV=true
     command: celery -A app worker --loglevel=info
     volumes:
-      - ./app:/app
+      - dev-static-data:/vol/worker
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
@@ -51,6 +46,17 @@ services:
   cache:
     image: redis:7.2.1-alpine
   
+  proxy:
+    build:
+      context: ./proxy
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - 80:8000
+    volumes:
+      - dev-static-data:/vol/static
+
 volumes:
   dev-db-data:
   dev-static-data:
