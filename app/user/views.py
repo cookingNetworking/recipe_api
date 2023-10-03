@@ -336,12 +336,10 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            print(serializer.data,2)
             user = serializer.validated_data['user']
             login(request, user)
             rotate_token(request)
             user_json = UserSerializer(user)
-            print(user_json.data)
             csrf_token = request.META.get('CSRF_COOKIE', '')
             session_id = request.session.session_key
             return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
@@ -394,7 +392,7 @@ class LogoutView(APIView):
             logout(request)
             return Response({'message':"Successed logout.",'detail':"Session id remove from cookies!"}, status=status.HTTP_200_OK)
         except Exception as e:
-            print(e)
+            print(e,1)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

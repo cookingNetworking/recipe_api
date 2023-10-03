@@ -8,17 +8,19 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, force_authenticate
 from rest_framework import status
 
 import jwt
 import datetime
 import os
+import json
 
 CREATE_USER_URL = reverse("user:user_create")
 GET_CSRF_TOKEN_URL = reverse("getCsrfToken")
 ACTIVATE_USER_URL = reverse("signupvertify")
 LOGIN_URL = reverse("user:login")
+LOGOUT_URL = reverse("user:logout")
 
 def create_user(**params):
     """Create user and return."""
@@ -43,9 +45,14 @@ class TestUser(TestCase):
     """Test every api for /user."""
     def setUp(self):
         self.client = APIClient()
-
-
-    def test_create_user_success(self, ):
+        payload = {
+            "email":"create@example.com",
+            "password":"asduiwqhdquiwf",
+            "username": "ceateduser",
+            "is_active": True
+        }
+        self.exist_user = get_user_model().objects.create(**payload)
+    def test_create_user_success(self):
         """Testing creating a user is successful."""
         with patch('user.tasks.sending_mail.apply_async') as mock_sending_mail, patch('user.tasks.delete_unactivate_user.apply_async') as mock_delete_unactivate:
             mock_delete_unactivate.return_value = Mock(id='mocked_id')
@@ -225,19 +232,64 @@ class TestUser(TestCase):
 
     def test_login_successed(self):
         """Test login successed!"""
-        params = {
+        payload = {
                 "email": "test1@example.com",
-                "password": "123564qefqwgqawegdef",
                 "username": "testuser1",
                 "is_active": True
             }
-        get_user_model().objects.create(**params)
-        print(get_user_model().objects.filter(email="test1@example.com").exists())
-        payload = {
+        user = get_user_model().objects.create(**payload)
+        user.set_password("123564qefqwgqawegdef")
+        user.save()
+        params = {
             "email": "test1@example.com",
             "password": "123564qefqwgqawegdef"
         }
-        res = self.client.post(LOGIN_URL, payload)
-        print(res.content)
-        print(res.data)
+        res = self.client.post(LOGIN_URL, json.dumps(params), content_type='application/json')
+        content = res.content.decode('utf-8')
+        content_dict = json.loads(content)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(content_dict['detail']['user']['email'], user.email)
+        self.assertEqual(content_dict['detail']['user']['username'], user.username)
+    
+    def test_login_fail_wrong_email(self):
+        """Test login with wrong eamil !"""
+        payload = {
+                "email": "test1@example.com",
+                "username": "testuser1",
+                "is_active": True
+            }
+        user = get_user_model().objects.create(**payload)
+        user.set_password("123564qefqwgqawegdef")
+        user.save()
+        params = {
+            "email": "wrong@example.com",
+            "password": "123564qefqwgqawegdef"
+        }
+        res = self.client.post(LOGIN_URL, json.dumps(params), content_type='application/json')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_login_fail_wrong_password(self):
+        """Test login with wrong eamil !"""
+        payload = {
+                "email": "test1@example.com",
+                "username": "testuser1",
+                "is_active": True
+            }
+        user = get_user_model().objects.create(**payload)
+        user.set_password("123564qefqwgqawegdef")
+        user.save()
+        params = {
+            "email": "wrong@example.com",
+            "password": "wrongpaassword"
+        }
+        res = self.client.post(LOGIN_URL, json.dumps(params), content_type='application/json')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_logout(self):
+        """Test logout user!"""
+        token_res = self.client.get(GET_CSRF_TOKEN_URL)
+        csrf_token = token_res.cookies["csrftoken"].value
+        self.client.force_authenticate(user=self.exist_user)
+        res = self.client.post(LOGOUT_URL,HTTP_X_CSRFTOKEN=csrf_token)
+        
         self.assertEqual(res.status_code, status.HTTP_200_OK)

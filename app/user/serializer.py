@@ -80,7 +80,7 @@ class Created201serializer(serializers.Serializer):
 class Error401Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
-    reidrect = serializers.CharField(allow_null=True)
+    
 class Error400Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
