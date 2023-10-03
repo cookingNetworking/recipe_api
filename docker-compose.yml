@@ -18,8 +18,9 @@ services:
     depends_on:
       - db
       - cache
-  worker:  # 新添加的 Celery worker service
-    build: 
+  worker:
+    # 新添加的 Celery worker service
+    build:
       context: .
       args:
         - DEV=true
@@ -34,7 +35,7 @@ services:
       - DEBUG=1
     depends_on:
       - db
-      - cache    
+      - cache
   db:
     image: postgres:13-alpine
     volumes:
@@ -45,7 +46,7 @@ services:
       - POSTGRES_PASSWORD=changeme
   cache:
     image: redis:7.2.1-alpine
-  
+
   proxy:
     build:
       context: ./proxy
