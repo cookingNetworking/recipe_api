@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   app:
-    image: as2229181/cooknetwork_v1.0:latest
+    image: as2229181/cooknetwork:app_v1.0
     build:
       context: .
       args:
@@ -20,7 +20,7 @@ services:
       - db
       - cache
   worker:
-    # 新添加的 Celery worker service
+    image: as2229181/cooknetwork:worker_v1.0
     build:
       context: .
       args:
@@ -49,6 +49,7 @@ services:
     image: redis:7.2.1-alpine
 
   proxy:
+    image: as2229181/cooknetwork:proxy_v1.0
     build:
       context: ./proxy
     restart: always
