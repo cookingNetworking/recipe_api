@@ -21,11 +21,19 @@ GET_CSRF_TOKEN_URL = reverse("getCsrfToken")
 ACTIVATE_USER_URL = reverse("signupvertify")
 LOGIN_URL = reverse("user:login")
 LOGOUT_URL = reverse("user:logout")
+USER_DETAIL_URL = reverse("user:user_detail")
+USER_LIST_URL = reverse("user:user_list")
+USER_CHANGE_PASSWORD_URL = reverse("user:changepassword")
+
 
 def create_user(**params):
     """Create user and return."""
     return get_user_model().objects.create_user(**params)
 
+def decode_content(content):
+    """Decode response content!"""
+    content_dict = json.loads(content.decode('utf-8'))
+    return content_dict
 
 def create_wrong_token(email=None,time=None):
     if  not email:
@@ -49,7 +57,9 @@ class TestUser(TestCase):
             "email":"create@example.com",
             "password":"asduiwqhdquiwf",
             "username": "ceateduser",
-            "is_active": True
+            "role": 'user',
+            "is_active": True,
+            "is_staff": True
         }
         self.exist_user = get_user_model().objects.create(**payload)
     def test_create_user_success(self):
@@ -293,3 +303,74 @@ class TestUser(TestCase):
         res = self.client.post(LOGOUT_URL,HTTP_X_CSRFTOKEN=csrf_token)
         
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_edit_user_email(self):
+        """Test edit user info."""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+            "email": "edit@example.com"
+        }
+        res = self.client.patch(USER_DETAIL_URL, params)
+        res_dict = decode_content(res.content)
+        self.exist_user.refresh_from_db()
+        self.assertEqual(self.exist_user.email, res_dict['email'])
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    
+    def test_edit_user_username(self):
+        """Test edit user username."""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+            'username': "editname"
+        } 
+        res = self.client.patch(USER_DETAIL_URL, params)
+        self.exist_user.refresh_from_db()
+        res_dict = decode_content(res.content)
+        self.assertEqual(self.exist_user.username, res_dict['username'])
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    
+    def test_edit_user_role(self):
+        """Test edit user role!"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+            'role': "cook"
+        }
+        res = self.client.patch(USER_DETAIL_URL, params)
+        res_dict = decode_content(res.content)
+        self.exist_user.refresh_from_db()
+        self.assertEqual(self.exist_user.role, res_dict['role'])
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_change_password(self):
+        """Test change user password"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+            "password": "newpassowrd123"
+        }
+        res = self.client.post(USER_CHANGE_PASSWORD_URL, params)
+        self.exist_user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(self.exist_user.check_password(params["password"]))
+
+    def test_list_user(self):
+        """Test list all user!"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+            "user1":{
+                "email":"mail1@example.com",
+                "username": "user1",
+                "is_active":True
+            },
+            "user2":{
+                "email":"mail2@example.com",
+                "username": "user2",
+                "is_active":True
+            },
+        }
+        for user_data in params.values():
+            get_user_model().objects.create(**user_data)
+        res = self.client.get(USER_LIST_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        res_content = decode_content(res.content)
+        self.assertEqual(len(res_content), 3)
+    
+    

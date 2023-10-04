@@ -161,6 +161,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     """Manage the user detail."""
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    
     @extend_schema(
             parameters=[
                 OpenApiParameter(
@@ -543,7 +544,7 @@ def check_username_replicate(request):
                             examples=[
                                  OpenApiExample(
                                     'Email exist Error',
-                                    value={'error': 'User is been actived!!!', 'detail': 'Redirect to login page, please login cookNetwoking with your email and password!'},
+                                    value={'message': 'User is been actived!!!', 'detail': 'Redirect to login page, please login cookNetwoking with your email and password!'},
                                     response_only=True,
                                     status_codes=['200']
                                 ),
