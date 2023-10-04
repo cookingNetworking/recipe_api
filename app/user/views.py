@@ -45,9 +45,9 @@ from user.serializer import (
             required=True,
             description='Ensure session id is in cookie!'
             )
-        ], 
+        ],
         responses={
-        200: UserSerializer,     
+        200: UserSerializer,
         403: 'You do not have permission to perform this action.',
 
     },
@@ -161,7 +161,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     """Manage the user detail."""
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     @extend_schema(
             parameters=[
                 OpenApiParameter(
@@ -171,8 +171,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 required=True,
                 description='Ensure session id is in cookie!'
                 )
-            ], 
-            request=UserDetailResponseSerializer, 
+            ],
+            request=UserDetailResponseSerializer,
             responses={
                 200:UserDetailResponseSerializer,
                 403:"Authentication credentials were not provided.",
@@ -188,7 +188,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-    
+
     @extend_schema(
             parameters=[
                 OpenApiParameter(
@@ -205,8 +205,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                     required=True,
                     description='Ensure session id is in cookie!'
                 )
-            ], 
-            request=UserDetailResponseSerializer, 
+            ],
+            request=UserDetailResponseSerializer,
             responses={
                 200:UserDetailResponseSerializer,
                 403:"Authentication credentials were not provided.",
@@ -225,7 +225,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                     response_only=True,
                     status_codes=['500']
                 ),
-            ]   
+            ]
             )
     @method_decorator(csrf_protect, name='dispatch')
     def put(self, request, *args, **kwargs):
@@ -233,7 +233,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             return super().put(request, *args, **kwargs)
         except Exception as e:
             return Response({"c":f"{e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @extend_schema(
             parameters=[
                OpenApiParameter(
@@ -250,8 +250,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 required=True,
                 description='Ensure session id is in cookie!'
                 )
-            ],             
-            request=UserDetailResponseSerializer, 
+            ],
+            request=UserDetailResponseSerializer,
             responses={
                 200:UserDetailResponseSerializer,
                 403:"Authentication credentials were not provided.",
@@ -270,7 +270,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                     response_only=True,
                     status_codes=['500']
                 ),
-            ]   
+            ]
             )
     @method_decorator(csrf_protect, name='dispatch')
     def patch(self, request, *args, **kwargs):
@@ -289,7 +289,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                location=OpenApiParameter.HEADER,
                required=True,
                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
-               )            
+               )
     ],
     request=LoginSerializer,
     responses={
@@ -628,7 +628,7 @@ class ChangePassword(APIView):
     """Change password for authenticated user."""
     permission_classes = [permissions.IsAuthenticated,]
     authentication_classes = [authentication.SessionAuthentication,]
-    
+
     @extend_schema(
     parameters=[
                 OpenApiParameter(
@@ -672,7 +672,7 @@ class ChangePassword(APIView):
                         value={'error': 'CSRF token missing or incorrect.'},
                         response_only=True,
                         status_codes=['403']
-                    ), 
+                    ),
                     OpenApiExample(
                         'Internal error',
                         value={'message': 'Internal error message!'},
@@ -721,7 +721,7 @@ class ChangePassword(APIView):
                         value={'error': 'CSRF token missing or incorrect.'},
                         response_only=True,
                         status_codes=['403']
-                    ), 
+                    ),
                     OpenApiExample(
                         'getToken success',
                         value={'message': 'Internal error message!'},
@@ -744,7 +744,7 @@ class EmailVertificationView(APIView):
                     "usuage": 'reset_password'
                 }
                 token = create_jwt(**payload)
-                link = f"http://cookNetwork/reset-password?code={token}" 
+                link = f"http://cookNetwork/reset-password?code={token}"
                 content = {
                     "subject": "Your vertify code for change password",
                     "message":f"Reset password link:{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
@@ -783,19 +783,19 @@ class EmailVertificationView(APIView):
                         value={'error': 'CSRF token missing or incorrect.'},
                         response_only=True,
                         status_codes=['403']
-                    ), 
+                    ),
                     OpenApiExample(
                         'getToken success',
                         value={'message': 'Internal error message!'},
                         response_only=True,
                         status_codes=['500']
                     ),]
-        
+
 )
-@method_decorator(ensure_csrf_cookie, name='dispatch')    
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class ResetPasswordView(APIView):
     """(Anonymous user)check token is correct or not ,if correct then user can reset password! """
-    
+
     def post(self, request):
         token = request.query_params.get('code')
         try:

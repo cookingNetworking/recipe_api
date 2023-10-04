@@ -7,7 +7,7 @@ from celery.contrib.abortable import AbortableTask
 from django.core.mail import send_mail
 from celery import Celery
 
-celery_app = Celery('app', broker='redis://cache:6379/1')
+celery_app = Celery('app', backend='redis://cache:6379/1' ,broker='redis://cache:6379/1')
 
 @shared_task(base=AbortableTask)
 def delete_unactivate_user(user_email):
