@@ -20,4 +20,4 @@ jobs:
       - name: Build and push
         run: |
           docker-compose build
-          docker-compose push ${{ secrets.DOCKERHUB_USER }}/cooknetwork_v1.0:latest
+          docker-compose push 

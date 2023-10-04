@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   app:
+    image: as2229181/cooknetwork_v1.0:latest
     build:
       context: .
       args:
