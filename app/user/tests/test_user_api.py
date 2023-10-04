@@ -344,12 +344,16 @@ class TestUser(TestCase):
         """Test change user password"""
         self.client.force_authenticate(user=self.exist_user)
         params = {
-            "password": "newpassowrd123"
+            "new_password": "newpassword123"
         }
+        print(self.exist_user.password)
         res = self.client.post(USER_CHANGE_PASSWORD_URL, params)
         self.exist_user.refresh_from_db()
+        print(self.exist_user.password)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertTrue(self.exist_user.check_password(params["password"]))
+        user = get_user_model().objects.get(pk=self.exist_user.pk)
+        self.assertTrue(user.check_password("newpassword123"))
+
 
     def test_list_user(self):
         """Test list all user!"""

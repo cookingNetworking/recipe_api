@@ -43,7 +43,7 @@ from user.serializer import (
             type=OpenApiTypes.STR,
             location=OpenApiParameter.COOKIE,
             required=True,
-            description='Ensure ession id is in cookie!'
+            description='Ensure session id is in cookie!'
             )
         ], 
         responses={
@@ -81,7 +81,7 @@ class UserListView(generics.ListAPIView):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.COOKIE,
                 required=True,
-                description='Ensure ession id is in cookie!'
+                description='Ensure session id is in cookie!'
                 )
     ],
     responses={
@@ -169,7 +169,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.COOKIE,
                 required=True,
-                description='Ensure ession id is in cookie!'
+                description='Ensure session id is in cookie!'
                 )
             ], 
             request=UserDetailResponseSerializer, 
@@ -203,7 +203,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                     type=OpenApiTypes.STR,
                     location=OpenApiParameter.COOKIE,
                     required=True,
-                    description='Ensure ession id is in cookie!'
+                    description='Ensure session id is in cookie!'
                 )
             ], 
             request=UserDetailResponseSerializer, 
@@ -248,7 +248,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.COOKIE,
                 required=True,
-                description='Ensure ession id is in cookie!'
+                description='Ensure session id is in cookie!'
                 )
             ],             
             request=UserDetailResponseSerializer, 
@@ -643,7 +643,7 @@ class ChangePassword(APIView):
                     type=OpenApiTypes.STR,
                     location=OpenApiParameter.COOKIE,
                     required=True,
-                    description='Ensure ession id is in cookie!'
+                    description='Ensure session id is in cookie!'
                 )
 
         ],
@@ -689,7 +689,7 @@ class ChangePassword(APIView):
             password = request.data.get('new_password')
             user = request.user
             user.set_password(password)
-            user.saved()
+            user.save()
             return Response({'message':'Change password success','detail':'Please use new password login again!','redirect':'/user/login/'}, status=status.HTTP_200_OK)
 
         except Exception as e:

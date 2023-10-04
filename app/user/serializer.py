@@ -63,7 +63,7 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 class PasswordSerialzier(serializers.Serializer):
-    password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
