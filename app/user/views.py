@@ -760,6 +760,15 @@ class EmailVertificationView(APIView):
             return Response({'error':f'{val_err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(
+    parameters=[
+            OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
+          )
+    ],
     request=PasswordSerialzier,
     responses={
                 200: Ok200serializer,
@@ -791,7 +800,8 @@ class EmailVertificationView(APIView):
                         value={'message': 'Internal error message!'},
                         response_only=True,
                         status_codes=['500']
-                    ),]
+                    ),],
+                    description='Forget password , the url must be like reset-password?code="token from /foreget-password/"'
 
 )
 @method_decorator(ensure_csrf_cookie, name='dispatch')
