@@ -75,14 +75,7 @@ class UserListView(generics.ListAPIView):
             location=OpenApiParameter.HEADER,
             required=True,
             description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
-          ),
-          OpenApiParameter(
-                name='Session_id',
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.COOKIE,
-                required=True,
-                description='Ensure session id is in cookie!'
-                )
+          )
     ],
     responses={
         201: Created201serializer,
@@ -697,6 +690,15 @@ class ChangePassword(APIView):
                 return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(
+    parameters=[
+            OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
+          )
+    ],
     request=EmailSerializer,
     responses={
                 200: Ok200serializer,
@@ -706,7 +708,7 @@ class ChangePassword(APIView):
                examples=[
                     OpenApiExample(
                         'Send email success!',
-                        value={'message': 'Vertify code is sending to your mail!', 'detail': 'please reset password in 15 min!'},
+                        value={'message': 'Link is sending to your mail!', 'detail': 'please reset password in 15 min!','token':'token'},
                         response_only=True,
                         status_codes=['200']
                     ),
@@ -746,12 +748,12 @@ class EmailVertificationView(APIView):
                 token = create_jwt(**payload)
                 link = f"http://cookNetwork/reset-password?code={token}"
                 content = {
-                    "subject": "Your vertify code for change password",
+                    "subject": "Your link for change password",
                     "message":f"Reset password link:{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
                     }
                 sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
                 cache.set(f'Rest_password_{email}', email, 9000)
-                return Response({"message":'Vertify code is sending to your mail!','detail':'please reset password in 15 min!'}, status=status.HTTP_200_OK)
+                return Response({"message":'Link is sending to your mail!','detail':'please reset password in 15 min!','token':f'{token}'}, status=status.HTTP_200_OK)
             return Response({"error":'Email is not existed!,please try again'}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as val_err:
             print(val_err)

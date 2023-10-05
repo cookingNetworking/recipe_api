@@ -72,6 +72,7 @@ class Ok200serializer(serializers.Serializer):
     message = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
     reidrect = serializers.CharField(allow_null=True)
+    token = serializers.CharField(allow_null=True)
 
 class Created201serializer(serializers.Serializer):
     message = serializers.CharField()
