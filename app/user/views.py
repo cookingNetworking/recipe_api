@@ -335,12 +335,14 @@ class LoginView(APIView):
     authentication_classes = [authentication.SessionAuthentication,]
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data, context={'request': request})
+
         email = request.data.get('email')
+        user = get_user_model().objects.filter(email=email).first()
+        print(user.is_active)
+        if user.is_active == False:
+            return Response({"error":"Account is not been active!",'detail':'Please check your email!!'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = LoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            user = get_user_model().objects.filter(email=email).first()
-            if user.is_active == False:
-                return Response({"error":"Account is not been active!",'detail':'Please check your email!!'}, status=status.HTTP_400_BAD_REQUEST)
             user = serializer.validated_data['user']
             login(request, user)
             rotate_token(request)
@@ -422,7 +424,7 @@ class LogoutView(APIView):
                 500: Error500Serializer,},
                  examples=[
                      OpenApiExample(
-                        "Email okay!",
+                        "Email okay",
                         value={'message':"Email check ok!",'detail':"User could use this email!"},
                         response_only=True,
                         status_codes=['200']

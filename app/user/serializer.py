@@ -20,14 +20,14 @@ class UserSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if 'request' in self.context and self.context['request'].method in ['GET','PUT','PATCH']:
             self.fields.pop('password', None)
-    
+
 
     def create(self, validated_data):
         """Create user and return user with encrypted password"""
         validated_data.pop('last_login', None)
         validated_data.pop('is_staff', None)
         return get_user_model().objects.create_user(**validated_data)
-    
+
     def update(self, instance, validated_data):
         """Upadte and return user."""
         validated_data.pop('password', None)
@@ -57,9 +57,6 @@ class LoginSerializer(serializers.Serializer):
             msg = _('Incorrect email or password.')
             raise serializers.ValidationError(msg, code='authorization')
 
-        if not user.is_active:
-            msg = _('User is disabled.')
-            raise serializers.ValidationError(msg, code='authorization')
 
         attrs['user'] = user
         return attrs
@@ -69,7 +66,7 @@ class PasswordSerialzier(serializers.Serializer):
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
-    
+
 class Ok200serializer(serializers.Serializer):
     message = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
@@ -83,7 +80,7 @@ class Created201serializer(serializers.Serializer):
 class Error401Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
-    
+
 class Error400Serializer(serializers.Serializer):
     error = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
