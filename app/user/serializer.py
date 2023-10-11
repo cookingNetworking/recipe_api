@@ -10,9 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ["email","password","username","role","birthday","is_staff","last_login"]
         extra_kwargs = {
-                        "password":{'write_only':True, "min_length" : 8},
+                        "password":{'write_only':True, "min_length" : 8,'required': True},
                         'last_login':{'read_only':True},
                         "is_staff": {'read_only': True},
+                        "email": {'required': True},
+                        "username": {'required': True}
                         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -86,7 +86,7 @@ class UserListView(generics.ListAPIView):
     examples=[
         OpenApiExample(
         'User created!',
-        value={'message': 'User created, please check yout email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
+        value={'message': 'User created, please check your email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
         response_only=True,
         status_codes=['201']
         ),
@@ -139,7 +139,7 @@ class CreateUserView(generics.CreateAPIView):
                  "message":f"Click the link to activate your account at cooNetwork!!\n{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click th link!!!"
                  }
             sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
-            return Response({'message':'User created, please check yout email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_201_CREATED)
+            return Response({'message':'User created, please check your email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_201_CREATED)
         except ValidationError as e:
         # Handle validation errors (like email already exists) here
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -307,6 +307,13 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         status_codes=['400']
     ),
     OpenApiExample(
+        "Account is not actived!",
+        value={'error': 'Account is not been active!', 'detail': 'Please check your email!!'},
+        description="Account is not active!",
+        response_only=True,
+        status_codes=['400']
+    ),
+    OpenApiExample(
         "Request forbbiden",
         value={'error': 'CSRF token missing or incorrect.'},
         response_only=True,
@@ -329,7 +336,10 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
+        email = request.data.get('email')
         if serializer.is_valid():
+            if get_user_model().objects.filter(email=email).is_active == False:
+                return Response({"error":"Account is not been active!",'detail':'Please check your email!!'}, status=status.HTTP_400_BAD_REQUEST)
             user = serializer.validated_data['user']
             login(request, user)
             rotate_token(request)
@@ -476,7 +486,7 @@ def check_email_replicate(request):
                 examples=[
                      OpenApiExample(
                         "Logout succeed",
-                        value={'message':"Email check ok!",'detail':"User could use this email!"},
+                        value={'message':"Username check ok!",'detail':"Username could use this email!"},
                         response_only=True,
                         status_codes=['200']
                     ),
@@ -735,7 +745,7 @@ class ChangePassword(APIView):
 class EmailVertificationView(APIView):
     """(Anonymous user)Forget password first step, check email is existed then send email with reset password link!"""
     def post(self, request):
-        """Check the exmail and send vertifi-code!"""
+        """Check the email and send vertifi-code!"""
         try:
             email = request.data.get('email')
             if get_user_model().objects.filter(email=email).exists():
