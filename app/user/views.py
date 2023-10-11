@@ -338,7 +338,8 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data, context={'request': request})
         email = request.data.get('email')
         if serializer.is_valid():
-            if get_user_model().objects.filter(email=email).is_active == False:
+            user = get_user_model().objects.filter(email=email).first()
+            if user.is_active == False:
                 return Response({"error":"Account is not been active!",'detail':'Please check your email!!'}, status=status.HTTP_400_BAD_REQUEST)
             user = serializer.validated_data['user']
             login(request, user)
