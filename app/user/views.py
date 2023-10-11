@@ -422,7 +422,7 @@ class LogoutView(APIView):
                 500: Error500Serializer,},
                  examples=[
                      OpenApiExample(
-                        "Logout succeed",
+                        "Email okay!",
                         value={'message':"Email check ok!",'detail':"User could use this email!"},
                         response_only=True,
                         status_codes=['200']
@@ -451,7 +451,7 @@ class LogoutView(APIView):
 @api_view(['POST'])
 @csrf_protect
 def check_email_replicate(request):
-    """Check create user request email and password is existed or not."""
+    """Check create user request email  is existed or not."""
 
     try:
         print(request.headers)
@@ -486,13 +486,13 @@ def check_email_replicate(request):
                 500: Error500Serializer,},
                 examples=[
                      OpenApiExample(
-                        "Logout succeed",
+                        "Username check okay",
                         value={'message':"Username check ok!",'detail':"Username could use this email!"},
                         response_only=True,
                         status_codes=['200']
                     ),
                     OpenApiExample(
-                        'Email exist Error',
+                        'Username exist Error',
                         value={'error': 'Username is already existed !!!', 'detail': 'Please use another username.'},
                         response_only=True,
                         status_codes=['400']
@@ -515,7 +515,7 @@ def check_email_replicate(request):
 @api_view(['POST'])
 @csrf_protect
 def check_username_replicate(request):
-    """Check create user request email and password is existed or not."""
+    """Check create user request  username is existed or not."""
 
     try:
         print(request.headers)
