@@ -30,5 +30,6 @@ urlpatterns = [
     path('signupVertify', view=user_views.sign_up_vertify, name='signupvertify' ),
     path('getCsrfToken/', user_views.GetCsrfToken.as_view(), name='getCsrfToken'),
     path('forget-password/', user_views.EmailVertificationView.as_view(), name='foregetpassword'),
-    path('reset-password', user_views.ResetPasswordView.as_view(), name='resetpassword')
+    path('reset-password', user_views.ResetPasswordView.as_view(), name='resetpassword'),
+    path('time/', user_views.time_now, name='time_now')
 ]

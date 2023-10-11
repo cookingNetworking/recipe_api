@@ -335,7 +335,8 @@ class LoginView(APIView):
     authentication_classes = [authentication.SessionAuthentication,]
 
     def post(self, request):
-
+        if request.user.is_authenticated:
+            return Response({"error":"Already login!",'detail':'please redirect to home page!'}, status=status.HTTP_400_BAD_REQUEST)
         email = request.data.get('email')
         user = get_user_model().objects.filter(email=email).first()
         if not user:
@@ -847,3 +848,8 @@ class ResetPasswordView(APIView):
         except Exception as e:
                 print(e)
                 return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def time_now(request):
+    time_now = datetime.now()
+    return Response({"time_now":f"{time_now}"}, status=status.HTTP_200_OK)
