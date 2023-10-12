@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
 
 from django.core.cache import cache
+from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
@@ -347,6 +348,9 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             login(request, user)
+            for s in Session.objects.all():
+                if s.get_decoded().get('_auth_user_id') == user.id:
+                    s.delete()
             rotate_token(request)
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
