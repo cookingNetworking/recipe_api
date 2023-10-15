@@ -10,11 +10,10 @@ from django.utils.translation import gettext_lazy as _
 from core import models
 from django.contrib.sessions.models import Session
 
+@admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    def _session_data(self, obj):
-        return obj.get_decoded()
-    list_display = ['session_key', '_session_data', 'expire_date']
-admin.site.register(Session, SessionAdmin)
+    list_display = ('session_key', 'expire_date', 'session_data')
+    readonly_fields = ('session_key', 'expire_date', 'session_data')
 
 class UserAdmin(BaseUserAdmin):
     """Define the admin pages for ussers."""
