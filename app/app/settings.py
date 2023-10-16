@@ -100,9 +100,9 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-        "session": {
+        "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://cache:6379/2", 
+        "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
