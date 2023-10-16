@@ -99,6 +99,13 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
+    },
+        "session": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://cache:6379/2", 
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -185,7 +192,8 @@ SPECTACULAR_SETTINGS = {
 
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+
+SESSION_CACHE_ALIAS = "session"
 
 # Celery
 CELERY_BROKER_URL = 'redis://cache:6379/1'

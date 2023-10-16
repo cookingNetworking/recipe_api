@@ -857,3 +857,16 @@ class ResetPasswordView(APIView):
 def time_now(request):
     time_now = datetime.now()
     return Response({"time_now":f"{time_now}"}, status=status.HTTP_200_OK)
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class ResendVertifyPassword(APIView):
+    """Resend vertify email to user!"""
+    def post(request):
+        email = request.data.get("email")
+        if not email :
+            return Response({"error":"Need emaill input!!"} ,status=status.HTTP_400_BAD_REQUEST)
+        user = get_user_model().objects.filter(email=email).first()
+        if not user:
+            return Response({"error":"Emaill is not be register, please sign up again!!"} ,status=status.HTTP_400_BAD_REQUEST)
+        return
