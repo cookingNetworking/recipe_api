@@ -348,9 +348,9 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             login(request, user)
-            for s in Session.objects.all():
-                if s.get_decoded().get('_auth_user_id') == user.id:
-                    s.delete()
+            # for s in Session.objects.all():
+            #     if s.get_decoded().get('_auth_user_id') == user.id:
+            #         s.delete()
             rotate_token(request)
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
