@@ -52,8 +52,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class UserFollowing(models.Model):
     """Establish users releationship."""
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="following")
-    following_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="follower")
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="following",on_delete=models.CASCADE)
+    following_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="follower",on_delete=models.CASCADE)
     create = models.DateTimeField(auto_now_add=True)
 
 class Recipe(models.Model):
