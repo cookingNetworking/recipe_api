@@ -43,22 +43,28 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     role = models.CharField(choices=ROLL,max_length=10,default='user')
     birthday = models.DateField(null=True,blank=True)
-    
+    create = models.DateTimeField(auto_now_add=True)
     objects = UserManager()
     USERNAME_FIELD = 'email'
 
     def __str__(self):
         return self.email
 
+class UserFollowing(models.Model):
+    """Establish users releationship."""
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="following")
+    following_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="follower")
+    create = models.DateTimeField(auto_now_add=True)
+
 class Recipe(models.Model):
     """Recipe object!"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     title = models.CharField(max_length=30, unique=True)
     description = models.CharField(max_length=255)
-    create_time = models.DateTimeField(auto_now=True)
+    create_time = models.DateTimeField(auto_now_add=True)
     ingredients = models.ManyToManyField("Ingredient")
     tags = models.ManyToManyField('Tag')
-    like = models.IntegerField(default=0)
+    likes = models.IntegerField(default=0)
     share = models.IntegerField(default=0)
     views = models.IntegerField(default=0)
     def __str__(self):
