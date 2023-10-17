@@ -43,7 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     role = models.CharField(choices=ROLL,max_length=10,default='user')
     birthday = models.DateField(null=True,blank=True)
-
+    
     objects = UserManager()
     USERNAME_FIELD = 'email'
 
@@ -58,15 +58,22 @@ class Recipe(models.Model):
     create_time = models.DateTimeField(auto_now=True)
     ingredients = models.ManyToManyField("Ingredient")
     tags = models.ManyToManyField('Tag')
+    like = models.IntegerField(default=0)
+    share = models.IntegerField(default=0)
+    views = models.IntegerField(default=0)
     def __str__(self):
         return self.title
 
 class Ingredient(models.Model):
     """Ingredient for recipes."""
     name = models.CharField(max_length=50)
+    save = models.IntegerField(default=0)
     def __str__(self):
         return self.name
 
 class Tag(models.Model):
     """Tags for filter recipe."""
     name = models.CharField(max_length=50)
+    save = models.IntegerField(default=0)
+    def __str__(self):
+        return self.name
