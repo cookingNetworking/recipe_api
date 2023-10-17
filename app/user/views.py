@@ -16,6 +16,8 @@ from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
+from django_redis import get_redis_connection
+
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
@@ -121,6 +123,9 @@ class CreateUserView(generics.CreateAPIView):
         try:
             email = request.data.get('email')
             password = request.data.get('password')
+            role = request.data.get('role')
+            if role == 'admin':
+                return Response({'error':'Admin is not allowed!!!','detail': 'Please change the role.'}, status=status.HTTP_400_BAD_REQUEST)
             if not email or len(email) == 0:
                 return Response({'error':'Email field is required!!!','detail': 'Please provide an email.'}, status=status.HTTP_400_BAD_REQUEST)
             if not password or len(password) == 0:
@@ -348,13 +353,11 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             login(request, user)
-            for s in Session.objects.all():
-                if s.get_decoded().get('_auth_user_id') == user.id:
-                    s.delete()
+            session_id = request.session.session_key
             rotate_token(request)
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
-            session_id = request.session.session_key
+
             return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)

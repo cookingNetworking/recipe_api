@@ -1,6 +1,7 @@
 """
 Database models.
 """
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -10,7 +11,7 @@ from django.contrib.auth.models import (
 
 ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
 
-class  UserManager(BaseUserManager):
+class UserManager(BaseUserManager):
     """Manage for users."""
 
     def create_user(self, email, password=None, **extra_fields):
@@ -42,9 +43,30 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     role = models.CharField(choices=ROLL,max_length=10,default='user')
     birthday = models.DateField(null=True,blank=True)
-    
+
     objects = UserManager()
     USERNAME_FIELD = 'email'
 
     def __str__(self):
         return self.email
+
+class Recipe(models.Model):
+    """Recipe object!"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    title = models.CharField(max_length=30, unique=True)
+    description = models.CharField(max_length=255)
+    create_time = models.DateTimeField(auto_now=True)
+    ingredients = models.ManyToManyField("Ingredient")
+    tags = models.ManyToManyField('Tag')
+    def __str__(self):
+        return self.title
+
+class Ingredient(models.Model):
+    """Ingredient for recipes."""
+    name = models.CharField(max_length=50)
+    def __str__(self):
+        return self.name
+
+class Tag(models.Model):
+    """Tags for filter recipe."""
+    name = models.CharField(max_length=50)
