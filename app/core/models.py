@@ -11,6 +11,15 @@ from django.contrib.auth.models import (
 
 ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
 
+
+def upload_image_file_path(instance, filename):
+    """Generate a filepath for recipe image."""
+    return f'recipes/{instance.id}/{filename}'
+
+def step_image_file_path(instance, filename):
+    """Generate a filepath for recipe step image."""
+    return f'recipe/{instance.recipe}/{instance.step}/{filename}'
+
 class UserManager(BaseUserManager):
     """Manage for users."""
 
@@ -58,22 +67,38 @@ class UserFollowing(models.Model):
 
 class Recipe(models.Model):
     """Recipe object!"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user = models.man(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     title = models.CharField(max_length=30, unique=True)
+    cost_time = models.CharField(max_length=50)
     description = models.CharField(max_length=255)
     create_time = models.DateTimeField(auto_now_add=True)
     ingredients = models.ManyToManyField("Ingredient")
     tags = models.ManyToManyField('Tag')
     likes = models.IntegerField(default=0)
-    share = models.IntegerField(default=0)
+    save = models.IntegerField(default=0)
     views = models.IntegerField(default=0)
+    photo = models.ImageField(null=True, upload_to=upload_image_file_path)
     def __str__(self):
         return self.title
+
+class RecipeStep(models.Model):
+    """Step for recipe."""
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
+    step = models.SmallIntegerField(default=1, null=False)
+    description = models.TextField(max_length=500, null=False)
+    image = models.ImageField(null=True, upload_to=step_image_file_path)
+    
+    def __str__(self):
+        return f'{self.recipe}step_{self.step}'
+
+
+
 
 class Ingredient(models.Model):
     """Ingredient for recipes."""
     name = models.CharField(max_length=50)
     save = models.IntegerField(default=0)
+    views = models.IntegerField(default=0)
     def __str__(self):
         return self.name
 
@@ -81,5 +106,6 @@ class Tag(models.Model):
     """Tags for filter recipe."""
     name = models.CharField(max_length=50)
     save = models.IntegerField(default=0)
+    views = models.IntegerField(default=0)
     def __str__(self):
         return self.name
