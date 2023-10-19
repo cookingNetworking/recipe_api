@@ -44,13 +44,12 @@ INSTALLED_APPS = [
     "rest_framework",
     'drf_spectacular',
     'corsheaders',
+    'django_extensions',
+    'storages',
     #project app
     "core",
     'user',
-    'django_extensions',
-    'storages'
-
-
+    'test'
 ]
 
 MIDDLEWARE = [
@@ -69,7 +68,7 @@ ROOT_URLCONF = "app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR,'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -199,7 +198,7 @@ SPECTACULAR_SETTINGS = {
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
-SESSION_CACHE_ALIAS = "session"
+SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
 CELERY_BROKER_URL = 'redis://cache:6379/1'

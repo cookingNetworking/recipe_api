@@ -10,7 +10,9 @@ from django.contrib.auth.models import (
 )
 
 ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
-
+def test_upload_image_file_path(instance, filename):
+    """Generate a filepath for recipe image."""
+    return f'test/{instance.id}/{filename}'
 
 def upload_image_file_path(instance, filename):
     """Generate a filepath for recipe image."""
@@ -52,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     role = models.CharField(choices=ROLL,max_length=10,default='user')
     birthday = models.DateField(null=True,blank=True)
-    create = models.DateTimeField(auto_now_add=True)
+    create = models.DateTimeField(auto_now_add=True,null=True,blank= True)
     objects = UserManager()
     USERNAME_FIELD = 'email'
 
@@ -63,15 +65,15 @@ class UserFollowing(models.Model):
     """Establish users releationship."""
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="following",on_delete=models.CASCADE)
     following_user_id = models.ForeignKey(settings.AUTH_USER_MODEL,related_name="follower",on_delete=models.CASCADE)
-    create = models.DateTimeField(auto_now_add=True)
+    create = models.DateTimeField(auto_now_add=True,null=True,blank= True)
 
 class Recipe(models.Model):
     """Recipe object!"""
-    user = models.man(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
     title = models.CharField(max_length=30, unique=True)
     cost_time = models.CharField(max_length=50)
     description = models.CharField(max_length=255)
-    create_time = models.DateTimeField(auto_now_add=True)
+    create_time = models.DateTimeField(auto_now_add=True,null=True,blank= True)
     ingredients = models.ManyToManyField("Ingredient")
     tags = models.ManyToManyField('Tag')
     likes = models.IntegerField(default=0)
@@ -87,11 +89,9 @@ class RecipeStep(models.Model):
     step = models.SmallIntegerField(default=1, null=False)
     description = models.TextField(max_length=500, null=False)
     image = models.ImageField(null=True, upload_to=step_image_file_path)
-    
+
     def __str__(self):
         return f'{self.recipe}step_{self.step}'
-
-
 
 
 class Ingredient(models.Model):
@@ -109,3 +109,7 @@ class Tag(models.Model):
     views = models.IntegerField(default=0)
     def __str__(self):
         return self.name
+
+class TestImageUpload(models.Model):
+    name = models.CharField(max_length=15, default="name")
+    image = models.ImageField(null=True,  upload_to=test_upload_image_file_path)
