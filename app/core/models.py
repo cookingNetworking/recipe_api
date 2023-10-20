@@ -9,10 +9,17 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 
+import uuid
+
 ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
+
+def generate_prefixed_uuid():
+    return f"test_{uuid.uuid4()}"
+
 def test_upload_image_file_path(instance, filename):
     """Generate a filepath for recipe image."""
-    return f'test/{instance.id}/{filename}'
+
+    return f'test/{instance.uuid}/{filename}'
 
 def upload_image_file_path(instance, filename):
     """Generate a filepath for recipe image."""
@@ -111,5 +118,6 @@ class Tag(models.Model):
         return self.name
 
 class TestImageUpload(models.Model):
+    uuid = models.CharField(max_length=50, default=generate_prefixed_uuid, editable=False, unique=True)
     name = models.CharField(max_length=15, default="name")
     image = models.ImageField(null=True,  upload_to=test_upload_image_file_path)

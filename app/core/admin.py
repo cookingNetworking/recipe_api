@@ -15,6 +15,10 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = ('session_key', 'expire_date', 'session_data')
     readonly_fields = ('session_key', 'expire_date', 'session_data')
 
+@admin.register(models.TestImageUpload)
+class TestImageUploadAdmin(admin.ModelAdmin):
+    list_display = ('name','image','uuid')
+
 class UserAdmin(BaseUserAdmin):
     """Define the admin pages for ussers."""
     ordering = ["id"]
