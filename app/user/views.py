@@ -11,12 +11,11 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
 
 from django.core.cache import cache
-from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
-from django_redis import get_redis_connection
+
 
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
@@ -24,7 +23,7 @@ from jwt.exceptions import ExpiredSignatureError
 
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
-from user.serializer import (
+from user.serializers import (
         UserSerializer,
         UserDetailResponseSerializer,
         PasswordSerialzier,
