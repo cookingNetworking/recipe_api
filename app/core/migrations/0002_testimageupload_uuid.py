@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='testimageupload',
             name='uuid',
-            field=models.CharField(default=core.models.generate_prefixed_uuid, editable=False, max_length=50, unique=True),
+            field=models.CharField(default=core.models.generate_prefixed_uuid, editable=False, max_length=50),
         ),
     ]

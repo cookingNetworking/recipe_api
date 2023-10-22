@@ -32,5 +32,6 @@ urlpatterns = [
     path('forget-password/', user_views.EmailVertificationView.as_view(), name='foregetpassword'),
     path('reset-password', user_views.ResetPasswordView.as_view(), name='resetpassword'),
     path('time/', user_views.time_now, name='time_now'),
-    path('test/',include('test.urls'))
+    path('test/',include('test.urls')),
+    path('',include('recipe.urls'))
 ]

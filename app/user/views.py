@@ -279,6 +279,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
+
 @extend_schema(
     parameters=[
           OpenApiParameter(

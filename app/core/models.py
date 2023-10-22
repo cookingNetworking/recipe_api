@@ -100,7 +100,7 @@ class RecipePhoto(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="photos")
     photo = models.ImageField(null=True, upload_to=upload_image_file_path)
     upload_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    category = models.CharField(choices=PHOTO_CATEGORY, default='main', null=False)
+    category = models.CharField(choices=PHOTO_CATEGORY,max_length=10, default='main', null=False)
 
 class RecipeStep(models.Model):
     """Step for recipe."""
@@ -130,6 +130,6 @@ class Tag(models.Model):
         return self.name
 
 class TestImageUpload(models.Model):
-    uuid = models.CharField(max_length=50, default=generate_prefixed_uuid, editable=False, unique=True)
+    uuid = models.CharField(max_length=50, default=generate_prefixed_uuid, editable=False)
     name = models.CharField(max_length=15, default="name")
     image = models.ImageField(null=True,  upload_to=test_upload_image_file_path)
