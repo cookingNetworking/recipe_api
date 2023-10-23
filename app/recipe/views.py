@@ -20,6 +20,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 
 from core import models
+from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin
 @extend_schema_view(
@@ -48,6 +49,8 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list','retrieve']:
             permission_classes = [permissions.AllowAny]
+        elif self.action in ['update', 'patch', 'delete']:
+            permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -71,3 +74,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             ingredients_names = ingredients.split(',')
             queryset = queryset.filter(ingredients__name__in=ingredients_names)
         return queryset.distinct()
+
+
+
