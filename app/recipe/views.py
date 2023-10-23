@@ -21,7 +21,7 @@ from django.utils.decorators import method_decorator
 
 from core import models
 from recipe import serializers
-
+from .utils import UnsafeMethodCSRFMixin
 @extend_schema_view(
     list=extend_schema(
         parameters=[
@@ -39,7 +39,7 @@ from recipe import serializers
     )
 )
 @method_decorator(csrf_protect, name='dispatch')
-class RecipeViewSet(viewsets.ModelViewSet):
+class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
     serializer_class = serializers.RecipeDetailSerializer
     queryset = models.Recipe.objects.all()

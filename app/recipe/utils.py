@@ -28,4 +28,5 @@ class UnsafeMethodCSRFMixin(ModelViewSet):
 
     def dispatch(self, request, *args, **kwargs):
         if request.method not in ['GET', 'HEAD', 'OPTIONS', 'TRASE']:
-            return csrf_protect(super().dispatch)
+            return csrf_protect(super().dispatch)(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
