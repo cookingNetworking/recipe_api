@@ -32,6 +32,7 @@ from user.serializers import (
         Created201serializer,
         Error400Serializer,
         Error401Serializer,
+        Error403CSRFTokenmissingSerialzier,
         Error500Serializer,
         CheckEmailResponseSerializer,
         CheckUsernameResponseSerializer,
@@ -82,7 +83,7 @@ class UserListView(generics.ListAPIView):
     responses={
         201: Created201serializer,
         400: Error400Serializer,
-        403: 'CSRF token missing or incorrect.',
+        403: Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer,
     },
     examples=[
@@ -294,7 +295,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     responses={
         200: Ok200serializer,
         400: Error400Serializer,
-        403: 'CSRF token missing or incorrect.',
+        403: Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer
     },
     examples=[
@@ -373,7 +374,7 @@ class LoginView(APIView):
     ],
     responses={
         200: Ok200serializer,
-        403 :'CSRF token missing or incorrect.',
+        403 :Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer
     },
     examples=[
@@ -429,7 +430,7 @@ class LogoutView(APIView):
     responses={
                 200: CheckEmailResponseSerializer,
                 400: Error400Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500: Error500Serializer,},
                  examples=[
                      OpenApiExample(
@@ -493,7 +494,7 @@ def check_email_replicate(request):
     responses={
                 200: CheckUsernameResponseSerializer,
                 400: Error400Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500: Error500Serializer,},
                 examples=[
                      OpenApiExample(
@@ -666,7 +667,7 @@ class ChangePassword(APIView):
     responses={
                 200: Ok200serializer,
                 401: Error401Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500 :Error500Serializer
                },
      examples=[
@@ -724,7 +725,7 @@ class ChangePassword(APIView):
     request=EmailSerializer,
     responses={
                 200: Ok200serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 400: Error400Serializer
                },
                examples=[
@@ -795,7 +796,7 @@ class EmailVertificationView(APIView):
     responses={
                 200: Ok200serializer,
                 401: Error401Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500 :Error500Serializer
                },
      examples=[
