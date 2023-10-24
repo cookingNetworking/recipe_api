@@ -21,20 +21,20 @@ class IngredientSerialzier(serializers.ModelSerializer):
 
 class RecipeStepSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipeStep!"""
-    recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
+    recipe = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = RecipeStep
-        fields = ['id', 'recipe', 'step', 'description', 'image']
-        read_only_fields = ['id']
+        fields = ['id','recipe', 'step', 'description', 'image']
+        read_only_fields = ['id','recipe']
         extra_kwargs = {"description": {"required": True}}
 
 class RecipePhotoSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipePhoto!"""
-    recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
+    recipe = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = RecipePhoto
-        fields = ['id', 'recipe', 'photo', 'upload_date', 'category']
-        read_only_fields = ['id',]
+        fields = ['id','recipe', 'photo', 'upload_date', 'category']
+        read_only_fields = ['id','recipe']
 
 
 class RecipeSerialzier(serializers.ModelSerializer):
@@ -49,7 +49,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
         slug_field='name',
         queryset=Ingredient.objects.all()
     )
-    photos = RecipeStepSerialzier(many=True, required=True)
+    photos = RecipePhotoSerialzier(many=True, required=True)
     steps = RecipeStepSerialzier(many=True, required=False)
     class Meta:
         model = Recipe

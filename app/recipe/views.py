@@ -49,8 +49,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     serializer_class = serializers.RecipeDetailSerializer
     queryset = models.Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticated]
-    filter_backend = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user__username','tags__name', 'ingredients__name']
+    filter_backend = [filters.OrderingFilter]
     ordering_fields = ['create_time', 'name']
     ordering = ['create_time']
 
@@ -77,7 +76,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         search_tags = self.request.query_params.get('tag')
         search_user = self.request.query_params.get('user')
 
-        filters = Q() 
+        filters = Q()
 
         if search_ingertients :
             ingredient_list = search_ingertients.split(",")
