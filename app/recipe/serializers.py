@@ -39,9 +39,17 @@ class RecipePhotoSerialzier(serializers.ModelSerializer):
 
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""
-    tag = TagSerialzier(many=True, required=False)
-    ingredient = IngredientSerialzier(many=True, required=False)
-    photos = RecipePhotoSerialzier(many=True, required=False, )
+    tags = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Tag.objects.all()
+    )
+    ingredients = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Ingredient.objects.all()
+    )
+    photos = RecipeStepSerialzier(many=True, required=True)
     steps = RecipeStepSerialzier(many=True, required=False)
     class Meta:
         model = Recipe
