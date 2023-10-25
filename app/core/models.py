@@ -85,7 +85,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField("Ingredient")
     tags = models.ManyToManyField('Tag')
     likes = models.IntegerField(default=0)
-    save = models.IntegerField(default=0)
+    save_count = models.IntegerField(default=0)
     views = models.IntegerField(default=0)
     def __str__(self):
         return self.title
@@ -116,7 +116,7 @@ class RecipeStep(models.Model):
 class Ingredient(models.Model):
     """Ingredient for recipes."""
     name = models.CharField(max_length=50)
-    save = models.IntegerField(default=0)
+    save_count = models.IntegerField(default=0)
     views = models.IntegerField(default=0)
     def __str__(self):
         return self.name
@@ -124,7 +124,7 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Tags for filter recipe."""
     name = models.CharField(max_length=50)
-    save = models.IntegerField(default=0)
+    save_count = models.IntegerField(default=0)
     views = models.IntegerField(default=0)
     def __str__(self):
         return self.name

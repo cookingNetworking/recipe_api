@@ -5,6 +5,7 @@ from botocore.config import Config
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
 
+from rest_framework import serializers
 from rest_framework.viewsets import ModelViewSet
 def generate_presigned_url(bucket_name, object_name, expiration=3600):
     """Generate a presigned URL to share an S3 object."""
@@ -30,3 +31,16 @@ class UnsafeMethodCSRFMixin(ModelViewSet):
         if request.method not in ['GET', 'HEAD', 'OPTIONS', 'TRASE']:
             return csrf_protect(super().dispatch)(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
+    
+
+class CustomSlugRelatedField(serializers.SlugRelatedField):
+    """Custom slugrelated field that object does not exist return normal data!"""
+
+    def to_internal_value(self, data):
+        try:
+            return super().to_internal_value(data)
+        except serializers.ValidationError as e:
+            error_detail = e.detail[0]
+            if "does not exist" in error_detail:
+                return data
+            raise e  

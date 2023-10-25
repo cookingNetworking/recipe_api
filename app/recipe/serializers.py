@@ -3,20 +3,20 @@
 from rest_framework import serializers
 
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient
-
+from .utils import CustomSlugRelatedField
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'save', 'views']
+        fields = ['id', 'name', 'save_count', 'views']
         read_only_fields = ['id']
 
 class IngredientSerialzier(serializers.ModelSerializer):
     """Serialzier for ingredient!"""
     class Meta:
         models = Ingredient
-        fields = ['id', 'name', 'save', 'views']
+        fields = ['id', 'name', 'save_count', 'views']
         read_only_fields = ['id']
 
 class RecipeStepSerialzier(serializers.ModelSerializer):
@@ -39,17 +39,17 @@ class RecipePhotoSerialzier(serializers.ModelSerializer):
 
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""
-    tags = serializers.SlugRelatedField(
+    tags = CustomSlugRelatedField(
         many=True,
         slug_field='name',
         queryset=Tag.objects.all()
     )
-    ingredients = serializers.SlugRelatedField(
+    ingredients = CustomSlugRelatedField(
         many=True,
         slug_field='name',
         queryset=Ingredient.objects.all()
     )
-    photos = RecipePhotoSerialzier(many=True, required=True)
+    photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
     class Meta:
         model = Recipe
@@ -60,17 +60,17 @@ class RecipeSerialzier(serializers.ModelSerializer):
         """Handle getting or tags as needed."""
         for tag in tags:
             tag_obj,created = Tag.objects.get_or_create(
-                **tag
+                name=tag
             )
-            recipe.add(tag_obj)
+            recipe.tags.add(tag_obj)
 
     def _get_or_create_ingredients(self, ingredients, recipe):
         """Handle getting or creating ingredients as needed."""
         for ingredient in ingredients:
             ingredient_obj, created = Ingredient.objects.get_or_create(
-                **ingredient
+                name=ingredient 
             )
-            recipe.ingredient.add(ingredient_obj)
+            recipe.ingredients.add(ingredient_obj)
 
     def _get_or_create_photos(self, photos, recipe):
         """Handle getting or creating photos as needed."""
@@ -89,13 +89,17 @@ class RecipeSerialzier(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create recipe."""
-        tags = validated_data.pop("tag", [])
-        ingredients = validated_data.pop("ingredient", [])
-        photos = validated_data.pop("photo", [])
+        req_user = self.context['request'].user
+        req_tags = validated_data.pop("tags", [])
+        print(req_tags)
+        req_ingredients = validated_data.pop("ingredients", [])
+        print(req_ingredients)
+        photos = validated_data.pop("photos", [])
         steps = validated_data.pop("steps", [])
-        recipe = Recipe.objects.create(**validated_data)
-        self._get_or_create_tags(tags, recipe)
-        self._get_or_create_ingredients(ingredients, recipe)
+
+        recipe = Recipe.objects.create(user=req_user, **validated_data)
+        self._get_or_create_tags(req_tags, recipe)
+        self._get_or_create_ingredients(req_ingredients, recipe)
         self._get_or_create_photos(photos, recipe)
         self._get_or_create_steps(steps, recipe)
         return recipe
@@ -122,7 +126,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
 class RecipeDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['likes','save','views']
+        fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
 
 
 

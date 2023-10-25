@@ -63,7 +63,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
 
-    def get_serializer_classes(self):
+    def get_serializer_class(self):
         """Return serializer class for request!"""
         if self.action == 'list':
             return serializers.RecipeSerialzier
@@ -71,28 +71,28 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrun query for filter!"""
-        queryset = self.queryset()
-        search_ingertients = self.request.query_params.get('ingredient')
-        search_tags = self.request.query_params.get('tag')
+        queryset = self.queryset
+        search_ingertients = self.request.query_params.get('ingredients')
+        search_tags = self.request.query_params.get('tags')
         search_user = self.request.query_params.get('user')
 
-        filters = Q()
+        reqeust_filters = Q()
 
         if search_ingertients :
             ingredient_list = search_ingertients.split(",")
             ingredient_queries = [Q(ingredients__name__icontains=ingredient) for ingredient in ingredient_list]
-            filters |= reduce(or_, ingredient_queries)
+            reqeust_filters |= reduce(or_, ingredient_queries)
         if search_tags:
             tag_list = search_tags.split(",")
             tag_queries = [Q(tags__name__icontains=tag) for tag in tag_list]
-            filters |= reduce(or_, tag_queries)
+            reqeust_filters |= reduce(or_, tag_queries)
 
         if search_user:
             user_list = search_user.split(",")
             user_queries = [Q(user__username__icontains=user) for user in user_list]
-            filters |= reduce(or_, user_queries)
+            reqeust_filters |= reduce(or_, user_queries)
 
-        return queryset.filter(filters).distinct()
+        return queryset.filter(reqeust_filters).distinct()
 
 
 
