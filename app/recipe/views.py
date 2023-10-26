@@ -94,7 +94,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
-    
+
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
                             mixins.UpdateModelMixin,
@@ -103,7 +103,7 @@ class BaseRecipeAttrViewSet(
     """Base view set for recipe attributes."""
 
     permission_classes = [permissions.AllowAny]
-    
+
     def get_permissions(self):
         if self.action in ['destroy','update']:
             permission_classes = [permissions.IsAuthenticated]
@@ -124,3 +124,5 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
     """"Views of tag API include list update destroy!"""
     serializer_class = serializers.IngredientSerialzier
     queryset= models.Ingredient.objects.all()
+
+
