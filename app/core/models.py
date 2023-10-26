@@ -117,7 +117,7 @@ class Ingredient(models.Model):
     """Ingredient for recipes."""
     name = models.CharField(max_length=50)
     save_count = models.IntegerField(default=0)
-    views = models.IntegerField(default=0)
+    views = models.IntegerField(default=1)
     def __str__(self):
         return self.name
 
@@ -125,7 +125,7 @@ class Tag(models.Model):
     """Tags for filter recipe."""
     name = models.CharField(max_length=50)
     save_count = models.IntegerField(default=0)
-    views = models.IntegerField(default=0)
+    views = models.IntegerField(default=1)
     def __str__(self):
         return self.name
 

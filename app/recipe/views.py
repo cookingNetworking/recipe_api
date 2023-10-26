@@ -3,6 +3,7 @@
 from rest_framework import (
         status,
         generics,
+        mixins,
         permissions,
         viewsets,
         filters
@@ -56,7 +57,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list']:
             permission_classes = [permissions.AllowAny]
-        elif self.action in ['update', 'patch', 'delete']:
+        elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
         else:
             permission_classes = [permissions.IsAuthenticated]
@@ -93,6 +94,33 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
+    
+class BaseRecipeAttrViewSet(
+                            mixins.DestroyModelMixin,
+                            mixins.UpdateModelMixin,
+                            mixins.ListModelMixin,
+                            viewsets.GenericViewSet):
+    """Base view set for recipe attributes."""
 
+    permission_classes = [permissions.AllowAny]
+    
+    def get_permissions(self):
+        if self.action in ['destroy','update']:
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            permission_classes = [permissions.AllowAny]
+        return [permission() for permission in permission_classes]
 
+    def get_queryset(self):
+        queryset = self.queryset
+        return queryset.all().order_by("-views").distinct()
 
+class TagViewSet(BaseRecipeAttrViewSet):
+    """Views of tag API include list update destroy!"""
+    serializer_class = serializers.TagSerialzier
+    queryset = models.Tag.objects.all()
+
+class IngredientViewSet(BaseRecipeAttrViewSet):
+    """"Views of tag API include list update destroy!"""
+    serializer_class = serializers.IngredientSerialzier
+    queryset= models.Ingredient.objects.all()
