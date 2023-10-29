@@ -119,7 +119,7 @@ class BaseRecipeAttrViewSet(
     """Base view set for recipe attributes."""
 
     permission_classes = [permissions.AllowAny]
-    
+
     def get_permissions(self):
         if self.action in ['destroy','update']:
             permission_classes = [permissions.IsAuthenticated]
@@ -140,3 +140,5 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
     """"Views of tag API include list update destroy!"""
     serializer_class = serializers.IngredientSerialzier
     queryset= models.Ingredient.objects.all()
+
+
