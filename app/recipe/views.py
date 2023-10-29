@@ -28,6 +28,8 @@ from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin
+from .redis_set import reids_client1, set_recipe_view_hkey, get_recipe_view_hkey, increase_recipe_view
+
 @extend_schema_view(
     list=extend_schema(
         parameters=[
@@ -95,6 +97,20 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
         return queryset.filter(reqeust_filters).distinct()
     
+    def create(self, request, *args, **kwargs):
+        """Create recipe object."""
+        response = super().create(request, *args, **kwargs)
+
+        # Extract newly create recipe instance from serializer.
+        recipe_instance = self.get_serializer().instance
+
+        # Get recipe id of instance.
+        recipe_id = recipe_instance.id
+
+        set_recipe_view_hkey(recipe_id)
+
+        return response  
+        
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
                             mixins.UpdateModelMixin,

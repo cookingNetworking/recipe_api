@@ -104,16 +104,26 @@ CACHES = {
         "LOCATION": "redis://cache:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    },
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",  
+            "CONNECTION_POOL_CLASS_KWARGS": {  
+                "max_connections": 50,  
+                "retry_on_timeout": True
+                }
+        },
         "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",  
+            "CONNECTION_POOL_CLASS_KWARGS": {  
+                "max_connections": 50,  
+                "retry_on_timeout": True
+                }
+            }
         }
     }
-}
+    }
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

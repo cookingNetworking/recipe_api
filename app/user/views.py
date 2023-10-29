@@ -1,7 +1,7 @@
 """
 Views for user API.
 """
-import random
+
 
 from rest_framework import status, generics, permissions, authentication
 from rest_framework.decorators import api_view
