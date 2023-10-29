@@ -51,7 +51,11 @@ services:
       - POSTGRES_PASSWORD=changeme
   cache:
     image: redis:7.2.1-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/vol/redis
 
 volumes:
   dev-db-data:
   dev-static-data:
+  redis-data:

@@ -8,6 +8,8 @@ from rest_framework import (
         viewsets,
         filters
 )
+
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import (
@@ -28,7 +30,7 @@ from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin
-from .redis_set import reids_client1, set_recipe_view_hkey, get_recipe_view_hkey, increase_recipe_view
+from .redis_set import set_recipe_view_hkey, get_recipe_view_hkey, increase_recipe_view
 
 @extend_schema_view(
     list=extend_schema(
@@ -69,7 +71,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Return serializer class for request!"""
         if self.action == 'list':
-            return serializers.RecipeSerialzier
+            return serializers.RecipeSerialzier 
         return self.serializer_class
 
     def get_queryset(self):
@@ -99,17 +101,33 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
-        response = super().create(request, *args, **kwargs)
-
-        # Extract newly create recipe instance from serializer.
-        recipe_instance = self.get_serializer().instance
-
-        # Get recipe id of instance.
-        recipe_id = recipe_instance.id
-
-        set_recipe_view_hkey(recipe_id)
-
-        return response  
+        try:
+            response = super().create(request, *args, **kwargs)
+            # Extract newly create recipe instance from serializer.
+            if response.data:
+                recipe_id = response.data.get('id', None)
+                print(recipe_id)
+                if recipe_id is not None:
+                # Get recipe id of instance.
+                    set_recipe_view_hkey(recipe_id)
+                    return response
+        except ValidationError as e:
+        # Handle validation errors (like email already exists) here
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e :
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve recipe object detail"""
+        try:
+            response = super().retrieve(self, request, *args, **kwargs)
+            recipe_id = response.data.get('id',None)
+            if recipe_id:
+                
+        except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e :
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,

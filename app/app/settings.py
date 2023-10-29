@@ -108,9 +108,10 @@ CACHES = {
             "CONNECTION_POOL_CLASS_KWARGS": {  
                 "max_connections": 50,  
                 "retry_on_timeout": True
-                }
-        },
-        "sessions": {
+            }
+        }
+    },
+    "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
@@ -119,11 +120,11 @@ CACHES = {
             "CONNECTION_POOL_CLASS_KWARGS": {  
                 "max_connections": 50,  
                 "retry_on_timeout": True
-                }
             }
         }
     }
-    }
+}
+
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
