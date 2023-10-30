@@ -121,11 +121,13 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         """Retrieve recipe object detail"""
         try:
             response = super().retrieve(self, request, *args, **kwargs)
-            recipe_id = response.data.get('id',None)
-            if recipe_id:
-                
+            # recipe_id = response.data.get('id',None)
+            # if recipe_id:
+            return response
+        
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
