@@ -51,7 +51,7 @@ from .redis_set import set_recipe_view_hkey, get_recipe_view_hkey, increase_reci
 @method_decorator(csrf_protect, name='dispatch')
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
-    serializer_class = serializers.RecipeDetailSerializer
+    serializer_class = serializers.ReciperSQLDetailSerializer
     queryset = models.Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backend = [filters.OrderingFilter]
@@ -71,7 +71,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Return serializer class for request!"""
         if self.action == 'list':
-            return serializers.RecipeSerialzier 
+            return serializers.RecipeSerialzier
         return self.serializer_class
 
     def get_queryset(self):
@@ -98,7 +98,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
-    
+
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
@@ -116,7 +116,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     def retrieve(self, request, *args, **kwargs):
         """Retrieve recipe object detail"""
         try:
@@ -124,13 +124,13 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             # recipe_id = response.data.get('id',None)
             # if recipe_id:
             return response
-        
+
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
                             mixins.UpdateModelMixin,

@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient
 from .utils import CustomSlugRelatedField
+from .redis_set import get_recipe_view_hkey, get_recipe_like_hkey, get_recipe_save_count_hkey
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
@@ -68,7 +69,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
         """Handle getting or creating ingredients as needed."""
         for ingredient in ingredients:
             ingredient_obj, created = Ingredient.objects.get_or_create(
-                name=ingredient 
+                name=ingredient
             )
             recipe.ingredients.add(ingredient_obj)
 
@@ -123,10 +124,33 @@ class RecipeSerialzier(serializers.ModelSerializer):
         instance.save()
         return instance
 
-class RecipeDetailSerializer(RecipeSerialzier):
+class ReciperRedisDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
+    views = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    save_count = serializers.SerializerMethodField()
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.db = kwargs.get('context',{}).get('db', 'sql')
+
+    def get_views(self, obj, db):
+        """Get recipe views from redis"""
+        return get_recipe_view_hkey(obj.id, 'views')
 
 
+    def get_likes(self, obj):
+        """Get recipe likes from redis"""
+        return get_recipe_like_hkey(obj.id, 'likes')
+
+    def get_save_count(self, obj):
+        """Get recipe likes from redis"""
+        return get_recipe_save_count_hkey(obj.id, 'save_count')
+
+
+class ReciperSQLDetailSerializer(RecipeSerialzier):
+    """Serializer for recipe detail !"""
+    class Meta(RecipeSerialzier.Meta):
+        fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
