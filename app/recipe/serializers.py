@@ -4,7 +4,11 @@ from rest_framework import serializers
 
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient
 from .utils import CustomSlugRelatedField
-from .redis_set import get_recipe_view_hkey, get_recipe_like_hkey, get_recipe_save_count_hkey
+from .redis_set import RedisHandler
+
+import django_redis
+
+redis_client1 = django_redis.get_redis_connection("default")
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
@@ -129,25 +133,31 @@ class ReciperRedisDetailSerializer(RecipeSerialzier):
     views = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     save_count = serializers.SerializerMethodField()
+
+    recipe_redis_handler = RedisHandler(redis_client=redis_client1)
+
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.db = kwargs.get('context',{}).get('db', 'sql')
+        super().__init__(*args, **kwargs)
 
-    def get_views(self, obj, db):
+
+    def get_views(self, obj):
         """Get recipe views from redis"""
-        return get_recipe_view_hkey(obj.id, 'views')
+        print(obj)
+        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj["id"])
 
 
     def get_likes(self, obj):
         """Get recipe likes from redis"""
-        return get_recipe_like_hkey(obj.id, 'likes')
+        print(obj)
+        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj["id"])
 
     def get_save_count(self, obj):
         """Get recipe likes from redis"""
-        return get_recipe_save_count_hkey(obj.id, 'save_count')
+        print(obj)
+        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj["id"])
 
 
 class ReciperSQLDetailSerializer(RecipeSerialzier):

@@ -30,7 +30,11 @@ from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin
-from .redis_set import set_recipe_view_hkey, get_recipe_view_hkey, increase_recipe_view
+from .redis_set import RedisHandler
+import django_redis
+
+redis_client1 = django_redis.get_redis_connection("default")
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -57,7 +61,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     filter_backend = [filters.OrderingFilter]
     ordering_fields = ['create_time', 'name']
     ordering = ['create_time']
-
+    recipe_redis_handler = RedisHandler(redis_client1)
     def get_permissions(self):
         if self.action in ['list']:
             permission_classes = [permissions.AllowAny]
@@ -65,7 +69,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
         else:
             permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        return [permission() for permission in permission_classes]  
 
 
     def get_serializer_class(self):
@@ -109,7 +113,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 print(recipe_id)
                 if recipe_id is not None:
                 # Get recipe id of instance.
-                    set_recipe_view_hkey(recipe_id)
+                    self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=response.data)
                     return response
         except ValidationError as e:
         # Handle validation errors (like email already exists) here
@@ -120,13 +124,26 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve recipe object detail"""
         try:
-            response = super().retrieve(self, request, *args, **kwargs)
-            # recipe_id = response.data.get('id',None)
-            # if recipe_id:
-            return response
+            recipe_id = kwargs.get('pk')
+            print(recipe_id)
+            if not recipe_id:
+                return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
+            cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
+            print(cache_data)
+            if cache_data:
+                cache_recipe = serializers.ReciperRedisDetailSerializer(data=cache_data)
+                cache_recipe.is_valid(raise_exception=True)
+                print(cache_recipe)
+                return Response({'recipe': cache_recipe.data}, status.HTTP_200_OK)
 
+            # If data is not in Redis, fetch it from SQL
+            recipe_instance = self.queryset.get(id=recipe_id)
+            recipe = serializers.ReciperSQLDetailSerializer(data=recipe_instance)
+            recipe.is_valid(raise_exception=True)
+            self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
+            return Response({'recipe':recipe.data}, status.HTTP_200_OK)            
         except ValidationError as e :
-            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_BAD_REQUEST)
 
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

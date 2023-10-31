@@ -78,7 +78,7 @@ class UserFollowing(models.Model):
 class Recipe(models.Model):
     """Recipe object!"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
-    title = models.CharField(max_length=30, unique=True)
+    title = models.CharField(max_length=30)
     cost_time = models.CharField(max_length=50)
     description = models.CharField(max_length=255)
     create_time = models.DateTimeField(auto_now_add=True,null=True,blank= True)
