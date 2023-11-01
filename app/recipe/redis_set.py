@@ -23,7 +23,7 @@ class RedisHandler:
         """
         self.redis_client = redis_client
 
-    def set_recipe(self,recipe_id: int, data: dict):
+    def set_recipe(self,recipe_id: int, data):
         """
         Cache recipe in redis.
 
@@ -43,7 +43,7 @@ class RedisHandler:
         :return: The data associated with the recipe, if exists.
         """
         data = self.redis_client.get(f'Recipe_{recipe_id}')
-        print(data)
+
         if data:
             try:
                 return json.loads(data.decode('utf-8'))

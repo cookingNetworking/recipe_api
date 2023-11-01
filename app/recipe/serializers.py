@@ -128,15 +128,28 @@ class RecipeSerialzier(serializers.ModelSerializer):
         instance.save()
         return instance
 
-class ReciperRedisDetailSerializer(RecipeSerialzier):
+class ReciperRedisDetailSerializer(serializers.Serializer):
     """Serializer for recipe detail !"""
+    id = serializers.IntegerField()
+    title = serializers.CharField(max_length=30)
+    cost_time = serializers.CharField(max_length=50)
+    description = serializers.CharField(max_length=255)
+    create_time = serializers.DateTimeField(required=False)
+    
+    ingredients = serializers.ListField(child=serializers.CharField(max_length=100))
+    tags = serializers.ListField(child=serializers.CharField(max_length=100))
+
     views = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     save_count = serializers.SerializerMethodField()
 
+    photos = RecipePhotoSerialzier(many=True, required=False)
+    steps = RecipeStepSerialzier(many=True, required=False)
+
     recipe_redis_handler = RedisHandler(redis_client=redis_client1)
 
     class Meta(RecipeSerialzier.Meta):
+        model = None
         fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
 
     def __init__(self, *args, **kwargs):
@@ -146,21 +159,21 @@ class ReciperRedisDetailSerializer(RecipeSerialzier):
     def get_views(self, obj):
         """Get recipe views from redis"""
         print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj["id"])
+        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj['id'])
 
 
     def get_likes(self, obj):
         """Get recipe likes from redis"""
         print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj["id"])
+        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj['id'])
 
     def get_save_count(self, obj):
         """Get recipe likes from redis"""
         print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj["id"])
+        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj['id'])
 
 
 class ReciperSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
+        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views']
