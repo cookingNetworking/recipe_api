@@ -7,6 +7,9 @@ from django.conf import settings
 
 from rest_framework import serializers
 from rest_framework.viewsets import ModelViewSet
+
+
+
 def generate_presigned_url(bucket_name, object_name, expiration=3600):
     """Generate a presigned URL to share an S3 object."""
     s3_client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -44,3 +47,5 @@ class CustomSlugRelatedField(serializers.SlugRelatedField):
             if "does not exist" in error_detail:
                 return data
             raise e  
+        
+

@@ -94,6 +94,18 @@ class RedisHandler:
             return int(recipe_view)
         return None
 
+    def del_hkey(self, hkey_name: str, *recipe_id: int):
+        """
+        Del  value of giving recipe id.
+        :param recipe_id: The ID of the recipe. Must be an integer or list.
+        """
+        try:
+            del_id = [str(key) for key in recipe_id]
+            self.redis_client.hdel(f"Recipe_{hkey_name}", *del_id)
+            return True
+        except Exception as e:
+            print(e)
+            return False
     def increase_recipe_view(self, hkey_name: str, recipe_id: int, increment_value=1):
         """
         Increase value for hkey value

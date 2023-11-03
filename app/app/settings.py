@@ -97,6 +97,13 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASS"),
+        'POOL_OPTIONS' : {
+            'POOL_SIZE': 5,
+            'MAX_OVERFLOW': 5,
+            'RECYCLE': 24 * 60 * 60,
+            'PRE_PING': True,
+            'TIMEOUT': 30
+            }
     }
 }
 
