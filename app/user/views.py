@@ -465,7 +465,6 @@ def check_email_replicate(request):
     """Check create user request email  is existed or not."""
 
     try:
-        print(request.headers)
         if get_user_model().objects.filter(email=request.data.get('email')).exists():
             return Response(
                 {'error':'Email is already existed !!!','detail': 'Please use another email.'},
@@ -475,7 +474,6 @@ def check_email_replicate(request):
     except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 

@@ -89,6 +89,11 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASS"),
+        'POOL_OPTIONS': {
+            'POOL_SIZE': 5,
+            'MAX_OVERFLOW': 5,
+            'RECYCLE': 24 * 60 * 60
+        }
     }
 }
 
@@ -193,7 +198,7 @@ SPECTACULAR_SETTINGS = {
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
-SESSION_CACHE_ALIAS = "session"
+SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
 CELERY_BROKER_URL = 'redis://cache:6379/1'
