@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['ec2-13-211-175-7.ap-southeast-2.compute.amazonaws.com',"localhost"]
+ALLOWED_HOSTS = ['ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
 
 
 INSTALLED_APPS = [
@@ -89,6 +89,11 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASS"),
+        'POOL_OPTIONS': {
+            'POOL_SIZE': 5,
+            'MAX_OVERFLOW': 5,
+            'RECYCLE': 24 * 60 * 60
+        }
     }
 }
 
@@ -100,7 +105,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
-        "session": {
+        "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
@@ -198,7 +203,7 @@ SPECTACULAR_SETTINGS = {
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
-SESSION_CACHE_ALIAS = "session"
+SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
 CELERY_BROKER_URL = 'redis://cache:6379/1'

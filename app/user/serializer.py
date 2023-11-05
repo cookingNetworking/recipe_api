@@ -5,6 +5,7 @@ Serialzier for User model.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext as _
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()

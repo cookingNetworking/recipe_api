@@ -31,5 +31,6 @@ urlpatterns = [
     path('getCsrfToken/', user_views.GetCsrfToken.as_view(), name='getCsrfToken'),
     path('forget-password/', user_views.EmailVertificationView.as_view(), name='foregetpassword'),
     path('reset-password', user_views.ResetPasswordView.as_view(), name='resetpassword'),
-    path('time/', user_views.time_now, name='time_now')
+    path('time/', user_views.time_now, name='time_now'),
+    path('resendVertify/',user_views.ResendVertifyEmail.as_view(), name='reseendertifyemail')
 ]

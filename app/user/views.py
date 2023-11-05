@@ -16,6 +16,8 @@ from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
+from django_redis import get_redis_connection
+
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
@@ -121,6 +123,9 @@ class CreateUserView(generics.CreateAPIView):
         try:
             email = request.data.get('email')
             password = request.data.get('password')
+            role = request.data.get('role')
+            if role == 'admin':
+                return Response({'error':'Admin is not allowed!!!','detail': 'Please change the role.'}, status=status.HTTP_400_BAD_REQUEST)
             if not email or len(email) == 0:
                 return Response({'error':'Email field is required!!!','detail': 'Please provide an email.'}, status=status.HTTP_400_BAD_REQUEST)
             if not password or len(password) == 0:
@@ -348,13 +353,11 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             login(request, user)
-            for s in Session.objects.all():
-                if s.get_decoded().get('_auth_user_id') == user.id:
-                    s.delete()
+            session_id = request.session.session_key
             rotate_token(request)
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
-            session_id = request.session.session_key
+
             return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
@@ -462,7 +465,6 @@ def check_email_replicate(request):
     """Check create user request email  is existed or not."""
 
     try:
-        print(request.headers)
         if get_user_model().objects.filter(email=request.data.get('email')).exists():
             return Response(
                 {'error':'Email is already existed !!!','detail': 'Please use another email.'},
@@ -472,7 +474,6 @@ def check_email_replicate(request):
     except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 
@@ -859,14 +860,72 @@ def time_now(request):
     return Response({"time_now":f"{time_now}"}, status=status.HTTP_200_OK)
 
 
+
+@extend_schema(
+    parameters=[
+            OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
+          )
+    ],
+    responses={
+        201: Created201serializer,
+        400: Error400Serializer,
+        403: 'CSRF token missing or incorrect.',
+        500: Error500Serializer,
+    },
+    examples=[
+        OpenApiExample(
+        'User created!',
+        value={'message': 'Email is resend, please check your email to active your account in 15 minutes !', 'token': 'Token that sendiing to email of user'},
+        response_only=True,
+        status_codes=['200']
+        ),
+    OpenApiExample(
+        'Email  Error',
+        value={'error': 'Email is requured!!!', 'detail': 'Please provide an email .'},
+        response_only=True,
+        status_codes=['400']
+    ),
+    OpenApiExample(
+        "Request forbbiden",
+        value={'error': 'CSRF token missing or incorrect.'},
+        response_only=True,
+        status_codes=['403']
+    ),
+    OpenApiExample(
+        'Internal Error',
+        value={'error': 'Internal server error'},
+        response_only=True,
+        status_codes=['500']
+    )
+    ],
+    description='Create a new user',)
 @method_decorator(ensure_csrf_cookie, name='dispatch')
-class ResendVertifyPassword(APIView):
+class ResendVertifyEmail(APIView):
     """Resend vertify email to user!"""
-    def post(request):
+    def post(self, request):
         email = request.data.get("email")
         if not email :
-            return Response({"error":"Need emaill input!!"} ,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Email is requured!!",'detail': 'Please provide an email .'} ,status=status.HTTP_400_BAD_REQUEST)
         user = get_user_model().objects.filter(email=email).first()
         if not user:
             return Response({"error":"Emaill is not be register, please sign up again!!"} ,status=status.HTTP_400_BAD_REQUEST)
-        return
+        current_time = int(datetime.now().timestamp())
+        result = delete_unactivate_user.apply_async((email,), countdown=15*60)
+        cache.set(f'del_unactive_{email}', result.id, 9000)
+        payload = {
+            "email": email,
+            "exp" : current_time + (15 * 60)
+        }
+        token = create_jwt(**payload)
+        link = f"http://cookNetwork/vertify?token={token}"
+        content = {
+                "subject": "Activate your account",
+                "message":f"Click the link to activate your account at cooNetwork!!\n{link}\nWarning : If you haven't sing up an accoutn at cookNetwork, please don't click the link!!!"
+                }
+        sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
+        return Response({'message':'Email is resend, please check your email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_200_OK)
