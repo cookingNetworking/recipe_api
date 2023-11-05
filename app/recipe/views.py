@@ -69,7 +69,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
         else:
             permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]  
+        return [permission() for permission in permission_classes]
 
 
     def get_serializer_class(self):
@@ -131,25 +131,29 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
-            
+
             if cache_data:
                 cache_recipe = serializers.ReciperRedisDetailSerializer(data=cache_data)
                 cache_recipe.is_valid(raise_exception=True)
                 self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
                 self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
                 return Response({'recipe': cache_recipe.data}, status.HTTP_200_OK)
-            
+
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
             recipe = serializers.ReciperSQLDetailSerializer(recipe_instance)
             self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
-            return Response({'recipe':recipe.data}, status.HTTP_200_OK)            
+            return Response({'recipe':recipe.data}, status.HTTP_200_OK)
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        """Update recipe and change recipe cache in redis."""
+
 
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,

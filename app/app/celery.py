@@ -14,8 +14,12 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'update-recipe-views': {
         'task': 'recipe.tasks.update_recipe_views_in_redis',
-        'schedule': crontab(minute='*/30'),  # 每30分鐘
+        'schedule': crontab(minute='*/30'),  # every 30 minutes
     },
+    'consist-recipe-to-sql':{
+        'task': 'recipe.tasks.consist_redis_and_sql_data',
+        'schedule': crontab(minute='*/15'),  # every 15 minutes
+    }
 }
 
 
