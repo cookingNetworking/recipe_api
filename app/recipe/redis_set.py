@@ -106,6 +106,14 @@ class RedisHandler:
         except Exception as e:
             print(e)
             return False
+    
+    def update_hkey(self, hkey_name: str, *recipe_id: int, value: str):
+        """
+        Update the hkey value in hash .
+        """
+        self.redis_client.hmset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
+
+
     def increase_recipe_view(self, hkey_name: str, recipe_id: int, increment_value=1):
         """
         Increase value for hkey value

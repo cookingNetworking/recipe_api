@@ -153,7 +153,16 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis."""
-
+        response = super().update(self, request, *args, **kwargs)
+        recipe =  response.data
+        if recipe:
+                recipe_id = response.get('id', None)
+                print(recipe_id, type)
+                if recipe_id is not None:
+                # Get recipe id of instance.
+                    self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
+                    
+                    return response
 
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
