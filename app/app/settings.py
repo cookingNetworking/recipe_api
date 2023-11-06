@@ -115,7 +115,8 @@ CACHES = {
 }
 
 CORS_ORIGIN_WHITELIST = [
-    'https://cookingnetowrk.vercel.app/',
+    'https://cookingnetowrk.vercel.app'
+    'http://localhost:3000',
 ]
 
 
