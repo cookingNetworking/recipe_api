@@ -83,6 +83,17 @@ class RedisHandler:
             except json.JSONDecodeError as e:
                     print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
                     return None
+    def get_prev_hset(self, hkey_name: str):
+        """
+        Specilized for get hash
+        """
+        data = self.redis_client.get(f'Prev_{hkey_name}')
+        if data:
+            try:
+                return json.loads(data.decode('utf-8'))
+            except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
+                    return None
 
     def get_hkey(self, hkey_name: str, recipe_id: int):
         """
@@ -93,6 +104,9 @@ class RedisHandler:
         if recipe_view:
             return int(recipe_view)
         return None
+
+
+
 
     def del_hkey(self, hkey_name: str, *recipe_id: int):
         """
@@ -106,13 +120,19 @@ class RedisHandler:
         except Exception as e:
             print(e)
             return False
-    
+
     def update_hkey(self, hkey_name: str, *recipe_id: int, value: str):
         """
         Update the hkey value in hash .
+        :param hkey_name: The hkey of the recipe. Must be an str.
+        :param recipe_id: The ID of the recipe. Must be an integer.
+        :param value: The value need to be updated. Must be an str.
         """
-        self.redis_client.hmset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
-
+        value = self.get_hkey(hkey_name, recipe_id)
+        if value is not None:
+            self.redis_client.hmset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
+        else:
+            self.set_hkey(hkey_name=hkey_name, recipe_id=recipe_id, value=value)
 
     def increase_recipe_view(self, hkey_name: str, recipe_id: int, increment_value=1):
         """
@@ -120,7 +140,11 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :param increment_value: The increase value of the recipe staff. Must be an integer.
         """
-        self.redis_client.hincrby(f'Recipe_{hkey_name}', f"{recipe_id}", increment_value)
+        value = self.get_hkey(hkey_name, recipe_id)
+        if value is not None:
+            self.redis_client.hincrby(f'Recipe_{hkey_name}', f"{recipe_id}", increment_value)
+        else:
+            raise ValueError({"error": f"{recipe_id} is not found in {hkey_name}"})
 
 
 

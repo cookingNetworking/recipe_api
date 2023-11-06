@@ -44,9 +44,9 @@ def consist_redis_and_sql_data():
     recipe_likes = recipe_redis_handler.get_hset("likes")
     recipe_save_counts = recipe_redis_handler.get_hset("save_count")
 
-    recipe_previos_views = recipe_redis_handler.get_hset("views")
-    recipe_previos_likes = recipe_redis_handler.get_hset("likes")
-    recipe_previos_save_counts = recipe_redis_handler.get_hset("save_count")
+    recipe_previos_views = recipe_redis_handler.get_prev_hset("views")
+    recipe_previos_likes = recipe_redis_handler.get_prev_hset("likes")
+    recipe_previos_save_counts = recipe_redis_handler.get_prev_hset("save_count")
 
     views_update = update_recipe("views", recipe_views, recipe_previos_views)
     likes_update = update_recipe("likes", recipe_likes, recipe_previos_likes)
@@ -63,11 +63,11 @@ def consist_redis_and_sql_data():
         if recipe_id in likes_update:
             update_values["likes"] = likes_update[recipe_id]
         else:
-            update_values["likes"] = recipe_previos_likes[recipe_id]     
+            update_values["likes"] = recipe_previos_likes[recipe_id]
         if recipe_id in save_counts_update:
             update_values["save_count"] = save_counts_update[recipe_id]
         else:
-            update_values["save_count"] = recipe_previos_save_counts[recipe_id]  
+            update_values["save_count"] = recipe_previos_save_counts[recipe_id]
 
         recipe = Recipe(id=recipe_id, **update_values)
         recipes_to_update.append(recipe)

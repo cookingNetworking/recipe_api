@@ -154,15 +154,34 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis."""
         response = super().update(self, request, *args, **kwargs)
-        recipe =  response.data
-        if recipe:
-                recipe_id = response.get('id', None)
-                print(recipe_id, type)
-                if recipe_id is not None:
-                # Get recipe id of instance.
-                    self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
-                    
+        try:
+            recipe =  response.data
+            if recipe:
+                    recipe_id = response.get('id', None)
+                    print(recipe_id, type)
+                    if recipe_id is not None:
+                    # Get recipe id of instance.
+                        self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
+                    views_value = int(recipe.get("views"))
+                    likes_value = int(recipe.get("likes"))
+                    save_count_value = int(recipe.get("save_count"))
+                    self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
+                    self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
+                    self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
                     return response
+        except Exception as e:
+            print(e)
+            return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def destroy(self, request, *args, **kwargs):
+        """Destroy the recipe instance and clear data in Redis cache."""
+        response = super().destroy(self, request, *args, **kwargs)
+        recipe_id = request.data.get("id")
+        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
+        return response
+
 
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
