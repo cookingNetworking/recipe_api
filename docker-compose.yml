@@ -64,10 +64,12 @@ services:
     ports:
       - 80:8000
     volumes:
+      - .certs:/etc/letsencrypt
       - dev-static-data:/vol/static
     environment:
       - TZ='GMT+8'
-      - PGTZ='GMT+8'    
+      - PGTZ='GMT+8'
+          
 volumes:
   dev-db-data:
   dev-static-data:
