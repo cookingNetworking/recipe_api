@@ -2,6 +2,13 @@ server {
     listen ${LISTEN_PORT} ssl;
     server_name ${DOMAIN};
 
+    location ^~ /.well-known/acme-challenge/ {
+        allow all;
+        root /var/www/certbot;
+        try_files $uri =404;
+        break;
+    }
+
     location /static {
         alias /vol/static;
     }

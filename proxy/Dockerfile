@@ -36,6 +36,7 @@ VOLUME /vol/static
 VOLUME /etc/letsencrypt
 VOLUME /var/lib/letsencrypt
 VOLUME /var/log/letsencrypt
+VOLUME /var/www/certbot
 
 USER nginx
 

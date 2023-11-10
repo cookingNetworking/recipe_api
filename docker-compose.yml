@@ -54,7 +54,6 @@ services:
     image: redis:7.2.1-alpine
 
   proxy:
-    image: as2229181/cooknetwork:proxy_v1.0
     build:
       context: ./proxy
     restart: always
@@ -67,6 +66,7 @@ services:
       - certs:/etc/letsencrypt
       - certbot-lib:/var/lib/letsencrypt
       - certbot-log:/var/log/letsencrypt
+      - certbot-www:/var/www/certbot
       - dev-static-data:/vol/static
     environment:
       - TZ='GMT+8'
@@ -78,3 +78,4 @@ volumes:
   certs:
   certbot-lib:
   certbot-log:
+  certbot-www:
