@@ -2,7 +2,7 @@ FROM nginxinc/nginx-unprivileged:1-alpine
 LABEL maintainer="GSHIN"
 
 
-ENV LISTEN_PORT=8443
+ENV LISTEN_PORT=8000
 ENV APP_HOST=app
 ENV APP_PORT=9000
 ENV DOMAIN=cookingnetwork.co
