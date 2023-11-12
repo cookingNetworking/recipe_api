@@ -183,7 +183,13 @@ class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""
     id = serializers.IntegerField(help_text="The ID of the recipe to like.")
 
-class LikeResponseSerializer(serializers.Serializer):
+class SaveActionSerializer(serializers.Serializer):
+    """Serializer fot save action"""
+    recipe_id = serializers.IntegerField(help_text="The ID of the recipe to like.")
+    tag = serializers.CharField(help_text="tag name")
+    ingredient = serializers.CharField(help_text="ingredient name")
+
+class ResponseSerializer(serializers.Serializer):
     message = serializers.CharField(help_text="A success message.")
     error = serializers.CharField(help_text="A error message.")
     detail = serializers.CharField(help_text="A detail message.")

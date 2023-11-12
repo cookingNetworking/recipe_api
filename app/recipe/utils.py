@@ -4,10 +4,12 @@ from botocore.config import Config
 
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
+from django.db.models import F
 
-from rest_framework import serializers
+from rest_framework.response import Response
+from rest_framework import serializers, status
 from rest_framework.viewsets import ModelViewSet
-
+from .core import models
 
 
 def generate_presigned_url(bucket_name, object_name, expiration=3600):
@@ -25,7 +27,18 @@ def generate_presigned_url(bucket_name, object_name, expiration=3600):
 
     return response
 
-
+def saved_action(user, obj):
+    """Funciton for save action."""
+    save, created = models.Save.objects.get_or_create(user=user,obj=obj)
+    if created:
+        obj.save_count =F('save_count') + 1
+        obj.save(update_fields=['save_count'])
+        return Response({'message':'User save the recipe!'}, status=status.HTTP_200_OK)
+    elif save:
+        obj.save_count =F('save_count') - 1
+        obj.save(update_fields=['save_count'])
+        save.delete()
+        return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
 
 class UnsafeMethodCSRFMixin(ModelViewSet):
     """Amixin that applies CSRF protection to unsafe HTTP methods (POST, PATCH, PUT, DELETE....)"""
