@@ -135,7 +135,7 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
     cost_time = serializers.CharField(max_length=50)
     description = serializers.CharField(max_length=255)
     create_time = serializers.DateTimeField(required=False)
-    
+
     ingredients = serializers.ListField(child=serializers.CharField(max_length=100))
     tags = serializers.ListField(child=serializers.CharField(max_length=100))
 
@@ -177,3 +177,13 @@ class ReciperSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views']
+
+
+class LikeRecipeAction(serializers.Serializer):
+    """Serializer for like action"""
+    id = serializers.IntegerField(help_text="The ID of the recipe to like.")
+
+class LikeResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(help_text="A success message.")
+    error = serializers.CharField(help_text="A error message.")
+    detail = serializers.CharField(help_text="A detail message.")

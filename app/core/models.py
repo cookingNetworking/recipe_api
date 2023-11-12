@@ -94,6 +94,23 @@ class Recipe(models.Model):
     def all_photo(self):
         return self.photos.all()
 
+    def total_likes(self):
+        return self.recipe_be_liked.count()
+
+class Like(models.Model):
+    """
+    The relationship of user and recipe.
+    Like.objects.filter(recipe=specific_recipe).count() => get all likes of recipe!
+    Like.objects.filter(user=specific_user).count => gel all recipe liked by user!
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_likes")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="recipe_be_liked")
+
+    class Meta:
+        unique_together = ('user', 'recipe') #like add constrain  CONSTRAINT unique_user_recipe UNIQUE (user_id, recipe_id)
+
+    def __str__(self):
+        return f'{self.user.username} likes {self.recipe.title}'
 
 class RecipePhoto(models.Model):
     """Recipe photo show on recipe page!"""

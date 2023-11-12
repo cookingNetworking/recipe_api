@@ -11,7 +11,9 @@ from rest_framework import (
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
 from drf_spectacular.utils import (
         extend_schema,
         OpenApiExample,
@@ -21,7 +23,7 @@ from drf_spectacular.utils import (
 )
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
-from django.db.models import Q
+from django.db.models import Q, F
 
 from functools import reduce
 from operator import or_
@@ -62,6 +64,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     ordering_fields = ['create_time', 'name']
     ordering = ['create_time']
     recipe_redis_handler = RedisHandler(redis_client1)
+
     def get_permissions(self):
         if self.action in ['list']:
             permission_classes = [permissions.AllowAny]
@@ -102,6 +105,28 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
+
+    def list(self, request, *args, **kwargs):
+        """list of recipe!"""
+        response = super().list(request, *args, **kwargs)
+        try:
+            search_tags = request.query_params.get('tags')
+            search_ingredients = request.query_params.get('ingredients')
+            search_user = request.query_params.get('user')
+
+            if search_tags:
+                tags = search_tags.split(",")
+                models.Tag.filter(name__in=tags).update(views=F('views') + 1)
+
+            if search_ingredients:
+                ingredients = search_ingredients.split(",")
+                models.Ingredinet.filter(name__in=ingredients).update(views=F('views') + 1)
+            return response
+        except ValidationError as e:
+        # Handle validation errors (like email already exists) here
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
@@ -147,7 +172,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'recipe':recipe.data}, status.HTTP_200_OK)
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -193,8 +217,8 @@ class BaseRecipeAttrViewSet(
     permission_classes = [permissions.AllowAny]
 
     def get_permissions(self):
-        if self.action in ['destroy','update']:
-            permission_classes = [permissions.IsAuthenticated]
+        if self.action in ['destroy','update', 'create']:
+            permission_classes = [permissions.IsAdminUser]
         else:
             permission_classes = [permissions.AllowAny]
         return [permission() for permission in permission_classes]
@@ -203,10 +227,12 @@ class BaseRecipeAttrViewSet(
         queryset = self.queryset
         return queryset.all().order_by("-views").distinct()
 
+
 class TagViewSet(BaseRecipeAttrViewSet):
     """Views of tag API include list update destroy!"""
     serializer_class = serializers.TagSerialzier
     queryset = models.Tag.objects.all()
+
 
 class IngredientViewSet(BaseRecipeAttrViewSet):
     """"Views of tag API include list update destroy!"""
@@ -214,3 +240,85 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
     queryset= models.Ingredient.objects.all()
 
 
+
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+        ),
+         OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+    ],
+    request=serializers.LikeRecipeAction,
+    responses={
+    200:serializers.LikeResponseSerializer,
+    400:serializers.LikeResponseSerializer,
+    403:serializers.LikeResponseSerializer,
+    404:serializers.LikeResponseSerializer,
+    500:serializers.LikeResponseSerializer,
+    },
+    examples=[
+        OpenApiExample(
+            'Successed',
+            value={'message': 'Like action successed!', 'detail': ""},
+            response_only=True,
+            status_codes=['200']
+        ),
+        OpenApiExample(
+            "Bad reque st",
+            value={'error': 'user already like the recipe!'},
+            response_only=True,
+            status_codes=['400']
+        ),
+        OpenApiExample(
+            "Request forbbiden",
+            value={'error': 'CSRF token missing or incorrect.'},
+            response_only=True,
+            status_codes=['403']
+        ),
+        OpenApiExample(
+            "Value or field error",
+            value={'error': 'There is no recipe with this id', 'detail': 'Please login again.'},
+            description="Ensure recipe id is send.",
+            response_only=True,
+            status_codes=['404']
+        ),
+        OpenApiExample(
+            'Internal Error',
+            value={'error': 'Internal server error'},
+            response_only=True,
+            status_codes=['500']
+        )
+    ],
+    )
+@api_view(['POST'])
+@csrf_protect
+@permission_classes([IsAuthenticated])
+def like_button(request):
+    """Action that user like the recipe!"""
+    recipe_id = request.date.get("id")
+    try:
+        recipe = models.Recipe.filter(id=recipe_id).first()
+        if not recipe:
+            return Response({"error":"There is no recipe with this id"}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        like,created = models.Like.objects.get_or_create(user=user ,recipe=recipe)
+        if created:
+            recipe(likes=F('likes') + 1)
+            recipe.save()
+            return Response({"message":"Like action successed!"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error":"User already liked the recipe!"}, status=status.HTPP_400_BAD_REQUEST)
+    except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e :
+        return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

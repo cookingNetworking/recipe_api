@@ -33,7 +33,7 @@ class RedisHandler:
         """
         json_data = json.dumps(data)
         timeout = random.randint(1500, 1800)
-        self.redis_client.set(f'Recipe_{recipe_id}',json_data, ex=timeout)
+        self.redis_client.set(f'Recipe_detail_{recipe_id}',json_data, ex=timeout)
 
     def get_recipe(self, recipe_id):
         """
@@ -42,7 +42,7 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :return: The data associated with the recipe, if exists.
         """
-        data = self.redis_client.get(f'Recipe_{recipe_id}')
+        data = self.redis_client.get(f'Recipe_detail_{recipe_id}')
 
         if data:
             try:
@@ -51,13 +51,14 @@ class RedisHandler:
                 print(f"Error decoding JSON for Recipe_{recipe_id}: {e}")
                 return None
 
+
     def delete_recipe_in_cache(self, recipe_id):
         """
         Delete recipe in redis!
 
         :param recipe_id: The ID of the recipe. Must be an integer.
         """
-        self.redis_client.delete(f'Recipe_{recipe_id}')
+        self.redis_client.delete(f'Recipe_detail_{recipe_id}')
 
     def set_hkey(self, hkey_name: str, recipe_id: int, initinal_value=0):
         """
@@ -104,8 +105,6 @@ class RedisHandler:
         if recipe_view:
             return int(recipe_view)
         return None
-
-
 
 
     def del_hkey(self, hkey_name: str, *recipe_id: int):
