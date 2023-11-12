@@ -31,7 +31,7 @@ from operator import or_
 from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
-from .utils import UnsafeMethodCSRFMixin
+from .utils import UnsafeMethodCSRFMixin, saved_action
 from .redis_set import RedisHandler
 import django_redis
 
@@ -260,11 +260,11 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
     ],
     request=serializers.LikeRecipeAction,
     responses={
-    200:serializers.LikeResponseSerializer,
-    400:serializers.LikeResponseSerializer,
-    403:serializers.LikeResponseSerializer,
-    404:serializers.LikeResponseSerializer,
-    500:serializers.LikeResponseSerializer,
+        200:serializers.ResponseSerializer,
+        400:serializers.ResponseSerializer,
+        403:serializers.ResponseSerializer,
+        404:serializers.ResponseSerializer,
+        500:serializers.ResponseSerializer,
     },
     examples=[
         OpenApiExample(
@@ -305,7 +305,7 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
 @permission_classes([IsAuthenticated])
 def like_button(request):
     """Action that user like the recipe!"""
-    recipe_id = request.date.get("id")
+    recipe_id = request.data.get("id")
     try:
         recipe = models.Recipe.filter(id=recipe_id).first()
         if not recipe:
@@ -313,11 +313,93 @@ def like_button(request):
         user = request.user
         like,created = models.Like.objects.get_or_create(user=user ,recipe=recipe)
         if created:
-            recipe(likes=F('likes') + 1)
-            recipe.save()
+            recipe.likes=F('likes') + 1
+            recipe.save(update_fields=['likes'])
             return Response({"message":"Like action successed!"}, status=status.HTTP_200_OK)
         else:
-            return Response({"error":"User already liked the recipe!"}, status=status.HTPP_400_BAD_REQUEST)
+            like.delete()
+            recipe.likes=F('likes') - 1
+            recipe.save(update_fields=['likes'])
+            return Response({"message":"Like action was revoke!"}, status=status.HTTP_200_OK)
+
+    except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e :
+        return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(
+        parameters=[
+        OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+        ),
+        OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+        ),
+    ],
+    request=serializers.SaveActionSerializer,
+    responses={
+        200:serializers.ResponseSerializer,
+        400:serializers.ResponseSerializer,
+        403:serializers.ResponseSerializer,
+        404:serializers.ResponseSerializer,
+        500:serializers.ResponseSerializer,
+    },
+        examples=[
+        OpenApiExample(
+            'Successed',
+            value={'message': 'Sace action successed!'},
+            response_only=True,
+            status_codes=['200']
+        ),
+        OpenApiExample(
+            "Request forbbiden",
+            value={'error': 'CSRF token missing or incorrect.'},
+            response_only=True,
+            status_codes=['403']
+        ),
+        OpenApiExample(
+            "Value or field error",
+            value={'error': 'Check recipe_id , tag or ingredient at least in is in request!!'},
+            description="Ensure recipe id is send.",
+            response_only=True,
+            status_codes=['404']
+        ),
+        OpenApiExample(
+            'Internal Error',
+            value={'error': 'Internal server error'},
+            response_only=True,
+            status_codes=['500']
+        )
+    ],
+        
+)
+@api_view('POST')
+@csrf_protect
+@permission_classes([IsAuthenticated])
+def save_action(request):
+    """The function for save recipe or not !"""
+    try:
+        recipe = models.Recipe.filter(id=request.data.get('recipe_id')).first()
+        tag = models.filter(request.data.get('tag')).first()
+        ingredient = models.Ingredient.filter(request.data.get('ingredient')).first()
+        if not recipe and tag and ingredient:
+            return Response({"error":"Check recipe_id , tag or ingredient at least in is in request!!"}, status=status.HTTP_404_NOT_FOUND) 
+        #save_action is import form .utils
+        if recipe:
+            saved_action(user=request.user, obj=recipe)
+        elif tag:
+            saved_action(user=request.user, obj=tag)
+        elif ingredient: 
+            saved_action(user=request.user, obj=ingredient)
     except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e :

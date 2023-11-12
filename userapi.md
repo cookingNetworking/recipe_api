@@ -113,3 +113,44 @@
 
   - `example :`
         {"message": "Internal Server Error"}
+
+
+
+## Response recipe 
+  - {
+  "count": 123,
+  "next": "http://api.example.org/accounts/?page=4",
+  "previous": "http://api.example.org/accounts/?page=2",
+  "results": [
+    {
+      "id": 0,
+      "title": "string",
+      "cost_time": "string",
+      "description": "string",
+      "ingredients": [
+        "string"
+      ],
+      "tags": [
+        "string"
+      ],
+      "photos": [
+        {
+          "id": 0,
+          "recipe": 0,
+          "photo": "string",
+          "upload_date": "2023-11-12T07:29:51.970Z",
+          "category": "main"
+        }
+      ],
+      "steps": [
+        {
+          "id": 0,
+          "recipe": 0,
+          "step": 32767,
+          "description": "string",
+          "image": "string"
+        }
+      ]
+    }
+  ]
+}

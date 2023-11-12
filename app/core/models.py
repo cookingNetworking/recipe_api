@@ -112,6 +112,26 @@ class Like(models.Model):
     def __str__(self):
         return f'{self.user.username} likes {self.recipe.title}'
 
+class Save(models.Model):
+    """
+    The table record user saved which recipe, tags, ingredients!
+    In this table, user only can save same recipe, ingredient, tag for more than one time.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_save", blank=True, null=True)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="saved_recipe")
+    tag = models.ForeignKey("Tag", on_delete=models.CASCADE, related_name="saved_tag", blank=True, null=True)
+    ingredient = models.ForeignKey("Ingredient", on_delete=models.CASCADE, related_name="saved_ingredient", blank=True, null=True)
+
+    class Meta:
+        unique_together = [
+            ("user", "recipe"),
+            ("user", "tag"),
+            ("user", "ingredient")
+        ]
+    
+    
+
+
 class RecipePhoto(models.Model):
     """Recipe photo show on recipe page!"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="photos")
