@@ -67,7 +67,7 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :param initinal_value: The initial value of the recipe staff. Must be an integer.
         """
-        if self.redis_client.hget(f"Recipe_{hkey_name}"):
+        if self.redis_client.hget(f"Recipe_{hkey_name}",f"{recipe_id}"):
             return KeyError({"error":"This recipe id is used before, please check again!"})
         self.redis_client.hset(f"Recipe_{hkey_name}", f"{recipe_id}", initinal_value)
         self.redis_client.hset(f"Prev_{hkey_name}",f"{recipe_id}", initinal_value)
@@ -139,7 +139,8 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :param increment_value: The increase value of the recipe staff. Must be an integer.
         """
-        value = self.get_hkey(hkey_name, recipe_id)
+        value = self.get_hkey(hkey_name, f"{recipe_id}")
+        print(value)
         if value is not None:
             self.redis_client.hincrby(f'Recipe_{hkey_name}', f"{recipe_id}", increment_value)
         else:

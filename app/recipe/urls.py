@@ -11,5 +11,6 @@ router.register('tags', views.TagViewSet)
 router.register('ingredients', views.IngredientViewSet)
 urlpatterns = [
         path('',  include(router.urls)),
-        path('likes', views.like_button, name="like-recipe")
+        path('likes', views.like_button, name="like-recipe"),
+        path('save', views.save_button, name="save-action")
 ]
