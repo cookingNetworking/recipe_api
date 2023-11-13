@@ -5,11 +5,17 @@ from botocore.config import Config
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
 from django.db.models import F
-
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.viewsets import ModelViewSet
-from .core import models
+
+from core import models
+from .redis_set import RedisHandler
+
+import django_redis
+
+redis_client1 = django_redis.get_redis_connection("default")
 
 
 def generate_presigned_url(bucket_name, object_name, expiration=3600):
@@ -27,18 +33,56 @@ def generate_presigned_url(bucket_name, object_name, expiration=3600):
 
     return response
 
+
+
+
 def saved_action(user, obj):
     """Funciton for save action."""
-    save, created = models.Save.objects.get_or_create(user=user,obj=obj)
-    if created:
-        obj.save_count =F('save_count') + 1
-        obj.save(update_fields=['save_count'])
-        return Response({'message':'User save the recipe!'}, status=status.HTTP_200_OK)
-    elif save:
-        obj.save_count =F('save_count') - 1
-        obj.save(update_fields=['save_count'])
-        save.delete()
-        return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
+    recipe_redis_handler = RedisHandler(redis_client1)
+    if isinstance(obj, models.Recipe):
+        save, created = models.Save.objects.get_or_create(user=user, recipe=obj)
+        if created:
+            obj.save_count =F('save_count') + 1
+            obj.save(update_fields=['save_count'])
+            recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id)
+            return Response({'message':'User save the recipe!'}, status=status.HTTP_200_OK)
+        elif save:
+            obj.save_count =F('save_count') - 1
+            obj.save(update_fields=['save_count'])
+            save.delete()
+            recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id, increment_value=-1)
+            return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+    elif isinstance(obj, models.Tag):
+        save, created = models.Save.objects.get_or_create(user=user, tag=obj)
+        if created:
+            obj.save_count =F('save_count') + 1
+            obj.save(update_fields=['save_count'])
+            return Response({'message':'User save the Tag!'}, status=status.HTTP_200_OK)
+        elif save:
+            obj.save_count =F('save_count') - 1
+            obj.save(update_fields=['save_count'])
+            save.delete()
+            return Response({'message':'User unsaved the Tag !'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
+    elif isinstance(obj, models.Ingredient):
+        save, created = models.Save.objects.get_or_create(user=user, ingredient=obj)
+        if created:
+            obj.save_count =F('save_count') + 1
+            obj.save(update_fields=['save_count'])
+            return Response({'message':'User save the ingredient!'}, status=status.HTTP_200_OK)
+        elif save:
+            obj.save_count =F('save_count') - 1
+            obj.save(update_fields=['save_count'])
+            save.delete()
+            return Response({'message':'User unsaved the ingredient !'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+    else:
+        return Response({'error': '無效的對象類型'}, status=status.HTTP_400_BAD_REQUEST)    
+   
 
 class UnsafeMethodCSRFMixin(ModelViewSet):
     """Amixin that applies CSRF protection to unsafe HTTP methods (POST, PATCH, PUT, DELETE....)"""

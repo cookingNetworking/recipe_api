@@ -306,8 +306,9 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
 def like_button(request):
     """Action that user like the recipe!"""
     recipe_id = request.data.get("id")
+    recipe_redis_handler = RedisHandler(redis_client1)
     try:
-        recipe = models.Recipe.filter(id=recipe_id).first()
+        recipe = models.Recipe.objects.filter(id=recipe_id).first()
         if not recipe:
             return Response({"error":"There is no recipe with this id"}, status=status.HTTP_404_NOT_FOUND)
         user = request.user
@@ -315,11 +316,17 @@ def like_button(request):
         if created:
             recipe.likes=F('likes') + 1
             recipe.save(update_fields=['likes'])
+            recipe.refresh_from_db()
+            recipe_redis_handler.increase_recipe_view(hkey_name="likes", recipe_id=recipe_id)
+            print(recipe.likes)
             return Response({"message":"Like action successed!"}, status=status.HTTP_200_OK)
         else:
             like.delete()
             recipe.likes=F('likes') - 1
             recipe.save(update_fields=['likes'])
+            recipe_redis_handler.increase_recipe_view(hkey_name="likes", recipe_id=recipe_id, increment_value=-1)
+            recipe.refresh_from_db()
+            print(recipe.likes)
             return Response({"message":"Like action was revoke!"}, status=status.HTTP_200_OK)
 
     except ValidationError as e :
@@ -356,7 +363,7 @@ def like_button(request):
         examples=[
         OpenApiExample(
             'Successed',
-            value={'message': 'Sace action successed!'},
+            value={'message': 'Save action successed!'},
             response_only=True,
             status_codes=['200']
         ),
@@ -369,7 +376,6 @@ def like_button(request):
         OpenApiExample(
             "Value or field error",
             value={'error': 'Check recipe_id , tag or ingredient at least in is in request!!'},
-            description="Ensure recipe id is send.",
             response_only=True,
             status_codes=['404']
         ),
@@ -382,16 +388,16 @@ def like_button(request):
     ],
         
 )
-@api_view('POST')
+@api_view(['POST'])
 @csrf_protect
 @permission_classes([IsAuthenticated])
-def save_action(request):
+def save_button(request):
     """The function for save recipe or not !"""
     try:
-        recipe = models.Recipe.filter(id=request.data.get('recipe_id')).first()
-        tag = models.filter(request.data.get('tag')).first()
-        ingredient = models.Ingredient.filter(request.data.get('ingredient')).first()
-        if not recipe and tag and ingredient:
+        recipe = models.Recipe.objects.filter(id=request.data.get('recipe_id')).first()
+        tag = models.Tag.objects.filter(name=request.data.get('tag')).first()
+        ingredient = models.Ingredient.objects.filter(name=request.data.get('ingredient')).first()
+        if not recipe and not tag and not ingredient:
             return Response({"error":"Check recipe_id , tag or ingredient at least in is in request!!"}, status=status.HTTP_404_NOT_FOUND) 
         #save_action is import form .utils
         if recipe:
@@ -401,7 +407,7 @@ def save_action(request):
         elif ingredient: 
             saved_action(user=request.user, obj=ingredient)
     except ValidationError as e :
-            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e :
         return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
