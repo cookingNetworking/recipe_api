@@ -51,5 +51,6 @@ admin.site.register(models.RecipePhoto)
 admin.site.register(models.RecipeStep)
 admin.site.register(models.Tag)
 admin.site.register(models.Ingredient)
-
+admin.site.register(models.Save)
+admin.site.register(models.Like)
 admin.site.register(models.User, UserAdmin)

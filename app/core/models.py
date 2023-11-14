@@ -118,7 +118,7 @@ class Save(models.Model):
     In this table, user only can save same recipe, ingredient, tag for more than one time.
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_save", blank=True, null=True)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="saved_recipe")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="saved_recipe", blank=True, null=True)
     tag = models.ForeignKey("Tag", on_delete=models.CASCADE, related_name="saved_tag", blank=True, null=True)
     ingredient = models.ForeignKey("Ingredient", on_delete=models.CASCADE, related_name="saved_ingredient", blank=True, null=True)
 
@@ -128,8 +128,8 @@ class Save(models.Model):
             ("user", "tag"),
             ("user", "ingredient")
         ]
-    
-    
+
+
 
 
 class RecipePhoto(models.Model):

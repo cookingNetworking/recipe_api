@@ -140,7 +140,6 @@ class RedisHandler:
         :param increment_value: The increase value of the recipe staff. Must be an integer.
         """
         value = self.get_hkey(hkey_name, f"{recipe_id}")
-        print(value)
         if value is not None:
             self.redis_client.hincrby(f'Recipe_{hkey_name}', f"{recipe_id}", increment_value)
         else:

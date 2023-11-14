@@ -47,7 +47,7 @@ redis_client1 = django_redis.get_redis_connection("default")
                 description="Comma separated list of name to filter.",
             ),
             OpenApiParameter(
-                "Ingreduents",
+                "Ingredients",
                 OpenApiTypes.STR,
                 description="Comma seprated list of ingredient name to filter.",
             ),
@@ -116,11 +116,11 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
             if search_tags:
                 tags = search_tags.split(",")
-                models.Tag.filter(name__in=tags).update(views=F('views') + 1)
+                models.Tag.objects.filter(name__in=tags).update(views=F('views') + 1)
 
             if search_ingredients:
                 ingredients = search_ingredients.split(",")
-                models.Ingredinet.filter(name__in=ingredients).update(views=F('views') + 1)
+                models.Ingredient.objects.filter(name__in=ingredients).update(views=F('views') + 1)
             return response
         except ValidationError as e:
         # Handle validation errors (like email already exists) here
@@ -386,7 +386,7 @@ def like_button(request):
             status_codes=['500']
         )
     ],
-        
+
 )
 @api_view(['POST'])
 @csrf_protect
@@ -395,17 +395,19 @@ def save_button(request):
     """The function for save recipe or not !"""
     try:
         recipe = models.Recipe.objects.filter(id=request.data.get('recipe_id')).first()
+        print(recipe)
         tag = models.Tag.objects.filter(name=request.data.get('tag')).first()
         ingredient = models.Ingredient.objects.filter(name=request.data.get('ingredient')).first()
         if not recipe and not tag and not ingredient:
-            return Response({"error":"Check recipe_id , tag or ingredient at least in is in request!!"}, status=status.HTTP_404_NOT_FOUND) 
+            return Response({"error":"Check recipe_id , tag or ingredient at least in is in request!!"}, status=status.HTTP_404_NOT_FOUND)
         #save_action is import form .utils
         if recipe:
-            saved_action(user=request.user, obj=recipe)
+            return saved_action(user=request.user, obj=recipe)
         elif tag:
-            saved_action(user=request.user, obj=tag)
-        elif ingredient: 
-            saved_action(user=request.user, obj=ingredient)
+            return saved_action(user=request.user, obj=tag)
+        elif ingredient:
+            return saved_action(user=request.user, obj=ingredient)
+        return Response({'error': 'No valid object found'}, status=status.HTTP_400_BAD_REQUEST)
     except ValidationError as e :
         return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e :

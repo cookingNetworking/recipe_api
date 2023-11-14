@@ -39,10 +39,13 @@ def generate_presigned_url(bucket_name, object_name, expiration=3600):
 def saved_action(user, obj):
     """Funciton for save action."""
     recipe_redis_handler = RedisHandler(redis_client1)
+    print(obj)
     if isinstance(obj, models.Recipe):
+        print("2")
         save, created = models.Save.objects.get_or_create(user=user, recipe=obj)
         if created:
-            obj.save_count =F('save_count') + 1
+            print(obj.save_count)
+            obj.save_count = F('save_count') + 1
             obj.save(update_fields=['save_count'])
             recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id)
             return Response({'message':'User save the recipe!'}, status=status.HTTP_200_OK)
@@ -53,7 +56,7 @@ def saved_action(user, obj):
             recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id, increment_value=-1)
             return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+            return Response({'error': 'Unknow error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     elif isinstance(obj, models.Tag):
         save, created = models.Save.objects.get_or_create(user=user, tag=obj)
         if created:
@@ -66,7 +69,7 @@ def saved_action(user, obj):
             save.delete()
             return Response({'message':'User unsaved the Tag !'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  
+            return Response({'error': 'Unknow error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     elif isinstance(obj, models.Ingredient):
         save, created = models.Save.objects.get_or_create(user=user, ingredient=obj)
         if created:
@@ -79,10 +82,10 @@ def saved_action(user, obj):
             save.delete()
             return Response({'message':'User unsaved the ingredient !'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': '未知錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+            return Response({'error': 'Unknow error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return Response({'error': '無效的對象類型'}, status=status.HTTP_400_BAD_REQUEST)    
-   
+        return Response({'error': 'No valid object found'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UnsafeMethodCSRFMixin(ModelViewSet):
     """Amixin that applies CSRF protection to unsafe HTTP methods (POST, PATCH, PUT, DELETE....)"""
@@ -91,7 +94,7 @@ class UnsafeMethodCSRFMixin(ModelViewSet):
         if request.method not in ['GET', 'HEAD', 'OPTIONS', 'TRASE']:
             return csrf_protect(super().dispatch)(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
-    
+
 
 class CustomSlugRelatedField(serializers.SlugRelatedField):
     """Custom slugrelated field that object does not exist return normal data!"""
@@ -103,6 +106,6 @@ class CustomSlugRelatedField(serializers.SlugRelatedField):
             error_detail = e.detail[0]
             if "does not exist" in error_detail:
                 return data
-            raise e  
-        
+            raise e
+
 
