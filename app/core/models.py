@@ -15,7 +15,7 @@ ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
 
 PHOTO_CATEGORY = (('main','Main'),('sub_2','Sub_2'),('sub_3','Sub_3'))
 
-RATING = (('1','*'),('2','**'),('3','***'),('4','****'),('5','*****'))
+RATING = ((1,'*'),(2,'**'),(3,'***'),(4,'****'),(5,'*****'))
 
 def generate_prefixed_uuid():
     return f"test_{uuid.uuid4()}"
@@ -33,7 +33,7 @@ def step_image_file_path(instance, filename):
     return f'recipe/{instance.recipe}/{instance.step}/{filename}'
 
 def comment_image_file_path(instance, filename):
-    return f'recipe/{instance.recipe}/comment{filename}'    
+    return f'recipe/{instance.recipe}/comment{filename}'
 
 class UserManager(BaseUserManager):
     """Manage for users."""
@@ -108,12 +108,12 @@ class RecipeComment(models.Model):
     The relatrionship for user and recipe which  user could make a comment!
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_comment")
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="commeted_recipe")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="recipe_comment")
     comment = models.TextField(blank=True)
     rating = models.IntegerField(choices=RATING, default="1", help_text="rating form 1 to 5")
-    Photo = models.ImageField(null=True, upload_to=comment_image_file_path)
+    Photo = models.ImageField(null=True, blank=True, upload_to=comment_image_file_path)
     crated_time = models.DateTimeField(auto_now=True)
-    
+
 class Like(models.Model):
     """
     The relationship of user and recipe.

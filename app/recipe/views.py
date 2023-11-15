@@ -202,8 +202,11 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         response = super().destroy(self, request, *args, **kwargs)
         recipe_id = request.data.get("id")
         self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_hkey(hkey_name="likes", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_hkey(hkey_name="save_count", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_prev_hkey(hkey_name="views", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_prev_hkey(hkey_name="likes", recipe_id=recipe_id)
+        self.recipe_redis_handler.del_prev_hkey(hkey_name="save_count", recipe_id=recipe_id)
         return response
 
 

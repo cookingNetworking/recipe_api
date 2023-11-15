@@ -16,7 +16,7 @@ redis_client1 = django_redis.get_redis_connection("default")
 
 @shared_task
 def update_recipe_views_in_redis():
-    top_recipes = Recipe.objects.prefetch_related('photos', 'steps').all()
+    top_recipes = Recipe.objects.prefetch_related('photos', 'steps', 'recipe_comment').all()
 
     serializer_recipes = ReciperSQLDetailSerializer(top_recipes, many=True).data
     recipe_redis_handler = RedisHandler(redis_client1)
@@ -27,13 +27,16 @@ def update_recipe_views_in_redis():
 def update_recipe(hkey: str, recipe_hash , previous_hash):
     """The function to distinguish which recipe id need to update."""
     update_recipe = {}
-    recipe_redis_handler = RedisHandler(redis_client1)
     for k ,v in recipe_hash.items():
         previous_value = previous_hash.get(k)
         if previous_value is not None and v != previous_value:
             update_recipe[k] = v
+            redis_client1.hset(f"Prev_{hkey}",f"{k}", v)
         elif previous_value is None:
-            recipe_redis_handler.del_hkey(hkey_name=hkey, recipe_id=int(k))
+            update_recipe[k] = v
+            redis_client1.hset(f"Prev_{hkey}",f"{k}",v)
+        elif previous_value is not None and v == previous_value:
+            pass
 
     return update_recipe
 

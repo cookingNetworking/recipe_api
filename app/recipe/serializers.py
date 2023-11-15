@@ -12,7 +12,7 @@ redis_client1 = django_redis.get_redis_connection("default")
 
 class UserMinimalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = get_user_model()  
+        model = get_user_model()
         fields = ['id', 'username']
 
 class TagSerialzier(serializers.ModelSerializer):
@@ -134,6 +134,31 @@ class RecipeSerialzier(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class RecipeMinialSerialzier(serializers.ModelSerializer):
+    """Serializer for only quert recipe title and id."""
+    class Meta:
+        model = Recipe
+        fields = ["id", "title", 'user']
+
+class RecipeCommentSerializer(serializers.ModelSerializer):
+    """Serializer for recipe comment."""
+    user = UserMinimalSerializer(read_only=True)
+    recipe = RecipeMinialSerialzier(read_only=True)
+    class Meta:
+        model = RecipeComment
+        fields=["id", "user", "recipe", "comment", "rating", "Photo", "crated_time"]
+
+    def create(self, validated_data):
+        """Create with serializer"""
+        req_user = self.context["request"].user
+        recipe_id = self.context.get("recipe_id")
+        recipe = Recipe.objects.get(id=recipe_id) if recipe_id else None
+        if recipe:
+            comment = RecipeComment.objects.create(user=req_user, recipe=recipe, **validated_data)
+            return comment
+        else:
+            raise serializers.ValidationError("Recipe is required to create a comment")
+
 class ReciperRedisDetailSerializer(serializers.Serializer):
     """Serializer for recipe detail !"""
     id = serializers.IntegerField()
@@ -148,7 +173,7 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
     views = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     save_count = serializers.SerializerMethodField()
-
+    recipe_comment = RecipeCommentSerializer(many=True, required=False)
     photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
 
@@ -156,7 +181,7 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
 
     class Meta:
         model = None
-        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps','likes','save_count','views']
+        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps','likes','save_count','views', 'recipe_comment']
         read_only_fields = ['id']
 
     def __init__(self, *args, **kwargs):
@@ -182,18 +207,12 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
 
 class ReciperSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
+    recipe_comment = RecipeCommentSerializer(many=True, required=False,read_only=True)
     class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views']
+        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'recipe_comment']
 
-# class RecipeCommentSerializer(serializers.ModelSerializer):
-#     """Serializer for recipe comment."""
-#     user = UserMinimalSerializer()
-#     class Meta:
-#         model = RecipeComment
-#         fields=["id", "user", "recipe", "comment", "rating", "Photo", "crated_time"]
-#     def create(self, validated_data):
-#         """Create with serializer"""
-#         req_user = self.context["request"].user
+
+
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""

@@ -77,25 +77,20 @@ class RedisHandler:
         """
         Get the full hash set !
         """
-        data = self.redis_client.get(f'Recipe_{hkey_name}')
-        if data:
-            try:
-                print(type(json.loads(data.decode('utf-8'))))
-                return json.loads(data.decode('utf-8'))
-            except json.JSONDecodeError as e:
-                    print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
-                    return None
+        try:
+            return json.loads(self.redis_client.hgetall(f'Recipe_{hkey_name}').decode('utf-8'))
+        except json.JSONDecodeError as e:
+                print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
+                return None
     def get_prev_hset(self, hkey_name: str):
         """
         Specilized for get hash
         """
-        data = self.redis_client.get(f'Prev_{hkey_name}')
-        if data:
-            try:
-                return json.loads(data.decode('utf-8'))
-            except json.JSONDecodeError as e:
-                    print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
-                    return None
+        try:
+            return json.loads(self.redis_client.hgetall(f'Recipe_{hkey_name}').decode('utf-8'))
+        except json.JSONDecodeError as e:
+                print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
+                return None
 
     def get_hkey(self, hkey_name: str, recipe_id: int):
         """
@@ -121,6 +116,18 @@ class RedisHandler:
             print(e)
             return False
 
+    def del_prev_hkey(self, hkey_name: str, *recipe_id: int):
+        """
+        Del  value of giving recipe id.
+        :param recipe_id: The ID of the recipe. Must be an integer or list.
+        """
+        try:
+            del_id = [str(key) for key in recipe_id]
+            self.redis_client.hdel(f"Prev_{hkey_name}", *del_id)
+            return True
+        except Exception as e:
+            print(e)
+            return False
     def update_hkey(self, hkey_name: str, *recipe_id: int, value: str):
         """
         Update the hkey value in hash .
@@ -130,7 +137,7 @@ class RedisHandler:
         """
         value = self.get_hkey(hkey_name, recipe_id)
         if value is not None:
-            self.redis_client.hmset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
+            self.redis_client.hset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
         else:
             self.set_hkey(hkey_name=hkey_name, recipe_id=recipe_id, value=value)
 
