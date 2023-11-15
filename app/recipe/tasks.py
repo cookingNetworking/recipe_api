@@ -11,6 +11,7 @@ from core.models import Recipe
 from .redis_set import RedisHandler
 import django_redis
 
+celery_app = Celery('app', backend='redis://cache:6379/1' ,broker='redis://cache:6379/1')
 redis_client1 = django_redis.get_redis_connection("default")
 
 @shared_task

@@ -1,14 +1,19 @@
 """Serializer for recipe!"""
 
 from rest_framework import serializers
-
-from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient
+from django.contrib.auth import get_user_model
+from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
 from .utils import CustomSlugRelatedField
 from .redis_set import RedisHandler
 
 import django_redis
 
 redis_client1 = django_redis.get_redis_connection("default")
+
+class UserMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()  
+        fields = ['id', 'username']
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
@@ -56,10 +61,11 @@ class RecipeSerialzier(serializers.ModelSerializer):
     )
     photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
+    user = UserMinimalSerializer(read_only=True)
     class Meta:
         model = Recipe
-        fields = ['id', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps']
-        read_only_fields = ['id',]
+        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps']
+        read_only_fields = ['id']
 
     def _get_or_create_tags(self, tags, recipe):
         """Handle getting or tags as needed."""
@@ -135,7 +141,7 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
     cost_time = serializers.CharField(max_length=50)
     description = serializers.CharField(max_length=255)
     create_time = serializers.DateTimeField(required=False)
-
+    user = UserMinimalSerializer(read_only=True)
     ingredients = serializers.ListField(child=serializers.CharField(max_length=100))
     tags = serializers.ListField(child=serializers.CharField(max_length=100))
 
@@ -148,9 +154,10 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
 
     recipe_redis_handler = RedisHandler(redis_client=redis_client1)
 
-    class Meta(RecipeSerialzier.Meta):
+    class Meta:
         model = None
-        fields = RecipeSerialzier.Meta.fields + ['likes','save_count','views']
+        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps','likes','save_count','views']
+        read_only_fields = ['id']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -178,6 +185,15 @@ class ReciperSQLDetailSerializer(RecipeSerialzier):
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views']
 
+# class RecipeCommentSerializer(serializers.ModelSerializer):
+#     """Serializer for recipe comment."""
+#     user = UserMinimalSerializer()
+#     class Meta:
+#         model = RecipeComment
+#         fields=["id", "user", "recipe", "comment", "rating", "Photo", "crated_time"]
+#     def create(self, validated_data):
+#         """Create with serializer"""
+#         req_user = self.context["request"].user
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""

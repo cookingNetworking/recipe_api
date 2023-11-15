@@ -11,16 +11,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # 查找在 INSTALLED_APPS 設置的異步任務
 app.autodiscover_tasks()
 
-app.conf.beat_schedule = {
-    'update-recipe-views': {
-        'task': 'recipe.tasks.update_recipe_views_in_redis',
-        'schedule': crontab(minute='*/30'),  # every 30 minutes
-    },
-    'consist-recipe-to-sql':{
-        'task': 'recipe.tasks.consist_redis_and_sql_data',
-        'schedule': crontab(minute='*/15'),  # every 15 minutes
-    }
-}
+app.conf.beat_schedule = settings.CELERY_BEAT_SCHEDULE
 
 
 

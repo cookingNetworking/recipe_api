@@ -9,7 +9,7 @@ from rest_framework import (
         filters
 )
 
-from rest_framework.exceptions import ValidationError
+ 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -33,6 +33,7 @@ from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin, saved_action
 from .redis_set import RedisHandler
+from rest_framework.exceptions import ValidationError
 import django_redis
 
 redis_client1 = django_redis.get_redis_connection("default")
@@ -156,13 +157,13 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
-
+            print(cache_data)
             if cache_data:
                 cache_recipe = serializers.ReciperRedisDetailSerializer(data=cache_data)
-                cache_recipe.is_valid(raise_exception=True)
+                print(cache_recipe)
                 self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
                 self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
-                return Response({'recipe': cache_recipe.data}, status.HTTP_200_OK)
+                return Response({'recipe': cache_recipe.initial_data}, status.HTTP_200_OK)
 
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
@@ -412,4 +413,7 @@ def save_button(request):
         return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e :
         return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
 

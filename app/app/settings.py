@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 import os
 import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -226,6 +227,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
+CELERY_IMPORTS = ('recipe.tasks',)
 CELERY_BROKER_URL = 'redis://cache:6379/1'
 CELERY_RESULT_BACKEND = 'redis://cache:6379/1'
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -234,6 +236,18 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+
+CELERY_BEAT_SCHEDULE = {
+    'update-recipe-views': {
+        'task': 'recipe.tasks.update_recipe_views_in_redis',
+        'schedule': crontab(minute='*/30'),  # every 30 minutes
+    },
+    'consist-recipe-to-sql':{
+        'task': 'recipe.tasks.consist_redis_and_sql_data',
+        'schedule': crontab(minute='*/15'),  # every 15 minutes
+    }
+}
+
 
 CROS_ORIGIN_ALLOW_ALL = True
 
