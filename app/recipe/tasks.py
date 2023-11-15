@@ -24,18 +24,22 @@ def update_recipe_views_in_redis():
     for data in serializer_recipes:
         recipe_redis_handler.set_recipe(recipe_id=data['id'], data=data)
 
-def update_recipe(hkey: str, recipe_hash: dict, previous_hash: dict):
+def update_recipe(hkey: str, recipe_hash , previous_hash):
     """The function to distinguish which recipe id need to update."""
     update_recipe = {}
     recipe_redis_handler = RedisHandler(redis_client1)
+    reci
     for k ,v in recipe_hash.items():
-        previous_value = previous_hash.get("k")
+        previous_value = previous_hash.get(k)
         if previous_value is not None and v != previous_value:
             update_recipe[k] = v
         elif previous_value is None:
             recipe_redis_handler.del_hkey(hkey_name=hkey, recipe_id=int(k))
 
     return update_recipe
+
+
+
 
 
 @shared_task

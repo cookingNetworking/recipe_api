@@ -80,6 +80,7 @@ class RedisHandler:
         data = self.redis_client.get(f'Recipe_{hkey_name}')
         if data:
             try:
+                print(type(json.loads(data.decode('utf-8'))))
                 return json.loads(data.decode('utf-8'))
             except json.JSONDecodeError as e:
                     print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")

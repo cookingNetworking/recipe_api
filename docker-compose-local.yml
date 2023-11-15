@@ -29,7 +29,7 @@ services:
       context: .
       args:
         - DEV=true
-    command: celery -A app worker --loglevel=info 
+    command: celery -A app worker --loglevel=info
     volumes:
       - dev-static-data:/vol/worker
     environment:
@@ -47,7 +47,8 @@ services:
       context: .
       args:
         - DEV=true
-    command:  /bin/sh -c "chmod 644 /home/celery/var/run/celerybeat-schedule && exec your_main_command"
+        - SERVICE_TYPE=beat
+    command: celery -A app beat -l info
     volumes:
       - dev-static-data:/vol/beat
     environment:
@@ -58,7 +59,7 @@ services:
       - DEBUG=1
     depends_on:
       - db
-      - cache    
+      - cache
   db:
     image: postgres:13-alpine
     volumes:

@@ -114,9 +114,9 @@ CACHES = {
         "LOCATION": "redis://cache:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",  
-            "CONNECTION_POOL_CLASS_KWARGS": {  
-                "max_connections": 50,  
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
                 "retry_on_timeout": True
             }
         }
@@ -126,9 +126,9 @@ CACHES = {
         "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",  
-            "CONNECTION_POOL_CLASS_KWARGS": {  
-                "max_connections": 50,  
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
                 "retry_on_timeout": True
             }
         }
@@ -211,7 +211,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication'
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,  
+    'PAGE_SIZE': 50,
 
 }
 
@@ -247,6 +247,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*/15'),  # every 15 minutes
     }
 }
+CELERY_BEAT_SCHEDULE_FILENAME = '/home/celery/var/run/celerybeat-schedule'
 
 
 CROS_ORIGIN_ALLOW_ALL = True
