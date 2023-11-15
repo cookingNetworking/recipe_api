@@ -28,7 +28,6 @@ def update_recipe(hkey: str, recipe_hash , previous_hash):
     """The function to distinguish which recipe id need to update."""
     update_recipe = {}
     recipe_redis_handler = RedisHandler(redis_client1)
-    reci
     for k ,v in recipe_hash.items():
         previous_value = previous_hash.get(k)
         if previous_value is not None and v != previous_value:
@@ -39,8 +38,18 @@ def update_recipe(hkey: str, recipe_hash , previous_hash):
     return update_recipe
 
 
-
-
+@shared_task
+def set_up_for_server_start():
+    """Create hash and prev hash in the begain of server start."""
+    recipe_redis_handler = RedisHandler(redis_client1)
+    recipes = Recipe.objects.values("id", "views", "likes", "save_count")
+    try:
+        for recipe in recipes:
+            recipe_redis_handler.set_hkey(hkey_name="views", recipe_id=int(recipe["id"]), initinal_value=recipe["views"])
+            recipe_redis_handler.set_hkey(hkey_name="likes", recipe_id=int(recipe["id"]), initinal_value=recipe["likes"])
+            recipe_redis_handler.set_hkey(hkey_name="save_count", recipe_id=int(recipe["id"]), initinal_value=recipe["save_count"])
+    except Exception as e:
+        print(e)
 
 @shared_task
 def consist_redis_and_sql_data():

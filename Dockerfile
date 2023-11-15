@@ -37,7 +37,7 @@ RUN if [ "$SERVICE_TYPE"="beat" ]; then \
     mkdir -p /home/celery/var/run && \
     touch /home/celery/var/run && \
     chown -R django-user:django-user /home/celery/var/run && \
-    chmod -R 755 /home/celery/var/run && \
+    chmod -R 755 /home/celery/var/run ; \
     fi
 
 ENV PATH="/scripts:/py/bin:$PATH"

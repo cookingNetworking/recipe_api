@@ -245,7 +245,8 @@ CELERY_BEAT_SCHEDULE = {
     'consist-recipe-to-sql':{
         'task': 'recipe.tasks.consist_redis_and_sql_data',
         'schedule': crontab(minute='*/15'),  # every 15 minutes
-    }
+    },
+
 }
 CELERY_BEAT_SCHEDULE_FILENAME = '/home/celery/var/run/celerybeat-schedule'
 
