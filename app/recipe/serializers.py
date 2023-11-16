@@ -144,9 +144,14 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
     """Serializer for recipe comment."""
     user = UserMinimalSerializer(read_only=True)
     recipe = RecipeMinialSerialzier(read_only=True)
+    recipe_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        queryset=Recipe.objects.all(),
+        source='recipe'
+    )
     class Meta:
         model = RecipeComment
-        fields=["id", "user", "recipe", "comment", "rating", "Photo", "crated_time"]
+        fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "crated_time"]
 
     def create(self, validated_data):
         """Create with serializer"""
@@ -187,12 +192,10 @@ class ReciperRedisDetailSerializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
     def get_views(self, obj):
         """Get recipe views from redis"""
         print(obj)
         return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj['id'])
-
 
     def get_likes(self, obj):
         """Get recipe likes from redis"""

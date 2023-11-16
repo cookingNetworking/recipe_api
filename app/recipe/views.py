@@ -21,7 +21,7 @@ from drf_spectacular.utils import (
         OpenApiParameter,
         OpenApiTypes
 )
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
 from django.db.models import Q, F
 
@@ -74,7 +74,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
-
 
     def get_serializer_class(self):
         """Return serializer class for request!"""
@@ -208,6 +207,36 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         self.recipe_redis_handler.del_prev_hkey(hkey_name="likes", recipe_id=recipe_id)
         self.recipe_redis_handler.del_prev_hkey(hkey_name="save_count", recipe_id=recipe_id)
         return response
+
+@method_decorator(csrf_protect, name='dispatch')
+@extend_schema(
+        parameters=[
+        OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+        ),
+         OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+    ],
+)
+class RecipeCommentViewSet(
+                            mixins.CreateModelMixin,
+                            mixins.DestroyModelMixin,
+                            mixins.UpdateModelMixin,
+                            viewsets.GenericViewSet):
+    """Viewset for recipe comment!"""
+    serializer_class = serializers.RecipeCommentSerializer
+    queryset = models.RecipeComment.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    
 
 
 class BaseRecipeAttrViewSet(

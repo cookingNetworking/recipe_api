@@ -2,7 +2,6 @@ version: '3.9'
 
 services:
   app:
-    image: as2229181/cooknetwork:app_v1.0
     build:
       context: .
       args:
@@ -20,7 +19,6 @@ services:
       - db
       - cache
   worker:
-    image: as2229181/cooknetwork:worker_v1.0
     build:
       context: .
       args:

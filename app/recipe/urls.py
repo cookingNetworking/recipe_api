@@ -9,6 +9,7 @@ router = DefaultRouter()
 router.register('recipes', views.RecipeViewSet)
 router.register('tags', views.TagViewSet)
 router.register('ingredients', views.IngredientViewSet)
+router.register('comments', views.RecipeCommentViewSet)
 urlpatterns = [
         path('',  include(router.urls)),
         path('likes', views.like_button, name="like-recipe"),
