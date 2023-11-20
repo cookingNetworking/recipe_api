@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","cookingnetwork.co","3.104.38.255"]
+ALLOWED_HOSTS = ["localhost","cookingnetwork.co","3.104.38.255",'ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com']
 
 
 INSTALLED_APPS = [
@@ -114,14 +114,11 @@ CACHES = {
     }
 }
 
-CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = False
 
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
 
-CORS_ALLOWED_ORIGINS = [
-    'https://cookingnetwork.vercel.app',
-    # other allowed domains...
-    ]
+
 
 CORS_ALLOW_CREDENTIALS = True
 
