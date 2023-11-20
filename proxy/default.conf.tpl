@@ -10,7 +10,7 @@ server {
         include /etc/nginx/uwsgi_params;
         client_max_body_size 10M;
 	
-	add_header 'Access-Control-Allow-Origin'  'https://cookingnetwork.vercel.app';  
+	    add_header 'Access-Control-Allow-Origin'  'https://cookingnetwork.vercel.app';  
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
         add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
         if ($request_method = 'OPTIONS') {
