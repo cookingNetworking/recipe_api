@@ -116,8 +116,8 @@ CACHES = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    'https://cookingnetwork.vercel.app/',
-    'http://localhost:3000/',
+    'https://cookingnetwork.vercel.app',
+    'http://localhost:3000',
     # other allowed domains...
     ]
 
