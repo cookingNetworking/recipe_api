@@ -55,7 +55,6 @@ services:
     image: redis:7.2.1-alpine
 
   proxy:
-    image: as2229181/cooknetwork:proxy_v1.0
     build:
       context: ./proxy
     restart: always
