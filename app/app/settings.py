@@ -114,10 +114,12 @@ CACHES = {
     }
 }
 
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SECURE = True
 
 CORS_ALLOWED_ORIGINS = [
     'https://cookingnetwork.vercel.app',
-    'http://localhost:3000',
     # other allowed domains...
     ]
 
