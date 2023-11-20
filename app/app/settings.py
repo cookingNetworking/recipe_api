@@ -114,17 +114,12 @@ CACHES = {
     }
 }
 
-CORS_ORIGIN_WHITELIST = [
-        'https://cookingnetowrk.vercel.app/',
-    'http://localhost:3000/',
-]
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
-            'https://cookingnetwork.vercel.app',
-                # other allowed domains...
-                ]
+    'https://cookingnetwork.vercel.app/',
+    'http://localhost:3000/',
+    # other allowed domains...
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
