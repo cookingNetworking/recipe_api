@@ -113,7 +113,7 @@ CACHES = {
         }
     }
 }
-
+CROS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOWED_ORIGINS = [
     'https://cookingnetwork.vercel.app',
@@ -219,4 +219,4 @@ CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
-CROS_ORIGIN_ALLOW_ALL = True
+
