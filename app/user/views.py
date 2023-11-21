@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
-
+from django.middleware.csrf import get_token
 from django.core.cache import cache
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model, login, logout
@@ -633,7 +633,8 @@ class GetCsrfToken(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
-        return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method '}, status=status.HTTP_200_OK)
+        csrf_token = get_token(request)
+        return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method ','csrfToken': csrf_token}, status=status.HTTP_200_OK)
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
