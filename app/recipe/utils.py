@@ -52,8 +52,9 @@ def saved_action(user, obj):
         elif save:
             obj.save_count =F('save_count') - 1
             obj.save(update_fields=['save_count'])
+            print(obj.id)
             save.delete()
-            recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id, increment_value=-1)
+            recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id, increment_value= -1)
             return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Unknow error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

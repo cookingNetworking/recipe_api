@@ -58,7 +58,7 @@ redis_client1 = django_redis.get_redis_connection("default")
 @method_decorator(csrf_protect, name='dispatch')
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
-    serializer_class = serializers.ReciperSQLDetailSerializer
+    serializer_class = serializers.RecipeSQLDetailSerializer
     queryset = models.Recipe.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backend = [filters.OrderingFilter]
@@ -105,6 +105,17 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
+    def to_representation(self, instance):
+        """Transform to leagal format"""
+        ret = super().to_representation(instance)
+        # tranform datetime 
+        if 'create_time' in ret:
+            ret['create_time'] = ret['create_time'].isoformat()
+        if 'recipe_comment' in ret:
+            for comment in ret['recipe_comment']:
+                if 'crated_time' in comment:
+                    comment['crated_time'] = comment['crated_time'].isoformat()
+        return ret
 
     def list(self, request, *args, **kwargs):
         """list of recipe!"""
@@ -157,16 +168,21 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
             if cache_data:
-                cache_recipe = serializers.ReciperRedisDetailSerializer(data=cache_data)
-                print(cache_recipe)
-                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
-                self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
-                return Response({'recipe': cache_recipe.initial_data}, status.HTTP_200_OK)
+                self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=recipe_id)
+                cache_data['recipe_comment'] = [{'recipe_id': recipe_id}]
+                print(cache_data)
+                cache_recipe = serializers.RecipeRedisDetailSerializer(data=cache_data)
+                cache_recipe.is_valid(raise_exception=True)
+                processed_data = cache_recipe.to_representation(cache_recipe.validated_data)
+                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=processed_data)
+                
+                return Response({'recipe': processed_data}, status.HTTP_200_OK)
 
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
-            recipe = serializers.ReciperSQLDetailSerializer(recipe_instance)
+            recipe = serializers.RecipeSQLDetailSerializer(recipe_instance)
             self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
+            print(recipe.data)
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
             return Response({'recipe':recipe.data}, status.HTTP_200_OK)
         except ValidationError as e :

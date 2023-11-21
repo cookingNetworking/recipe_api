@@ -79,7 +79,7 @@ class RedisHandler:
         Get the full hash set !
         """
         try:
-            return json.loads(self.redis_client.hgetall(f'Recipe_{hkey_name}'))
+            return self.redis_client.hgetall(f'Recipe_{hkey_name}')
         except json.JSONDecodeError as e:
                 print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
                 return None
@@ -89,7 +89,7 @@ class RedisHandler:
         Specilized for get hash
         """
         try:
-            return json.loads(self.redis_client.hgetall(f'Recipe_{hkey_name}'))
+            return self.redis_client.hgetall(f'Recipe_{hkey_name}')
         except json.JSONDecodeError as e:
                 print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
                 return None

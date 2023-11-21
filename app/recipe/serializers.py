@@ -151,7 +151,7 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = RecipeComment
-        fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "crated_time"]
+        fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "created_time"]
 
     def create(self, validated_data):
         """Create with serializer"""
@@ -164,51 +164,37 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError("Recipe is required to create a comment")
 
-class ReciperRedisDetailSerializer(serializers.Serializer):
+class RecipeRedisDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
-    id = serializers.IntegerField()
-    title = serializers.CharField(max_length=30)
-    cost_time = serializers.CharField(max_length=50)
-    description = serializers.CharField(max_length=255)
-    create_time = serializers.DateTimeField(required=False)
-    user = UserMinimalSerializer(read_only=True)
-    ingredients = serializers.ListField(child=serializers.CharField(max_length=100))
-    tags = serializers.ListField(child=serializers.CharField(max_length=100))
-
     views = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     save_count = serializers.SerializerMethodField()
     recipe_comment = RecipeCommentSerializer(many=True, required=False)
-    photos = RecipePhotoSerialzier(many=True, required=False)
-    steps = RecipeStepSerialzier(many=True, required=False)
-
     recipe_redis_handler = RedisHandler(redis_client=redis_client1)
 
-    class Meta:
-        model = None
-        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps','likes','save_count','views', 'recipe_comment']
-        read_only_fields = ['id']
+    class Meta(RecipeSerialzier.Meta):
+        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'recipe_comment']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def get_views(self, obj):
         """Get recipe views from redis"""
-        print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj['id'])
+        recipe_id = obj.get('id')
+        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=recipe_id)
 
     def get_likes(self, obj):
         """Get recipe likes from redis"""
-        print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj['id'])
+        recipe_id = obj.get('id')
+        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=recipe_id)
 
     def get_save_count(self, obj):
         """Get recipe likes from redis"""
-        print(obj)
-        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj['id'])
+        recipe_id = obj.get('id')
+        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=recipe_id)
 
 
-class ReciperSQLDetailSerializer(RecipeSerialzier):
+class RecipeSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     recipe_comment = RecipeCommentSerializer(many=True, required=False,read_only=True)
     class Meta(RecipeSerialzier.Meta):

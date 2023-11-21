@@ -112,7 +112,7 @@ class RecipeComment(models.Model):
     comment = models.TextField(blank=True)
     rating = models.IntegerField(choices=RATING, default="1", help_text="rating form 1 to 5")
     Photo = models.ImageField(null=True, blank=True, upload_to=comment_image_file_path)
-    crated_time = models.DateTimeField(auto_now=True)
+    created_time = models.DateTimeField(auto_now=True)
 
 class Like(models.Model):
     """

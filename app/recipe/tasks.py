@@ -6,7 +6,7 @@ Celery task for recipe!
 from celery import shared_task
 from celery import Celery
 
-from .serializers import ReciperSQLDetailSerializer
+from .serializers import RecipeSQLDetailSerializer
 from core.models import Recipe
 from .redis_set import RedisHandler
 import django_redis
@@ -18,7 +18,7 @@ redis_client1 = django_redis.get_redis_connection("default")
 def update_recipe_views_in_redis():
     top_recipes = Recipe.objects.prefetch_related('photos', 'steps', 'recipe_comment').all()
 
-    serializer_recipes = ReciperSQLDetailSerializer(top_recipes, many=True).data
+    serializer_recipes = RecipeSQLDetailSerializer(top_recipes, many=True).data
     recipe_redis_handler = RedisHandler(redis_client1)
 
     for data in serializer_recipes:
