@@ -108,7 +108,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     def to_representation(self, instance):
         """Transform to leagal format"""
         ret = super().to_representation(instance)
-        # tranform datetime 
+        # tranform datetime
         if 'create_time' in ret:
             ret['create_time'] = ret['create_time'].isoformat()
         if 'recipe_comment' in ret:
@@ -167,16 +167,16 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
+            print(cache_data, 1)
             if cache_data:
-                self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=recipe_id)
-                cache_data['recipe_comment'] = [{'recipe_id': recipe_id}]
-                print(cache_data)
+                self.recipe_redis_handler.increase_recipe_view(hkey_name="views", recipe_id=recipe_id)
+                print(cache_data,2)
                 cache_recipe = serializers.RecipeRedisDetailSerializer(data=cache_data)
                 cache_recipe.is_valid(raise_exception=True)
                 processed_data = cache_recipe.to_representation(cache_recipe.validated_data)
-                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=processed_data)
-                
-                return Response({'recipe': processed_data}, status.HTTP_200_OK)
+                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_recipe.data)
+
+                return Response({'recipe': cache_recipe.validated_data}, status.HTTP_200_OK)
 
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
@@ -252,7 +252,7 @@ class RecipeCommentViewSet(
     serializer_class = serializers.RecipeCommentSerializer
     queryset = models.RecipeComment.objects.all()
     permission_classes = [permissions.IsAuthenticated]
-    
+
 
 
 class BaseRecipeAttrViewSet(

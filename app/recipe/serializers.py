@@ -145,7 +145,6 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
     user = UserMinimalSerializer(read_only=True)
     recipe = RecipeMinialSerialzier(read_only=True)
     recipe_id = serializers.PrimaryKeyRelatedField(
-        write_only=True,
         queryset=Recipe.objects.all(),
         source='recipe'
     )
@@ -153,6 +152,11 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         model = RecipeComment
         fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "created_time"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # when action is create set recipe is write_only
+        if 'context' in kwargs and kwargs['context'].get('action') == 'create':
+            self.fields['recipe_id'].write_only = True
     def create(self, validated_data):
         """Create with serializer"""
         req_user = self.context["request"].user
@@ -178,20 +182,27 @@ class RecipeRedisDetailSerializer(RecipeSerialzier):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def to_representation(self, instance):
+        """Convert `instance` into JSON-serializable format."""
+        ret = super().to_representation(instance)
+        context = {'action': 'read'}
+        comment_serializer = RecipeCommentSerializer(instance.get('recipe_comment', []), many=True, context=context)
+        ret['recipe_comment'] = comment_serializer.data
+        return ret
+
     def get_views(self, obj):
         """Get recipe views from redis"""
-        recipe_id = obj.get('id')
-        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=recipe_id)
+        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj.get('id'))
 
     def get_likes(self, obj):
         """Get recipe likes from redis"""
-        recipe_id = obj.get('id')
-        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=recipe_id)
+
+        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj.get('id'))
 
     def get_save_count(self, obj):
         """Get recipe likes from redis"""
-        recipe_id = obj.get('id')
-        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=recipe_id)
+
+        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj.get('id'))
 
 
 class RecipeSQLDetailSerializer(RecipeSerialzier):
