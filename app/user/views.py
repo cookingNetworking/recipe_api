@@ -358,7 +358,7 @@ class LoginView(APIView):
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
 
-            return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
+            return Response({'message':'Login successed!','detail':{'user':user_json.data},"csrf_token":csrf_token}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
 
