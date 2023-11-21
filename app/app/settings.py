@@ -114,6 +114,8 @@ CACHES = {
     }
 }
 
+CSRF_COOKIE_DOMAIN = 'cookingnetwork.vercel.app'
+
 CSRF_COOKIE_SECURE = False
 
 SESSION_COOKIE_SECURE = False
