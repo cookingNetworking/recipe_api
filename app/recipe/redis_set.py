@@ -67,6 +67,7 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :param initinal_value: The initial value of the recipe staff. Must be an integer.
         """
+
         if self.redis_client.hget(f"Recipe_{hkey_name}",f"{recipe_id}"):
             return KeyError({"error":"This recipe id is used before, please check again!"})
         self.redis_client.hset(f"Recipe_{hkey_name}", f"{recipe_id}", initinal_value)
@@ -82,6 +83,7 @@ class RedisHandler:
         except json.JSONDecodeError as e:
                 print(f"Error decoding JSON for Recipe_{hkey_name}: {e}")
                 return None
+
     def get_prev_hset(self, hkey_name: str):
         """
         Specilized for get hash
