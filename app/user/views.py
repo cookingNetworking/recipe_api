@@ -633,7 +633,7 @@ class GetCsrfToken(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
-        csrf_token = get_token(request)
+        csrf_token = request.META.get('CSRF_COOKIE', '')
         return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method ','csrfToken': csrf_token}, status=status.HTTP_200_OK)
 
 
