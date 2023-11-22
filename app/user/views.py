@@ -614,7 +614,7 @@ def sign_up_vertify(request):
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 @extend_schema(
      responses={
                 200: Ok200serializer,
@@ -627,7 +627,6 @@ def sign_up_vertify(request):
                         status_codes=['200']
                     ),]
 )
-@method_decorator(ensure_csrf_cookie, name='dispatch')
 class GetCsrfToken(APIView):
     """Get csrf_token protect from csrf attact!!!"""
     permission_classes = [permissions.AllowAny]

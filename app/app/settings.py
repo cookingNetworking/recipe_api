@@ -118,6 +118,8 @@ CSRF_COOKIE_SECURE = False
 
 SESSION_COOKIE_SECURE = False
 
+CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app/']
+
 CORS_ALLOWED_ORIGINS = [
     'https://cookingnetwork.vercel.app',
     # other allowed domains...
