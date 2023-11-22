@@ -114,26 +114,15 @@ CACHES = {
     }
 }
 
+SESSION_COOKIE_SAMESITE = 'None'
 
 CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
 
-
 SESSION_COOKIE_SAMESITE = 'None'
 
-
-CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
 
 SESSION_COOKIE_SECURE = True
-
-CORS_ALLOWED_ORIGINS = [
-    'https://cookingnetwork.vercel.app',
-    # other allowed domains...
-    ]
 
 CORS_ALLOW_CREDENTIALS = True
 
