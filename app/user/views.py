@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
-
+from django.middleware.csrf import get_token
 from django.core.cache import cache
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model, login, logout
@@ -358,7 +358,7 @@ class LoginView(APIView):
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
 
-            return Response({'message':'Login successed!','detail':{'user':user_json.data}}, status=status.HTTP_200_OK)
+            return Response({'message':'Login successed!','detail':{'user':user_json.data},"csrf_token":csrf_token}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -632,7 +632,8 @@ class GetCsrfToken(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, format=None):
-        return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method '}, status=status.HTTP_200_OK)
+        csrf_token = request.META.get('CSRF_COOKIE', '')
+        return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method ','csrfToken': csrf_token}, status=status.HTTP_200_OK)
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
