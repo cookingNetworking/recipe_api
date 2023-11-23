@@ -1,7 +1,7 @@
 
 server {
     listen 80;
-    server_name cookingnetwork.co www.cookingnetwork.co; # 包括 www 子域
+    server_name cookingnetwork.co www.cookingnetwork.co; 
 
 
     location ^~ /.well-known/acme-challenge/ {

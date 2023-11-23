@@ -44,6 +44,7 @@ services:
     image: postgres:13-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
+      
     environment:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
@@ -63,19 +64,26 @@ services:
       - 80:8000
       - 443:8443
     volumes:
-      - certs:/etc/letsencrypt
-      - certbot-lib:/var/lib/letsencrypt
-      - certbot-log:/var/log/letsencrypt
-      - certbot-www:/var/www/certbot
+      - ./etc/letsencrypt:/etc/letsencrypt
+      - ./var/www/certbot:/var/www/certbot
+      - ./var/log/letsencrypt:/var/log/letsencrypt
+      - ./var/lib/letsencrypt:/var/lib/letsencrypt
       - dev-static-data:/vol/static
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
-
+  certbot:
+    image: certbot/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait ${$}; if ! [ -d \"/etc/letsencrypt/live/${DOMAIN}\" ]; then certbot certonly --nginx -d ${DOMAIN} -d www.${DOMAIN} --email ${EMAIL} --agree-tos --non-interactive --webroot-path=/var/www/certbot; fi; done;'"
+    environment:
+      - DOMAIN=cookingnetwork.co
+      - EMAIL=evo.derbro.2023@gmail.com
+    volumes:
+    - ./etc/letsencrypt:/etc/letsencrypt
+    - ./var/www/certbot:/var/www/certbot
+    - ./var/lib/letsencrypt:/var/lib/letsencrypt
+    - ./var/log/letsencrypt:/var/log/letsencrypt
 volumes:
   dev-db-data:
   dev-static-data:
-  certs:
-  certbot-lib:
-  certbot-log:
-  certbot-www:
+  
