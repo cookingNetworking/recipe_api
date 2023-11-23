@@ -8,4 +8,5 @@ if [ ! -d "/etc/letsencrypt/live/cookingnetwork.co" ]; then
 fi
 set -e
 envsubst < /etc/nginx/default.conf.tpl > /etc/nginx/conf.d/default.conf
+cat /etc/nginx/default.conf.tpl
 nginx -g 'daemon off;'
