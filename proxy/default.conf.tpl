@@ -19,8 +19,10 @@ server {
     listen 443 ssl; 
     server_name cookingnetwork.co www.cookingnetwork.co; 
 
-    ssl_certificate /etc/letsencrypt/live/cookingnetwork.co/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/cookingnetwork.co/privkey.pem;
+    if (-f /etc/letsencrypt/live/cookingnetwork.co/fullchain.pem) {
+        ssl_certificate /etc/letsencrypt/live/cookingnetwork.co/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/cookingnetwork.co/privkey.pem;
+    }
 
  
 
