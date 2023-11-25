@@ -21,6 +21,8 @@ services:
     depends_on:
       - db
       - cache
+    networks:
+      - webnet    
   worker:
     build:
       context: .
@@ -40,6 +42,8 @@ services:
     depends_on:
       - db
       - cache
+    networks:
+      - webnet    
   db:
     image: postgres:13-alpine
     volumes:
@@ -51,8 +55,12 @@ services:
       - POSTGRES_PASSWORD=changeme
       - TZ='GMT+8'
       - PGTZ='GMT+8'
+    networks:
+      - webnet    
   cache:
     image: redis:7.2.1-alpine
+    networks:
+      - webnet    
 
   proxy:
     build:
@@ -72,21 +80,24 @@ services:
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
+    networks:
+      - webnet
   certbot:
     build:
       context: ./certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $$$$; if ! [ -d \"/etc/letsencrypt/live/$${DOMAIN}\" ]; then certbot certonly --webroot --webroot-path /var/www/certbot -d $${DOMAIN} -d www.$${DOMAIN} --email $${EMAIL} --agree-tos --non-interactive --staging; fi; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $$$$; if ! [ -d \"/etc/letsencrypt/live/$${DOMAIN}\" ]; then certbot certonly --webroot -w /var/www/certbot -d $${DOMAIN} -d www.$${DOMAIN} --email $${EMAIL} --agree-tos --non-interactive --staging; fi; done;'"
     environment:
       - DOMAIN=cookingnetwork.co
       - EMAIL=evo.derbro.2023@gmail.com
-    depends_on:
-      - proxy
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./var/www/certbot:/var/www/certbot
       - ./var/lib/letsencrypt:/var/lib/letsencrypt
       - ./var/log/letsencrypt:/var/log/letsencrypt
+    networks:
+      - webnet
 volumes:
   dev-db-data:
   dev-static-data:
-  
+networks:
+  webnet:
