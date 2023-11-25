@@ -1,7 +1,8 @@
 
 server {
     listen 80;
-    server_name cookingnetwork.co www.cookingnetwork.co; 
+    listen [::]:80;
+    server_name cookingnetwork.co www.cookingnetwork.co;
 
 
     location ^~ /.well-known/acme-challenge/ {
@@ -16,22 +17,22 @@ server {
 }
 
 server {
-    listen 443 ssl; 
-    server_name cookingnetwork.co www.cookingnetwork.co; 
+    listen 443 ssl;
+    server_name cookingnetwork.co www.cookingnetwork.co;
 
     ssl_certificate /etc/letsencrypt/live/cookingnetwork.co/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/cookingnetwork.co/privkey.pem;
 
- 
+
 
     # static file
     location /static {
         alias /vol/static;
     }
 
-   
+
     location / {
-        uwsgi_pass app:9000; 
+        uwsgi_pass app:9000;
         include /etc/nginx/uwsgi_params;
         client_max_body_size 10M;
 
@@ -44,7 +45,7 @@ server {
         add_header 'Content-Type' 'text/plain charset=UTF-8';
         add_header 'Content-Length' 0;
         return 204;
-      
-    
+
+
         }
 }

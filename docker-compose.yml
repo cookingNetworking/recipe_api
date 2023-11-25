@@ -44,7 +44,7 @@ services:
     image: postgres:13-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
-      
+
     environment:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
@@ -75,16 +75,17 @@ services:
   certbot:
     build:
       context: ./certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $$$$; if ! [ -d \"/etc/letsencrypt/live/$${DOMAIN}\" ]; then certbot certonly --webroot --webroot-path=/var/www/certbot -d $${DOMAIN} -d www.$${DOMAIN} --email $${EMAIL} --agree-tos --non-interactive; fi; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 12h & wait $$$$; if ! [ -d \"/etc/letsencrypt/live/$${DOMAIN}\" ]; then certbot certonly --webroot --webroot-path /var/www/certbot -d $${DOMAIN} -d www.$${DOMAIN} --email $${EMAIL} --agree-tos --non-interactive; fi; done;'"
     environment:
       - DOMAIN=cookingnetwork.co
       - EMAIL=evo.derbro.2023@gmail.com
     volumes:
-    - ./etc/letsencrypt:/etc/letsencrypt
-    - ./var/www/certbot:/var/www/certbot
-    - ./var/lib/letsencrypt:/var/lib/letsencrypt
-    - ./var/log/letsencrypt:/var/log/letsencrypt
+      - ./etc/letsencrypt:/etc/letsencrypt
+      - ./var/www/certbot:/var/www/certbot
+      - ./var/lib/letsencrypt:/var/lib/letsencrypt
+      - ./var/log/letsencrypt:/var/log/letsencrypt
 volumes:
   dev-db-data:
   dev-static-data:
-  
+
+
