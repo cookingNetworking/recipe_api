@@ -61,7 +61,6 @@ services:
     image: redis:7.2.1-alpine
     networks:
       - webnet
-
   proxy:
     build:
       context: ./proxy
@@ -93,8 +92,11 @@ services:
       - ./var/www/certbot:/var/www/certbot
       - ./var/lib/letsencrypt:/var/lib/letsencrypt
       - ./var/log/letsencrypt:/var/log/letsencrypt
+    networks:
+      - webnet    
 volumes:
   dev-db-data:
   dev-static-data:
-
+networks:
+  webnet:
 
