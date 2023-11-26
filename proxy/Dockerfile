@@ -8,7 +8,8 @@ ENV APP_PORT=9000
 ENV DOMAIN=cookingnetwork.co
 
 USER root
-
+# 安装 Certbot
+RUN apk --no-cache add certbot
 
 COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./no-ssl.conf.tpl /etc/nginx/no-ssl.conf.tpl
@@ -21,6 +22,9 @@ RUN mkdir -p /vol/static && \
     chown nginx:nginx /etc/nginx/conf.d/default.conf && \
     chmod +x /run.sh
 
+RUN if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then \
+    certbot certonly --webroot -w /var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --staging; \
+    fi
 
 VOLUME /vol/static
 
