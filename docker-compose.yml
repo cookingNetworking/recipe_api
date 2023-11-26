@@ -84,6 +84,7 @@ services:
   certbot:
     build:
       context: ./certbot
+    entrypoint: [ "/init-certbot.sh" ]
     environment:
       - DOMAIN=cookingnetwork.co
       - EMAIL=evo.derbro.2023@gmail.com
@@ -93,10 +94,11 @@ services:
       - ./var/lib/letsencrypt:/var/lib/letsencrypt
       - ./var/log/letsencrypt:/var/log/letsencrypt
     networks:
-      - webnet    
+      - webnet
 volumes:
   dev-db-data:
   dev-static-data:
 networks:
   webnet:
+
 

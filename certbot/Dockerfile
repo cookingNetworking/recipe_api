@@ -6,5 +6,3 @@ RUN apk add certbot-nginx
 COPY ./init-certbot.sh /init-certbot.sh
 RUN chmod +x /init-certbot.sh
 
-CMD ["/init-certbot.sh"]
-
