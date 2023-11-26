@@ -1,8 +1,8 @@
-
 FROM certbot/certbot:v2.7.4
 
-RUN apk add certbot-nginx
+RUN pip3 install certbot-nginx
 
-COPY ./init-certbot.sh /init-certbot.sh
-RUN chmod +x /init-certbot.sh
-CMD ["/init-certbot.sh"]
+COPY ./run.sh /run.sh
+RUN chmod +x /run.sh
+
+ENTRYPOINT ["/run.sh"]
