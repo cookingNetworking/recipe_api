@@ -82,16 +82,13 @@ services:
     networks:
       - webnet
   certbot:
-    build:
-      context: ./certbot
-    environment:
-      - DOMAIN=cookingnetwork.co
-      - EMAIL=evo.derbro.2023@gmail.com
+    image: certbot/certbot
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./var/www/certbot:/var/www/certbot
       - ./var/lib/letsencrypt:/var/lib/letsencrypt
       - ./var/log/letsencrypt:/var/log/letsencrypt
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email evo.derbro.2023@gmail.com -d cookingnetwork.co -d www.cookingnetwork.co --agree-tos --non-interactive --staging
     networks:
       - webnet
 volumes:

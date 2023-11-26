@@ -1,4 +1,4 @@
-FROM certbot/certbot:v2.7.4
+FROM certbot/certbot:latest
 
 RUN pip3 install certbot-nginx
 
