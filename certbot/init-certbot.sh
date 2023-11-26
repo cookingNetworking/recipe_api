@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 DOMAIN="cookingnetwork.co"
 WWW_DOMAIN="www.cookingnetwork.co"
