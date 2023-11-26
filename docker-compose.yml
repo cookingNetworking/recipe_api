@@ -84,7 +84,6 @@ services:
   certbot:
     build:
       context: ./certbot
-    entrypoint: [ "/init-certbot.sh" ]
     environment:
       - DOMAIN=cookingnetwork.co
       - EMAIL=evo.derbro.2023@gmail.com
