@@ -3,7 +3,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
-from .utils import CustomSlugRelatedField
 from .redis_set import RedisHandler
 
 import django_redis
@@ -47,17 +46,27 @@ class RecipePhotoSerialzier(serializers.ModelSerializer):
         read_only_fields = ['id','recipe']
 
 
+class IngerdientminiSerializer(serializers.ModelSerializer):
+    """Serializer for Recipe ingredient"""
+    class Meta:
+        model = Ingredient
+        fields = ['id', 'name']
+        read_onlyfield = ['id', 'name']
+
+class TagminiSerializer(serializers.ModelSerializer):
+    """Serializer for Recipe ingredient"""
+    class Meta:
+        model = Tag
+        fields = ['id', 'name']
+        read_onlyfield = ['id', 'name']
+
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""
-    tags = CustomSlugRelatedField(
-        many=True,
-        slug_field='name',
-        queryset=Tag.objects.all()
+    tags = TagminiSerializer(
+        many=True
     )
-    ingredients = CustomSlugRelatedField(
+    ingredients = IngerdientminiSerializer(
         many=True,
-        slug_field='name',
-        queryset=Ingredient.objects.all()
     )
     photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
@@ -156,7 +165,7 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         # when action is create set recipe is write_only
         if 'context' in kwargs and kwargs['context'].get('action') == 'create':
-            self.fields['recipe_id'].write_only = True
+            self.fields['recipe_id'].write_only = True       
     def create(self, validated_data):
         """Create with serializer"""
         req_user = self.context["request"].user
@@ -181,14 +190,6 @@ class RecipeRedisDetailSerializer(RecipeSerialzier):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def to_representation(self, instance):
-        """Convert `instance` into JSON-serializable format."""
-        ret = super().to_representation(instance)
-        context = {'action': 'read'}
-        comment_serializer = RecipeCommentSerializer(instance.get('recipe_comment', []), many=True, context=context)
-        ret['recipe_comment'] = comment_serializer.data
-        return ret
 
     def get_views(self, obj):
         """Get recipe views from redis"""

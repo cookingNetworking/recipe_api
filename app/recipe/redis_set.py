@@ -3,6 +3,8 @@
 
 import random
 import json
+from core.models import Recipe
+from recipe import serializers
 
 class RedisHandler:
     """
@@ -51,6 +53,13 @@ class RedisHandler:
                 print(f"Error decoding JSON for Recipe_{recipe_id}: {e}")
                 return None
 
+    def update_recipe_in_cache(self, recipe_id):
+        """
+        Update recipe data in cahce
+        """
+        recipe = Recipe.objects.get(id=recipe_id)
+        serializer_recipe = serializers.RecipeSQLDetailSerializer(recipe)
+        self.set_recipe(recipe_id=recipe_id, data=serializer_recipe)
 
     def delete_recipe_in_cache(self, recipe_id):
         """

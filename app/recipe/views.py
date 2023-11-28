@@ -167,22 +167,16 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=int(recipe_id))
-            print(cache_data, 1)
             if cache_data:
-                self.recipe_redis_handler.increase_recipe_view(hkey_name="views", recipe_id=recipe_id)
-                print(cache_data,2)
-                cache_recipe = serializers.RecipeRedisDetailSerializer(data=cache_data)
-                cache_recipe.is_valid(raise_exception=True)
-                processed_data = cache_recipe.to_representation(cache_recipe.validated_data)
-                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_recipe.data)
-
-                return Response({'recipe': cache_recipe.validated_data}, status.HTTP_200_OK)
+                self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=recipe_id)
+                cache_data["views"] = cache_data.get("views", 0) + 1
+                self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
+                return Response({'recipe': cache_data}, status.HTTP_200_OK)
 
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
             recipe = serializers.RecipeSQLDetailSerializer(recipe_instance)
             self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
-            print(recipe.data)
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
             return Response({'recipe':recipe.data}, status.HTTP_200_OK)
         except ValidationError as e :
@@ -252,9 +246,34 @@ class RecipeCommentViewSet(
     serializer_class = serializers.RecipeCommentSerializer
     queryset = models.RecipeComment.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    recipe_redis_handler = RedisHandler(redis_client1)
 
-
-
+    def create(self, request, *args, **kwargs):
+        """Base create method and update the recipe with new comment in cache!"""
+        response = super.create(self, request, *args, **kwargs)
+        self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.get("recipe_id"))
+        return response
+     
+    def destroy(self, request, *args, **kwargs):
+        """Base destroy method and update the recipe with new comment in cache!"""
+        instance = self.get_object()
+        recipe_id = instance.recipe.id
+        self.perform_destroy(instance)
+        self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def perform_update(self, serializer):
+        """Base on UpdateModelMixin and update the recipe with new comment in cache! """
+        super().perform_update(serializer)
+        instance = serializer.instance
+        
+        # Ensure that the recipe instance exists before trying to access its id
+        if hasattr(instance, 'recipe') and instance.recipe:
+            recipe_id = instance.recipe.id
+            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
+        else:
+            # Handle the case where recipe is None, if necessary
+            pass
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
                             mixins.UpdateModelMixin,
