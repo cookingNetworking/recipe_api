@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
 
 
 INSTALLED_APPS = [
@@ -210,4 +210,27 @@ CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
-CROS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+CORS_ALLOWED_ORIGINS = [
+            "https://www.cookingnetwork.co",  # 允許前端域名
+            ]
+CORS_ALLOW_METHODS = [
+            'GET',
+            'POST',
+            'PUT',
+            'DELETE',
+            'PATCH' ]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+        'accept-encoding',
+            'authorization',
+                'content-type',
+                    'dnt',
+                        'origin',
+                            'user-agent',
+                                'x-csrftoken',
+                                    'x-requested-with',
+                                    ]
