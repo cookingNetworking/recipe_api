@@ -210,13 +210,11 @@ class RecipeSQLDetailSerializer(RecipeSerialzier):
     recipe_comment = RecipeCommentSerializer(many=True, required=False,read_only=True)
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'recipe_comment']
-
-
-
+        read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','recipe_comment']
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""
-    id = serializers.IntegerField(help_text="The ID of the recipe to like.")
+    recipe_id = serializers.IntegerField(help_text="The ID of the recipe to like.")
 
 class SaveActionSerializer(serializers.Serializer):
     """Serializer fot save action"""

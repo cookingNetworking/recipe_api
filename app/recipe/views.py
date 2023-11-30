@@ -59,29 +59,89 @@ redis_client1 = django_redis.get_redis_connection("default")
             500:serializers.ResponseSerializer
         },
         examples=[
-                OpenApiExample(
-                    "Bad request",
-                    value={"error":"error"},
-                    response_only=True,
-                    status_codes=['400']
-                ),
-                OpenApiExample(
-                    "Bad request",
-                    value={"error":"error","detail":"please check again!"},
-                    response_only=True,
-                    status_codes=['400']
-                ),
-                OpenApiExample(
-                    "Interval server error!",
-                    value={"error":"error","detail":"please check again!"},
-                    response_only=True,
-                    status_codes=['500']
-                ),
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
             ]
-        )
-
-
+        ),
+    create=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ), 
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+            ],
+        responses= {
+            201:serializers.RecipeSQLDetailSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    ),
+    retrieve=extend_schema(
+        responses={
+            200:serializers.RecipeSQLDetailSerializer,
+            400:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    ),
+    update=extend_schema(
+        
     )
+)
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
     serializer_class = serializers.RecipeSQLDetailSerializer
@@ -93,7 +153,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     recipe_redis_handler = RedisHandler(redis_client1)
 
     def get_permissions(self):
-        if self.action in ['list']:
+        if self.action in ['list','retrieve']:
             permission_classes = [permissions.AllowAny]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
@@ -179,7 +239,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                     self.recipe_redis_handler.set_hkey(hkey_name='save_count',recipe_id=int(recipe_id))
                     return response
         except ValidationError as e:
-        # Handle validation errors (like email already exists) here
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -204,9 +263,9 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
             return Response({'recipe':recipe.data}, status.HTTP_200_OK)
         except ValidationError as e :
-            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
         except Exception as e :
-            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error':f'{e}',"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis."""
@@ -365,6 +424,12 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
             status_codes=['200']
         ),
         OpenApiExample(
+            'Successed',
+            value={'message': 'Like action was revoke!', 'detail': ""},
+            response_only=True,
+            status_codes=['200']
+        ),
+        OpenApiExample(
             "Bad reque st",
             value={'error': 'user already like the recipe!'},
             response_only=True,
@@ -390,7 +455,8 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
             status_codes=['500']
         )
     ],
-    )
+    description="The user could like or revoke like from recipe!"
+)
 @api_view(['POST'])
 @csrf_protect
 @permission_classes([IsAuthenticated])
@@ -427,7 +493,7 @@ def like_button(request):
 
 
 @extend_schema(
-        parameters=[
+    parameters=[
         OpenApiParameter(
             name='X-CSRFToken',
             type=OpenApiTypes.STR,
@@ -451,7 +517,7 @@ def like_button(request):
         404:serializers.ResponseSerializer,
         500:serializers.ResponseSerializer,
     },
-        examples=[
+    examples=[
         OpenApiExample(
             'Successed',
             value={'message': 'Save action successed!'},
