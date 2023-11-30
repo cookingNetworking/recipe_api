@@ -34,5 +34,6 @@ urlpatterns = [
     path('time/', user_views.time_now, name='time_now'),
     path('test/',include('test.urls')),
     path('',include('recipe.urls')),
-    path("__debug__/", include("debug_toolbar.urls")),
+    path("__debug__/", include("debug_toolbar.urls")),,
+    path('resendVertify/',user_views.ResendVertifyEmail.as_view(), name='reseendertifyemail')
 ]
