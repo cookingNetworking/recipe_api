@@ -159,12 +159,14 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeComment
         fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "created_time"]
+        extra_kwargs = {"rating": {"required": True}}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # when action is create set recipe is write_only
         if 'context' in kwargs and kwargs['context'].get('action') == 'create':
             self.fields['recipe_id'].write_only = True
+
     def create(self, validated_data):
         """Create with serializer"""
         req_user = self.context["request"].user
@@ -175,34 +177,6 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
             return comment
         else:
             raise serializers.ValidationError("Recipe is required to create a comment")
-
-class RecipeRedisDetailSerializer(RecipeSerialzier):
-    """Serializer for recipe detail !"""
-    views = serializers.SerializerMethodField()
-    likes = serializers.SerializerMethodField()
-    save_count = serializers.SerializerMethodField()
-    recipe_comment = RecipeCommentSerializer(many=True, required=False)
-    recipe_redis_handler = RedisHandler(redis_client=redis_client1)
-
-    class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'recipe_comment']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def get_views(self, obj):
-        """Get recipe views from redis"""
-        return self.recipe_redis_handler.get_hkey(hkey_name='views',recipe_id=obj.get('id'))
-
-    def get_likes(self, obj):
-        """Get recipe likes from redis"""
-
-        return self.recipe_redis_handler.get_hkey(hkey_name='likes',recipe_id=obj.get('id'))
-
-    def get_save_count(self, obj):
-        """Get recipe likes from redis"""
-
-        return self.recipe_redis_handler.get_hkey(hkey_name='save_count',recipe_id=obj.get('id'))
 
 
 class RecipeSQLDetailSerializer(RecipeSerialzier):

@@ -66,25 +66,6 @@ services:
     depends_on:
       - db
       - cache
-  beat:
-    image: as2229181/cooknetwork:worker_v1.0
-    build:
-      context: .
-      args:
-        - DEV=true
-        - SERVICE_TYPE=beat
-    command: celery -A app beat -l info
-    volumes:
-      - dev-static-data:/vol/beat
-    environment:
-      - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
-      - DEBUG=1
-    depends_on:
-      - db
-      - cache
   db:
     image: postgres:13-alpine
     volumes:

@@ -81,7 +81,7 @@ redis_client1 = django_redis.get_redis_connection("default")
                 location=OpenApiParameter.HEADER,
                 required=True,
                 description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
-                ), 
+                ),
             OpenApiParameter(
                 name='Session_id',
                 type=OpenApiTypes.STR,
@@ -139,7 +139,142 @@ redis_client1 = django_redis.get_redis_connection("default")
         ]
     ),
     update=extend_schema(
-        
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+            ],
+        responses={
+            201:serializers.RecipeSQLDetailSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    ),
+    partial_update=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+            ],
+        responses={
+            201:serializers.RecipeSQLDetailSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    ),
+    destroy=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                )
+            ],
+        responses={
+            204:serializers.ResponseSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "destroy recipe successed.",
+                value="No_content,Redirect to list page",
+                response_only=True,
+                status_codes=['204']
+            ),
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
     )
 )
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
@@ -223,6 +358,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
@@ -273,36 +409,71 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         try:
             recipe =  response.data
             if recipe:
-                    recipe_id = response.get('id', None)
-                    print(recipe_id, type)
-                    if recipe_id is not None:
-                    # Get recipe id of instance.
-                        self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
-                    views_value = int(recipe.get("views"))
-                    likes_value = int(recipe.get("likes"))
-                    save_count_value = int(recipe.get("save_count"))
-                    self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
-                    self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
-                    self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
-                    return response
+                recipe_id = response.get('id', None)
+                print(recipe_id, type)
+                if recipe_id is not None:
+                # Get recipe id of instance.
+                    self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
+                views_value = int(recipe.get("views"))
+                likes_value = int(recipe.get("likes"))
+                save_count_value = int(recipe.get("save_count"))
+                self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
+                self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
+                self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
+                return response
+        except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
         except Exception as e:
             print(e)
             return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def partial_update(self, request, *args, **kwargs):
+        """Update recipe and change recipe cache in redis.(partial)"""
+        response = super().partial_update(self, request, *args, **kwargs)
+        try:
+            recipe =  response.data
+            if recipe:
+                recipe_id = response.get('id', None)
+                print(recipe_id, type)
+                if recipe_id is not None:
+                # Get recipe id of instance.
+                    self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
+                views_value = int(recipe.get("views"))
+                likes_value = int(recipe.get("likes"))
+                save_count_value = int(recipe.get("save_count"))
+                self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
+                self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
+                self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
+                return response
+        except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            print(e)
+            return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
     def destroy(self, request, *args, **kwargs):
         """Destroy the recipe instance and clear data in Redis cache."""
-        response = super().destroy(self, request, *args, **kwargs)
-        recipe_id = request.data.get("id")
-        self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_hkey(hkey_name="likes", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_hkey(hkey_name="save_count", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_prev_hkey(hkey_name="views", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_prev_hkey(hkey_name="likes", recipe_id=recipe_id)
-        self.recipe_redis_handler.del_prev_hkey(hkey_name="save_count", recipe_id=recipe_id)
-        return response
+        try:
+            instance = self.get_object()
+            recipe_id = instance.id
+            super().destroy(self, request, *args, **kwargs)
+            self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
+            self.recipe_redis_handler.del_hkey(hkey_name="likes", recipe_id=recipe_id)
+            self.recipe_redis_handler.del_hkey(hkey_name="save_count", recipe_id=recipe_id)
+            self.recipe_redis_handler.del_prev_hkey(hkey_name="views", recipe_id=recipe_id)
+            self.recipe_redis_handler.del_prev_hkey(hkey_name="likes", recipe_id=recipe_id)
+            self.recipe_redis_handler.del_prev_hkey(hkey_name="save_count", recipe_id=recipe_id)
+            return Response("No_content,Redirect to list page", status=status.HTTP_204_NO_CONTENT)
+        except ValidationError as e :
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            print(e)
+            return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @method_decorator(csrf_protect, name='dispatch')
-@extend_schema(
+@extend_schema_view(
+    create=extend_schema(
         parameters=[
         OpenApiParameter(
             name='X-CSRFToken',
@@ -310,15 +481,43 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             location=OpenApiParameter.HEADER,
             required=True,
             description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
-        ),
-         OpenApiParameter(
-                name='Session_id',
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.COOKIE,
-                required=True,
-                description='Ensure session id is in cookie!'
-                )
-    ],
+            ),
+        OpenApiParameter(
+            name='Session_id',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.COOKIE,
+            required=True,
+            description='Ensure session id is in cookie!'
+            ),
+        ],
+        request=serializers.RecipeCommentSerializer,
+        responses={
+            201:serializers.RecipeCommentSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    )
 )
 class RecipeCommentViewSet(
                             mixins.CreateModelMixin,
@@ -333,17 +532,27 @@ class RecipeCommentViewSet(
 
     def create(self, request, *args, **kwargs):
         """Base create method and update the recipe with new comment in cache!"""
-        response = super.create(self, request, *args, **kwargs)
-        self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.get("recipe_id"))
-        return response
+        try:
+            response = super.create(self, request, *args, **kwargs)
+            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.get("recipe_id"))
+            return response
+        except ValidationError as e:
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, *args, **kwargs):
         """Base destroy method and update the recipe with new comment in cache!"""
-        instance = self.get_object()
-        recipe_id = instance.recipe.id
-        self.perform_destroy(instance)
-        self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            instance = self.get_object()
+            recipe_id = instance.recipe.id
+            self.perform_destroy(instance)
+            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ValidationError as e:
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_update(self, serializer):
         """Base on UpdateModelMixin and update the recipe with new comment in cache! """
