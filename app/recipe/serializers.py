@@ -30,21 +30,20 @@ class IngredientSerialzier(serializers.ModelSerializer):
 
 class RecipeStepSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipeStep!"""
-    recipe = serializers.PrimaryKeyRelatedField(read_only=True)
+    recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = RecipeStep
-        fields = ['id','recipe', 'step', 'description', 'image']
-        read_only_fields = ['id','recipe']
+        fields = ['id','recipe_id', 'step', 'description', 'image']
+        read_only_fields = ['id','recipe_id']
         extra_kwargs = {"description": {"required": True}}
 
 class RecipePhotoSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipePhoto!"""
-    recipe = serializers.PrimaryKeyRelatedField(read_only=True)
+    recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = RecipePhoto
-        fields = ['id','recipe', 'photo', 'upload_date', 'category']
-        read_only_fields = ['id','recipe']
-
+        fields = ['id','recipe_id', 'photo', 'upload_date', 'category']
+        read_only_fields = ['id','recipe_id','upload_date']
 
 class IngerdientminiSerializer(serializers.ModelSerializer):
     """Serializer for Recipe ingredient"""
@@ -165,7 +164,7 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         # when action is create set recipe is write_only
         if 'context' in kwargs and kwargs['context'].get('action') == 'create':
-            self.fields['recipe_id'].write_only = True       
+            self.fields['recipe_id'].write_only = True
     def create(self, validated_data):
         """Create with serializer"""
         req_user = self.context["request"].user

@@ -52,10 +52,36 @@ redis_client1 = django_redis.get_redis_connection("default")
                 OpenApiTypes.STR,
                 description="Comma seprated list of ingredient name to filter.",
             ),
-        ]
+        ],
+        responses={
+            200:serializers.RecipeSQLDetailSerializer,
+            400:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+                OpenApiExample(
+                    "Bad request",
+                    value={"error":"error"},
+                    response_only=True,
+                    status_codes=['400']
+                ),
+                OpenApiExample(
+                    "Bad request",
+                    value={"error":"error","detail":"please check again!"},
+                    response_only=True,
+                    status_codes=['400']
+                ),
+                OpenApiExample(
+                    "Interval server error!",
+                    value={"error":"error","detail":"please check again!"},
+                    response_only=True,
+                    status_codes=['500']
+                ),
+            ]
+        )
+
+
     )
-)
-@method_decorator(csrf_protect, name='dispatch')
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
     serializer_class = serializers.RecipeSQLDetailSerializer
@@ -134,11 +160,9 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 models.Ingredient.objects.filter(name__in=ingredients).update(views=F('views') + 1)
             return response
         except ValidationError as e:
-        # Handle validation errors (like email already exists) here
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
@@ -253,7 +277,7 @@ class RecipeCommentViewSet(
         response = super.create(self, request, *args, **kwargs)
         self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.get("recipe_id"))
         return response
-     
+
     def destroy(self, request, *args, **kwargs):
         """Base destroy method and update the recipe with new comment in cache!"""
         instance = self.get_object()
@@ -261,12 +285,12 @@ class RecipeCommentViewSet(
         self.perform_destroy(instance)
         self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
     def perform_update(self, serializer):
         """Base on UpdateModelMixin and update the recipe with new comment in cache! """
         super().perform_update(serializer)
         instance = serializer.instance
-        
+
         # Ensure that the recipe instance exists before trying to access its id
         if hasattr(instance, 'recipe') and instance.recipe:
             recipe_id = instance.recipe.id
