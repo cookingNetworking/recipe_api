@@ -517,7 +517,58 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 status_codes=['500']
             ),
         ]
-    )
+    ),
+    destroy=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+        ],
+        responses={
+            204:serializers.ResponseSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "No content",
+                value={"message":"None content",},
+                response_only=True,
+                status_codes=['204']
+            ),
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    ),
+   
 )
 class RecipeCommentViewSet(
                             mixins.CreateModelMixin,
@@ -539,7 +590,7 @@ class RecipeCommentViewSet(
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error':f'{e} '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, *args, **kwargs):
         """Base destroy method and update the recipe with new comment in cache!"""
@@ -566,6 +617,7 @@ class RecipeCommentViewSet(
         else:
             # Handle the case where recipe is None, if necessary
             pass
+
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
                             mixins.UpdateModelMixin,
