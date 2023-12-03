@@ -211,7 +211,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication'
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 10,
 
 }
 
@@ -236,6 +236,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_TASK_RESULT_EXPIRES = 1800
+
 
 CELERY_BEAT_SCHEDULE = {
     'update-recipe-views': {

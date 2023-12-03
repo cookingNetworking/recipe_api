@@ -5,10 +5,12 @@ from botocore.config import Config
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
 from django.db.models import F
+
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.pagination import PageNumberPagination
 
 from core import models
 from .redis_set import RedisHandler
@@ -109,4 +111,7 @@ class CustomSlugRelatedField(serializers.SlugRelatedField):
                 return data
             raise e
 
+class CustomPagination(PageNumberPagination):
+    """Customerized the page numer."""
+    page_size = 30
 

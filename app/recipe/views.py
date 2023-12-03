@@ -1,5 +1,4 @@
 """Create recipe API end point!"""
-
 from rest_framework import (
         status,
         generics,
@@ -8,8 +7,6 @@ from rest_framework import (
         viewsets,
         filters
 )
-
-
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -23,15 +20,15 @@ from drf_spectacular.utils import (
 )
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
-from django.db.models import Q, F
-
+from django.db.models import Q, F, Prefetch
+from django.shortcuts import get_object_or_404
 from functools import reduce
 from operator import or_
 
 from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
-from .utils import UnsafeMethodCSRFMixin, saved_action
+from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination
 from .redis_set import RedisHandler
 from rest_framework.exceptions import ValidationError
 import django_redis
@@ -280,7 +277,7 @@ redis_client1 = django_redis.get_redis_connection("default")
 class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
     serializer_class = serializers.RecipeSQLDetailSerializer
-    queryset = models.Recipe.objects.all()
+    queryset = models.Recipe.objects.all().order_by("create_time")
     permission_classes = [permissions.IsAuthenticated]
     filter_backend = [filters.OrderingFilter]
     ordering_fields = ['create_time', 'name']
@@ -340,6 +337,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """list of recipe!"""
+        self.pagination_class = CustomPagination
         response = super().list(request, *args, **kwargs)
         try:
             search_tags = request.query_params.get('tags')
@@ -568,24 +566,184 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             ),
         ]
     ),
-   
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+            OpenApiParameter(
+                name='recipe_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='The recipe_id that need to comment'
+                ),
+        ],
+        responses={
+            200:serializers.RecipeCommentSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            )
+        ],
+    ),
+    update=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+        ],
+        responses={
+            200:serializers.RecipeCommentSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            )
+        ]
+    ),
+    partial_update=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+                ),
+        ],
+        responses={
+            200:serializers.RecipeCommentSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            )
+        ]
+    )
 )
 class RecipeCommentViewSet(
-                            mixins.CreateModelMixin,
-                            mixins.DestroyModelMixin,
-                            mixins.UpdateModelMixin,
-                            viewsets.GenericViewSet):
+                        mixins.ListModelMixin,
+                        mixins.CreateModelMixin,
+                        mixins.DestroyModelMixin,
+                        mixins.UpdateModelMixin,
+                        viewsets.GenericViewSet
+                        ):
     """Viewset for recipe comment!"""
     serializer_class = serializers.RecipeCommentSerializer
-    queryset = models.RecipeComment.objects.all()
+    queryset = models.RecipeComment.objects.all().order_by("-created_time")
     permission_classes = [permissions.IsAuthenticated]
     recipe_redis_handler = RedisHandler(redis_client1)
+
+    def get_permissions(self):
+        if self.action in ['list']:
+            permission_classes = [permissions.AllowAny]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        """List recipecommet filter by recipe id."""
+        try:
+            recipe_id = request.query_params.get('recipe_id')
+            if recipe_id is not None:
+                self.queryset = self.queryset.prefetch_related(
+                        Prefetch('recipe_comment', queryset=models.RecipeComment.objects.filter(recipe=recipe_id))
+                    )
+            return super().list(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         """Base create method and update the recipe with new comment in cache!"""
         try:
-            response = super.create(self, request, *args, **kwargs)
-            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.get("recipe_id"))
+            serializer = self.get_serializer(data=request.data)
+            print(serializer)
+            response = super().create(request, *args, **kwargs)
+            print(response)
+            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.data.get("recipe"))
+            print(5)
             return response
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -609,7 +767,6 @@ class RecipeCommentViewSet(
         """Base on UpdateModelMixin and update the recipe with new comment in cache! """
         super().perform_update(serializer)
         instance = serializer.instance
-
         # Ensure that the recipe instance exists before trying to access its id
         if hasattr(instance, 'recipe') and instance.recipe:
             recipe_id = instance.recipe.id
@@ -617,6 +774,16 @@ class RecipeCommentViewSet(
         else:
             # Handle the case where recipe is None, if necessary
             pass
+
+    def update(self, request, *args, **kwargs):
+        """Add new response to cache error"""
+        try:
+            response = super().update(request, *args, **kwargs)
+            return response
+        except ValidationError as e:
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BaseRecipeAttrViewSet(
                             mixins.DestroyModelMixin,
@@ -637,7 +804,6 @@ class BaseRecipeAttrViewSet(
     def get_queryset(self):
         queryset = self.queryset
         return queryset.all().order_by("-views").distinct()
-
 
 class TagViewSet(BaseRecipeAttrViewSet):
     """Views of tag API include list update destroy!"""

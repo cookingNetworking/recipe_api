@@ -59,7 +59,8 @@ class RedisHandler:
         """
         recipe = Recipe.objects.get(id=recipe_id)
         serializer_recipe = serializers.RecipeSQLDetailSerializer(recipe)
-        self.set_recipe(recipe_id=recipe_id, data=serializer_recipe)
+        print(serializer_recipe.data)
+        self.set_recipe(recipe_id=recipe_id, data=serializer_recipe.data)
 
     def delete_recipe_in_cache(self, recipe_id):
         """

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
 from .redis_set import RedisHandler
-
+from .utils import CustomSlugRelatedField
 import django_redis
 
 redis_client1 = django_redis.get_redis_connection("default")
@@ -45,27 +45,31 @@ class RecipePhotoSerialzier(serializers.ModelSerializer):
         fields = ['id','recipe_id', 'photo', 'upload_date', 'category']
         read_only_fields = ['id','recipe_id','upload_date']
 
-class IngerdientminiSerializer(serializers.ModelSerializer):
-    """Serializer for Recipe ingredient"""
-    class Meta:
-        model = Ingredient
-        fields = ['id', 'name']
-        read_onlyfield = ['id', 'name']
+# class IngerdientminiSerializer(serializers.ModelSerializer):
+#     """Serializer for Recipe ingredient"""
+#     class Meta:
+#         model = Ingredient
+#         fields = ['id', 'name']
+#         read_onlyfield = ['id']
 
-class TagminiSerializer(serializers.ModelSerializer):
-    """Serializer for Recipe ingredient"""
-    class Meta:
-        model = Tag
-        fields = ['id', 'name']
-        read_onlyfield = ['id', 'name']
+# class TagminiSerializer(serializers.ModelSerializer):
+#     """Serializer for Recipe ingredient"""
+#     class Meta:
+#         model = Tag
+#         fields = ['id', 'name']
+#         read_onlyfield = ['id']
 
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""
-    tags = TagminiSerializer(
-        many=True
-    )
-    ingredients = IngerdientminiSerializer(
+    tags = CustomSlugRelatedField(
         many=True,
+        slug_field='name',
+        queryset=Tag.objects.all()
+    )
+    ingredients = CustomSlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Ingredient.objects.all()
     )
     photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
@@ -146,32 +150,28 @@ class RecipeMinialSerialzier(serializers.ModelSerializer):
     """Serializer for only quert recipe title and id."""
     class Meta:
         model = Recipe
-        fields = ["id", "title", 'user']
+        fields = ["id"]
 
 class RecipeCommentSerializer(serializers.ModelSerializer):
     """Serializer for recipe comment."""
     user = UserMinimalSerializer(read_only=True)
-    recipe = RecipeMinialSerialzier(read_only=True)
-    recipe_id = serializers.PrimaryKeyRelatedField(
-        queryset=Recipe.objects.all(),
-        source='recipe'
+    recipe = CustomSlugRelatedField(
+        many=False,
+        slug_field='id',
+        queryset=Recipe.objects.all()
     )
     class Meta:
         model = RecipeComment
-        fields=["id", "recipe_id","user", "recipe", "comment", "rating", "Photo", "created_time"]
+        fields=["id", "recipe","user", "comment", "rating", "Photo", "created_time"]
         extra_kwargs = {"rating": {"required": True}}
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # when action is create set recipe is write_only
-        if 'context' in kwargs and kwargs['context'].get('action') == 'create':
-            self.fields['recipe_id'].write_only = True
 
     def create(self, validated_data):
         """Create with serializer"""
         req_user = self.context["request"].user
-        recipe_id = self.context.get("recipe_id")
-        recipe = Recipe.objects.get(id=recipe_id) if recipe_id else None
+        print(req_user)
+        recipe = validated_data.pop("recipe",None)
+        # recipe = Recipe.objects.get(id=recipe_id) if recipe_id else None
         if recipe:
             comment = RecipeComment.objects.create(user=req_user, recipe=recipe, **validated_data)
             return comment
@@ -181,10 +181,16 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
 
 class RecipeSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
-    recipe_comment = RecipeCommentSerializer(many=True, required=False,read_only=True)
+    top_five_comments = serializers.SerializerMethodField()
     class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'recipe_comment']
-        read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','recipe_comment']
+        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'top_five_comments']
+        read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','top_five_comments']
+
+    def get_top_five_comments(self, obj):
+        print(obj)
+        comments = obj.recipe_comment.order_by('-created_time')[:5]
+        return RecipeCommentSerializer(comments, many=True).data
+
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""
