@@ -74,10 +74,12 @@ class RecipeSerialzier(serializers.ModelSerializer):
     photos = RecipePhotoSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
     user = UserMinimalSerializer(read_only=True)
+    comment_count = serializers.IntegerField(read_only=True)
+    average_rating = serializers.DecimalField(max_digits=3, decimal_places=2)
     class Meta:
         model = Recipe
-        fields = ['id','user', 'title','cost_time', 'description', 'ingredients', 'tags','photos','steps']
-        read_only_fields = ['id']
+        fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'photos', 'steps', 'comment_count', 'average_rating']
+        read_only_fields = ['id','comment_count', 'average_rating']
 
     def _get_or_create_tags(self, tags, recipe):
         """Handle getting or tags as needed."""
@@ -145,6 +147,8 @@ class RecipeSerialzier(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+
 
 class RecipeMinialSerialzier(serializers.ModelSerializer):
     """Serializer for only quert recipe title and id."""

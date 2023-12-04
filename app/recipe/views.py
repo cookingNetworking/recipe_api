@@ -20,7 +20,7 @@ from drf_spectacular.utils import (
 )
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
-from django.db.models import Q, F, Prefetch
+from django.db.models import Q, F, Prefetch, Count, Avg
 from django.shortcuts import get_object_or_404
 from functools import reduce
 from operator import or_
@@ -51,7 +51,7 @@ redis_client1 = django_redis.get_redis_connection("default")
             ),
         ],
         responses={
-            200:serializers.RecipeSQLDetailSerializer,
+            200:serializers.RecipeSerialzier(many=True),
             400:serializers.ResponseSerializer,
             500:serializers.ResponseSerializer
         },
@@ -301,7 +301,10 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrun query for filter!"""
-        queryset = self.queryset
+        queryset = self.queryset.annotate(
+        comment_count=Count('recipe_comment'),
+        average_rating=Avg('recipe_comment__rating')
+        )
         search_ingertients = self.request.query_params.get('ingredients')
         search_tags = self.request.query_params.get('tags')
         search_user = self.request.query_params.get('user')
@@ -323,6 +326,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
+    
     def to_representation(self, instance):
         """Transform to leagal format"""
         ret = super().to_representation(instance)

@@ -102,7 +102,6 @@ class Recipe(models.Model):
     def total_likes(self):
         return self.recipe_be_liked.count()
 
-
 class RecipeComment(models.Model):
     """
     The relatrionship for user and recipe which  user could make a comment!
