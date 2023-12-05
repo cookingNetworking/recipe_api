@@ -37,7 +37,6 @@ def update_recipe(hkey: str, recipe_hash , previous_hash):
             redis_client1.hset(f"Prev_{hkey}",f"{k}",v)
         elif previous_value is not None and v == previous_value:
             pass
-
     return update_recipe
 
 

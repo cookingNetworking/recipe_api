@@ -46,20 +46,6 @@ class RecipePhotoSerialzier(serializers.ModelSerializer):
         fields = ['id','recipe_id', 'photo', 'upload_date', 'category']
         read_only_fields = ['id','recipe_id','upload_date']
 
-# class IngerdientminiSerializer(serializers.ModelSerializer):
-#     """Serializer for Recipe ingredient"""
-#     class Meta:
-#         model = Ingredient
-#         fields = ['id', 'name']
-#         read_onlyfield = ['id']
-
-# class TagminiSerializer(serializers.ModelSerializer):
-#     """Serializer for Recipe ingredient"""
-#     class Meta:
-#         model = Tag
-#         fields = ['id', 'name']
-#         read_onlyfield = ['id']
-
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""
     tags = CustomSlugRelatedField(
