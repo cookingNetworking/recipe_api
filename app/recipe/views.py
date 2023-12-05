@@ -326,7 +326,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             reqeust_filters |= reduce(or_, user_queries)
 
         return queryset.filter(reqeust_filters).distinct()
-    
+
     def to_representation(self, instance):
         """Transform to leagal format"""
         ret = super().to_representation(instance)
@@ -393,9 +393,14 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 cache_data["views"] = cache_data.get("views", 0) + 1
                 self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
                 return Response({'recipe': cache_data}, status.HTTP_200_OK)
-
             # If data is not in Redis, fetch it from SQL
             recipe_instance = self.queryset.get(id=recipe_id)
+            average_rating_result = recipe_instance.recipe_comment.aggregate(average_rating=Avg('rating'))
+            comment_count_result = recipe_instance.recipe_comment.aggregate(comment_count=Count('id'))
+            average_rating = average_rating_result.get("average_rating")
+            comment_count = comment_count_result.get("comment_count")
+            setattr(recipe_instance, 'average_rating', average_rating)
+            setattr(recipe_instance, 'comment_count', comment_count)
             recipe = serializers.RecipeSQLDetailSerializer(recipe_instance)
             self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))

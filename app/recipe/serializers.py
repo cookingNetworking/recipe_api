@@ -1,7 +1,8 @@
 """Serializer for recipe!"""
-
+from decimal import Decimal
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
 from .redis_set import RedisHandler
 from .utils import CustomSlugRelatedField
@@ -186,15 +187,15 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
 class RecipeSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     top_five_comments = serializers.SerializerMethodField()
+
     class Meta(RecipeSerialzier.Meta):
         fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'top_five_comments']
         read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','top_five_comments']
 
     def get_top_five_comments(self, obj):
-        print(obj)
+
         comments = obj.recipe_comment.order_by('-created_time')[:5]
         return RecipeCommentSerializer(comments, many=True).data
-
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""
