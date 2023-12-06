@@ -5,6 +5,7 @@ Celery task for recipe!
 
 from celery import shared_task
 from celery import Celery
+from django.db.models import Avg, Count
 
 from .serializers import RecipeSQLDetailSerializer
 from core.models import Recipe
@@ -16,7 +17,10 @@ redis_client1 = django_redis.get_redis_connection("default")
 
 @shared_task
 def update_recipe_views_in_redis():
-    top_recipes = Recipe.objects.prefetch_related('photos', 'steps', 'recipe_comment').all()
+    top_recipes = Recipe.objects.annotate(
+        average_rating=Avg('recipe_comment__rating'),
+        comment_count=Count('recipe_comment')
+    ).order_by('-views')[:100].prefetch_related('photos', 'steps', 'recipe_comment')
 
     serializer_recipes = RecipeSQLDetailSerializer(top_recipes, many=True).data
     recipe_redis_handler = RedisHandler(redis_client1)

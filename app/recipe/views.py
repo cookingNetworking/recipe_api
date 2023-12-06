@@ -357,9 +357,9 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 models.Ingredient.objects.filter(name__in=ingredients).update(views=F('views') + 1)
             return response
         except ValidationError as e:
-            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error':f'{e}',"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
         """Create recipe object."""

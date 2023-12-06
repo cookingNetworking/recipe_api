@@ -62,7 +62,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
     steps = RecipeStepSerialzier(many=True, required=False)
     user = UserMinimalSerializer(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
-    average_rating = serializers.DecimalField(max_digits=3, decimal_places=2)
+    average_rating = serializers.DecimalField(max_digits=3, decimal_places=2,required=False)
     class Meta:
         model = Recipe
         fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'photos', 'steps', 'comment_count', 'average_rating']
