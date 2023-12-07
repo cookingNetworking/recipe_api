@@ -10,7 +10,10 @@ from core.models import *
 from rest_framework.test import APIClient, force_authenticate
 from rest_framework import status
 import json
+
+
 RECIPE_URL = reverse("recipe:recipe-list")
+RECIPE_COMMENT_URL = reverse("recipe:recipecomment-list")
 
 def decode_content(content):
     """Decode response content!"""
@@ -71,6 +74,7 @@ class PublicAgentAPITests(TestCase):
         }
         recipe1 = create_recipe(user)
         recipe2 = Recipe.objects.create(user=user, **recipe2_params)
+        
         res = self.client.get(RECIPE_URL)
         res_content = decode_content(res.content)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -80,18 +84,19 @@ class PublicAgentAPITests(TestCase):
 
     def test_recipe_retrieve_public(self):
         """Test the recipe retrieve api could be access without login in!"""
-        params = {
-                "password":"test1123123123",
-                "username":"testuser1"
-                }
-        user = create_user(**params)
-        recipe = create_recipe(user=user)
-        url = detail_url(recipe.id)
-        res = self.client.get(url)
-        res_content = decode_content(res.content)
-        print(res_content)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res_content['recipe']['id'], recipe.id)
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            params = {
+                    "password":"test1123123123",
+                    "username":"testuser1"
+                    }
+            user = create_user(**params)
+            recipe = create_recipe(user=user)
+            url = detail_url(recipe.id)
+            mock_increase_recipe_view.return_value = None
+            res = self.client.get(url)
+            res_content = decode_content(res.content)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['recipe']['id'], recipe.id)
 
     def test_recipe_list_filter_by_ingredient(self):
         """Test the recipe list api that filter by ingredients!"""
@@ -114,3 +119,33 @@ class PublicAgentAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res_content['results'][0]['id'], recipe1.id)
         self.assertNotIn(recipe2.id, returned_recipe_ids)
+    
+    def test_get_comments_list(self):
+        """Test the recipe comments list for specific recipe."""
+        params = {
+                "password":"test1123123123",
+                "username":"testuser1"
+                }
+        user = create_user(**params)
+        recipe = create_recipe(user=user)
+        comment_1 = RecipeComment.objects.create(
+                                                user=user, 
+                                                recipe=recipe,
+                                                comment='test comment1',
+                                                rating=5
+                                                )
+        comment_2 = RecipeComment.objects.create(
+                                                user=user, 
+                                                recipe=recipe,
+                                                comment='test comment2',
+                                                rating=3
+                                                )
+        res = self.client.get(
+                            RECIPE_COMMENT_URL,
+                            {"page": 1, "recipe_id":recipe.id}
+                            )
+        res_content = decode_content(res.content)
+        print(res_content)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_content['results']), 2)
+        

@@ -4,7 +4,7 @@
 import random
 import json
 from core.models import Recipe
-from recipe import serializers
+
 
 class RedisHandler:
     """
@@ -57,6 +57,7 @@ class RedisHandler:
         """
         Update recipe data in cahce
         """
+        from recipe import serializers
         recipe = Recipe.objects.get(id=recipe_id)
         serializer_recipe = serializers.RecipeSQLDetailSerializer(recipe)
         print(serializer_recipe.data)

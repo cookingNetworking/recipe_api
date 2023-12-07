@@ -29,10 +29,10 @@ from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
 from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination
-from .redis_set import RedisHandler
+
 from rest_framework.exceptions import ValidationError
 import django_redis
-
+from .redis_set import RedisHandler
 redis_client1 = django_redis.get_redis_connection("default")
 
 
@@ -735,9 +735,7 @@ class RecipeCommentViewSet(
         try:
             recipe_id = request.query_params.get('recipe_id')
             if recipe_id is not None:
-                self.queryset = self.queryset.prefetch_related(
-                        Prefetch('recipe_comment', queryset=models.RecipeComment.objects.filter(recipe=recipe_id))
-                    )
+                self.queryset = self.queryset.filter(recipe=recipe_id).prefetch_related('user', 'recipe')
             return super().list(request, *args, **kwargs)
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)

@@ -4,11 +4,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
-from .redis_set import RedisHandler
 from .utils import CustomSlugRelatedField
-import django_redis
 
-redis_client1 = django_redis.get_redis_connection("default")
 
 class UserMinimalSerializer(serializers.ModelSerializer):
     class Meta:
