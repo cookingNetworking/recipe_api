@@ -368,7 +368,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             # Extract newly create recipe instance from serializer.
             if response.data:
                 recipe_id = response.data.get('id', None)
-                print(recipe_id, type)
                 if recipe_id is not None:
                 # Get recipe id of instance.
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=response.data)
@@ -404,7 +403,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             recipe = serializers.RecipeSQLDetailSerializer(recipe_instance)
             self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
             self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
-            return Response({'recipe':recipe.data}, status.HTTP_200_OK)
+            return Response(recipe.data, status.HTTP_200_OK)
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
         except Exception as e :
