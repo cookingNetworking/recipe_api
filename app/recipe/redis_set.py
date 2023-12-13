@@ -141,7 +141,7 @@ class RedisHandler:
         except Exception as e:
             print(e)
             return False
-    def update_hkey(self, hkey_name: str, *recipe_id: int, value: str):
+    def update_hkey(self, hkey_name: str, recipe_id, value):
         """
         Update the hkey value in hash .
         :param hkey_name: The hkey of the recipe. Must be an str.
@@ -150,7 +150,7 @@ class RedisHandler:
         """
         value = self.get_hkey(hkey_name, recipe_id)
         if value is not None:
-            self.redis_client.hset(f"Recipe_{hkey_name}",{f"{recipe_id}": f"{value}"})
+            self.redis_client.hset(f"Recipe_{hkey_name}",f"{recipe_id}",f"{value}")
         else:
             self.set_hkey(hkey_name=hkey_name, recipe_id=recipe_id, value=value)
 

@@ -25,6 +25,10 @@ def detail_url(recipe_id):
     """Create and return detail recipe url with given recipe_id!!!"""
     return reverse("recipe:recipe-detail", args=[recipe_id])
 
+def detail_comment_rul(comment_id):
+    """Create and return detail recipe comment url with given comment_id !!!"""
+    return reverse("recipe:recipecomment-detail", args=[comment_id])
+
 def create_recipe(user, **params):
     """Create and return a simple recipe!"""
     ingredient = Ingredient.objects.create(name='chocolate')
@@ -198,7 +202,6 @@ class PrivateAgentAPITests(TestCase):
             mock_increase_recipe_view.return_value = None
             res = self.client.get(url)
             res_content = decode_content(res.content)
-            serializer = RecipeSQLDetailSerializer(recipe)
             self.assertEqual(res.status_code, status.HTTP_200_OK)
             self.assertEqual(res_content['id'], recipe.id)
             self.assertEqual(res_content['title'], recipe.title)
@@ -234,10 +237,187 @@ class PrivateAgentAPITests(TestCase):
             'cost_time':'20',
             'description':'Uni test'
         }
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.set_hkey') as mock_update_hkey:
+            mock_set_recipe.return_value = None
+            mock_update_hkey.return_value = None
+            res = self.client.post(RECIPE_URL, payload)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(res.data['title'], payload['title'])
+            self.assertEqual(res.data['cost_time'], payload['cost_time'])
+            self.assertEqual(res.data['description'], payload['description'])
 
-        res = self.client.post(RECIPE_URL, payload)
-        print(res.data)
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['title'], payload['title'])
-        self.assertEqual(res.data['cost_time'], payload['cost_time'])
-        self.assertEqual(res.data['description'], payload['description'])
+    def test_put_recipe(self):
+        """Test update recipe with authenticated!"""
+        payload = {
+            'title':'test_title_2',
+            'cost_time':'25',
+            'description':'recipe for test'
+        }
+        recipe = create_recipe(user=self.user, **payload)
+        update_param = {
+            'title':'new title',
+            'cost_time':'20',
+            'description':'recipe for test'
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+            mock_set_recipe.return_value = None
+            mock_update_hkey.return_value = None
+            res = self.client.put(url, update_param)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            res_content = decode_content(res.content)
+            self.assertEqual(res_content['id'], recipe.id)
+            self.assertEqual(res_content['title'], update_param['title'])
+            self.assertEqual(res_content['cost_time'], update_param['cost_time'])
+
+    def test_patch_recipe(self):
+        """Test patch recipe (partial update!)"""
+        payload = {
+            'title':'test_for_patch',
+            'cost_time':'30',
+            'description': 'qwiojqiwo;fjioqwe'
+        }
+        recipe = create_recipe(user=self.user, **payload)
+        update_param = {
+            'title':'new title'
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+            mock_set_recipe.return_value = None
+            mock_update_hkey.return_value = None
+            res = self.client.patch(url, update_param)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            res_content = decode_content(res.content)
+            self.assertEqual(res_content['id'], recipe.id)
+            self.assertEqual(res_content['title'], update_param['title'])
+
+    def test_delete_recipe(self):
+        """Test delete recipe with authenticated!"""
+        payload = {
+            'title':'test_for_delete',
+            'cost_time':'30',
+            'description': 'qwiojqiwo;fjioqwe'
+        }
+        recipe = create_recipe(user=self.user, **payload)
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.del_hkey') as mock_del_hkey, \
+            patch('recipe.redis_set.RedisHandler.del_prev_hkey') as mock_del_prev_hkey:
+            res = self.client.delete(url)
+            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+            res2 = self.client.get(url)
+            self.assertEqual(res2.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_add_comment(self):
+        """Add comment to recipe!"""
+        recipe_params = {
+            'title':'test_for_add_comment',
+            'cost_time':'30',
+            'description':'I LOVE UNITEST!!!!!'
+        }
+        recipe = create_recipe(user=self.user, **recipe_params)
+        payload = {
+            'recipe':f'{recipe.id}',
+            'comment':'Nice recipe, it help me a lot !!!',
+            'rating': 5
+        }
+        with patch('recipe.redis_set.RedisHandler.update_recipe_in_cache') as mock_update_recipe_in_cache, \
+            patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_update_recipe_in_cache.return_value = None
+            mock_set_recipe.return_value = None
+            mock_increase_recipe_view.return_value = None
+            res = self.client.post(RECIPE_COMMENT_URL, payload)
+            res_content1 = decode_content(res.content)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            url = detail_url(recipe.id)
+            res_retrieve_recipe = self.client.get(url)
+            res_content2 = decode_content(res_retrieve_recipe.content)
+            self.assertEqual(res_retrieve_recipe.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content2['top_five_comments'][0]['id'], res_content1['id'])
+
+    def test_update_comment(self):
+        """Test PUT recipe comment!"""
+        recipe_params = {
+            'title':'test_for_update_comment',
+            'cost_time':'30',
+            'description':'I LOVE la !!!!!'
+        }
+        recipe = create_recipe(user=self.user, **recipe_params)
+        comment_params = {
+            'comment':'for update test',
+            'rating':5
+        }
+        recipe_comment = RecipeComment.objects.create(
+                                                    user=self.user,
+                                                    recipe=recipe,
+                                                    **comment_params
+                                                    )
+        with patch('recipe.redis_set.RedisHandler.update_recipe_in_cache') as mock_update_recipe_in_cache:
+            mock_update_recipe_in_cache.return_value = None
+            payload = {
+                'recipe': recipe.id,
+                'comment':'updated!!!',
+                'rating': 5
+            }
+            url = detail_comment_rul(recipe_comment.id)
+            res = self.client.put(url, payload)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            res_content = decode_content(res.content)
+            self.assertEqual(res_content['id'], recipe_comment.id)
+            self.assertEqual(res_content['comment'], payload['comment'])
+
+    def test_partial_update_comment(self):
+        """Test patch recipe comment !!!"""
+        recipe_params = {
+            'title':'partial_update_comment',
+            'cost_time':'30',
+            'description':'I LOVE la !!!!!'
+        }
+        recipe = create_recipe(user=self.user, **recipe_params)
+        comment_params = {
+            'comment':'for partial_update test',
+            'rating':5
+        }
+        recipe_comment = RecipeComment.objects.create(
+                                                    user=self.user,
+                                                    recipe=recipe,
+                                                    **comment_params
+                                                    )
+        with patch('recipe.redis_set.RedisHandler.update_recipe_in_cache') as mock_update_recipe_in_cache:
+            mock_update_recipe_in_cache.return_value = None
+            payload = {
+                'recipe': recipe.id,
+                'rating': 3
+            }
+            url = detail_comment_rul(recipe_comment.id)
+            res = self.client.patch(url, payload)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            res_content = decode_content(res.content)
+            self.assertEqual(res_content['id'], recipe_comment.id)
+            self.assertEqual(res_content['rating'], payload['rating'])
+
+    def test_destroy_comment(self):
+        """Test for delete comment!!!"""
+        recipe_params = {
+            'title':'partial_update_comment',
+            'cost_time':'30',
+            'description':'I LOVE la !!!!!'
+        }
+        recipe = create_recipe(user=self.user, **recipe_params)
+        comment_params = {
+            'comment':'for destroy test',
+            'rating':5
+        }
+        recipe_comment = RecipeComment.objects.create(
+                                                    user=self.user,
+                                                    recipe=recipe,
+                                                    **comment_params
+                                                    )
+        with patch('recipe.redis_set.RedisHandler.update_recipe_in_cache') as mock_update_recipe_in_cache:
+            mock_update_recipe_in_cache.return_value = None
+            url = detail_comment_rul(recipe_comment.id)
+            res = self.client.delete(url)
+            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)

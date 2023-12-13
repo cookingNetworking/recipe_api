@@ -115,9 +115,10 @@ class RecipeSerialzier(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Update recipe."""
-        tags = validated_data.pop("tag", [])
-        ingredients = validated_data.pop("ingredient", [])
-        photos = validated_data.pop("photo", [])
+        tags = validated_data.pop("tags", [])
+        ingredients = validated_data.pop("ingredients", [])
+        photos = validated_data.pop("photos", [])
+        steps = validated_data.pop("steps", [])
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
@@ -125,14 +126,15 @@ class RecipeSerialzier(serializers.ModelSerializer):
             instance.ingredients.clear()
             self._get_or_create_ingredients(ingredients, instance)
         if photos is not None:
-            instance.photos.clear()
+            RecipePhoto.objects.filter(recipe=instance).delete()
             self._get_or_create_photos(photos, instance)
+        if steps is not None:
+            RecipeStep.objects.filter(recipe=instance).delete()
+            self._get_or_create_steps(steps, instance)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         return instance
-
-
 
 class RecipeMinialSerialzier(serializers.ModelSerializer):
     """Serializer for only quert recipe title and id."""
@@ -156,6 +158,7 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create with serializer"""
+        print('start')
         req_user = self.context["request"].user
         print(req_user)
         recipe = validated_data.pop("recipe",None)
@@ -176,7 +179,6 @@ class RecipeSQLDetailSerializer(RecipeSerialzier):
         read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','top_five_comments']
 
     def get_top_five_comments(self, obj):
-
         comments = obj.recipe_comment.order_by('-created_time')[:5]
         return RecipeCommentSerializer(comments, many=True).data
 

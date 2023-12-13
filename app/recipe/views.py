@@ -153,7 +153,7 @@ redis_client1 = django_redis.get_redis_connection("default")
                 )
             ],
         responses={
-            201:serializers.RecipeSQLDetailSerializer,
+            200:serializers.RecipeSQLDetailSerializer,
             400:serializers.ResponseSerializer,
             403:serializers.ResponseSerializer,
             500:serializers.ResponseSerializer
@@ -393,7 +393,9 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                 self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=cache_data)
                 return Response({'recipe': cache_data}, status.HTTP_200_OK)
             # If data is not in Redis, fetch it from SQL
-            recipe_instance = self.queryset.get(id=recipe_id)
+            recipe_instance = self.queryset.filter(id=recipe_id).first()
+            if not recipe_instance:
+                return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_404_NOT_FOUND)
             average_rating_result = recipe_instance.recipe_comment.aggregate(average_rating=Avg('rating'))
             comment_count_result = recipe_instance.recipe_comment.aggregate(comment_count=Count('id'))
             average_rating = average_rating_result.get("average_rating")
@@ -411,12 +413,11 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis."""
-        response = super().update(self, request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
         try:
             recipe =  response.data
             if recipe:
-                recipe_id = response.get('id', None)
-                print(recipe_id, type)
+                recipe_id = response.data.get('id', None)
                 if recipe_id is not None:
                 # Get recipe id of instance.
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
@@ -435,12 +436,11 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis.(partial)"""
-        response = super().partial_update(self, request, *args, **kwargs)
+        response = super().partial_update(request, *args, **kwargs)
         try:
             recipe =  response.data
             if recipe:
                 recipe_id = response.get('id', None)
-                print(recipe_id, type)
                 if recipe_id is not None:
                 # Get recipe id of instance.
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
@@ -744,12 +744,8 @@ class RecipeCommentViewSet(
     def create(self, request, *args, **kwargs):
         """Base create method and update the recipe with new comment in cache!"""
         try:
-            serializer = self.get_serializer(data=request.data)
-            print(serializer)
-            response = super().create(request, *args, **kwargs)
-            print(response)
+            response = super().create(request, *args,**kwargs)
             self.recipe_redis_handler.update_recipe_in_cache(recipe_id=response.data.get("recipe"))
-            print(5)
             return response
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -772,14 +768,19 @@ class RecipeCommentViewSet(
     def perform_update(self, serializer):
         """Base on UpdateModelMixin and update the recipe with new comment in cache! """
         super().perform_update(serializer)
-        instance = serializer.instance
-        # Ensure that the recipe instance exists before trying to access its id
-        if hasattr(instance, 'recipe') and instance.recipe:
-            recipe_id = instance.recipe.id
-            self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
-        else:
-            # Handle the case where recipe is None, if necessary
-            pass
+        try:
+            instance = serializer.instance
+            # Ensure that the recipe instance exists before trying to access its id
+            if hasattr(instance, 'recipe') and instance.recipe:
+                recipe_id = instance.recipe.id
+                self.recipe_redis_handler.update_recipe_in_cache(recipe_id=recipe_id)
+            else:
+                # Handle the case where recipe is None, if necessary
+                pass
+        except ValidationError as e:
+            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':f'{e}  '}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
         """Add new response to cache error"""
