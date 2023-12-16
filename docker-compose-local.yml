@@ -10,7 +10,7 @@ services:
     ports:
       - "8000:8000"
     command: >
-      sh -c "python manage.py wait_for_db && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py wait_for_db && python manage.py makemigrations && python manage.py migrate && python manage.py shell -c 'from recipe.tasks import set_up_for_server_start; set_up_for_server_start.delay()' && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
@@ -45,6 +45,27 @@ services:
     depends_on:
       - db
       - cache
+  beat:
+    image: as2229181/cooknetwork:worker_v1.0
+    build:
+      context: .
+      args:
+        - DEV=true
+        - SERVICE_TYPE=beat
+    command: celery -A app beat -l info
+    volumes:
+      - dev-static-data:/vol/beat
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+      - DEBUG=1
+      - TZ='GMT+8'
+      - PGTZ='GMT+8'
+    depends_on:
+      - db
+      - cache
   db:
     image: postgres:13-alpine
     volumes:
@@ -60,7 +81,13 @@ services:
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/vol/redis
 
 volumes:
   dev-db-data:
   dev-static-data:
+  redis-data:
+
+

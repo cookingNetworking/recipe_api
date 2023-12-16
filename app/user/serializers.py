@@ -100,3 +100,6 @@ class CheckEmailResponseSerializer(serializers.Serializer):
 class CheckUsernameResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
     detail = serializers.CharField(allow_null=True)
+
+class Error403CSRFTokenmissingSerialzier(serializers.Serializer):
+    error = serializers.CharField()

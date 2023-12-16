@@ -11,11 +11,16 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 import os
-
+import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+env = environ.Env(DEBUG=(bool, False))
+
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -40,11 +45,14 @@ INSTALLED_APPS = [
     "rest_framework",
     'drf_spectacular',
     'corsheaders',
+    'django_extensions',
+    'storages',
+    "debug_toolbar",
     #project app
     "core",
     'user',
-
-
+    'test',
+    'recipe'
 ]
 
 MIDDLEWARE = [
@@ -56,6 +64,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "app.urls"
@@ -63,7 +72,7 @@ ROOT_URLCONF = "app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR,'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -89,11 +98,13 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASS"),
-        'POOL_OPTIONS': {
+        'POOL_OPTIONS' : {
             'POOL_SIZE': 5,
             'MAX_OVERFLOW': 5,
-            'RECYCLE': 24 * 60 * 60
-        }
+            'RECYCLE': 24 * 60 * 60,
+            'PRE_PING': True,
+            'TIMEOUT': 30
+            }
     }
 }
 
@@ -103,13 +114,23 @@ CACHES = {
         "LOCATION": "redis://cache:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
+                "retry_on_timeout": True
+            }
         }
     },
-        "sessions": {
+    "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://cache:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
+                "retry_on_timeout": True
+            }
         }
     }
 }
@@ -125,6 +146,9 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 CORS_ALLOW_CREDENTIALS = True
+
+
+
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -198,6 +222,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication'
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 
 }
 
@@ -213,6 +239,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
+CELERY_IMPORTS = ('recipe.tasks',)
 CELERY_BROKER_URL = 'redis://cache:6379/1'
 CELERY_RESULT_BACKEND = 'redis://cache:6379/1'
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -221,5 +248,32 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_TASK_RESULT_EXPIRES = 1800
+
+
+CELERY_BEAT_SCHEDULE = {
+    'update-recipe-views': {
+        'task': 'recipe.tasks.update_recipe_views_in_redis',
+        'schedule': crontab(minute='*/30'),  # every 30 minutes
+    },
+    'consist-recipe-to-sql':{
+        'task': 'recipe.tasks.consist_redis_and_sql_data',
+        'schedule': crontab(minute='*/15'),  # every 15 minutes
+    },
+
+}
+CELERY_BEAT_SCHEDULE_FILENAME = '/home/celery/var/run/celerybeat-schedule'
+
 
 CROS_ORIGIN_ALLOW_ALL = True
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME')
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}

@@ -30,7 +30,6 @@ class ModelTests(TestCase):
         for email, excepted in sample_emails:
             user = get_user_model().objects.create_user(email=email,password='password123',username=username)
             username = f'{username}+1'
-            print(username)
             self.assertEqual(user.email, excepted)
 
 

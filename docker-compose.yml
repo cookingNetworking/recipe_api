@@ -2,7 +2,6 @@ version: '3.9'
 
 services:
   app:
-    image: as2229181/cooknetwork:app_v1.0
     build:
       context: .
       args:
@@ -15,6 +14,10 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_REGION_NAME
       - DEBUG=1
       - TZ='GMT+8'
       - PGTZ='GMT+8'
@@ -42,8 +45,27 @@ services:
     depends_on:
       - db
       - cache
-    networks:
-      - webnet
+  beat:
+    image: as2229181/cooknetwork:worker_v1.0
+    build:
+      context: .
+      args:
+        - DEV=true
+        - SERVICE_TYPE=beat
+    command: celery -A app beat -l info
+    volumes:
+      - dev-static-data:/vol/beat
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+      - DEBUG=1
+      - TZ='GMT+8'
+      - PGTZ='GMT+8'
+    depends_on:
+      - db
+      - cache
   db:
     image: postgres:13-alpine
     volumes:
@@ -59,8 +81,13 @@ services:
       - webnet
   cache:
     image: redis:7.2.1-alpine
-    networks:
-      - webnet
+    environment:
+      - TZ='GMT+8'
+      - PGTZ='GMT+8'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/vol/redis
+
   proxy:
     build:
       context: ./proxy
@@ -79,12 +106,7 @@ services:
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
-    networks:
-      - webnet
 volumes:
   dev-db-data:
   dev-static-data:
-networks:
-  webnet:
-
-
+  redis-data:

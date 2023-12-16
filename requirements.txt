@@ -1,6 +1,12 @@
 pyjwt[crypto]
+debugpy
 Django>=3.2.4,<3.3
 djangorestframework>=3.12.4,<3.13
+django-extensions
+django-environ
+django-storages
+django-debug-toolbar
+boto3
 django-cors-headers
 drf-spectacular
 django-celery-results

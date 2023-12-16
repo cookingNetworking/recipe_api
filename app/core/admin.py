@@ -15,6 +15,10 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = ('session_key', 'expire_date', 'session_data')
     readonly_fields = ('session_key', 'expire_date', 'session_data')
 
+@admin.register(models.TestImageUpload)
+class TestImageUploadAdmin(admin.ModelAdmin):
+    list_display = ('name','image','uuid')
+
 class UserAdmin(BaseUserAdmin):
     """Define the admin pages for ussers."""
     ordering = ["id"]
@@ -42,5 +46,12 @@ class UserAdmin(BaseUserAdmin):
         })
     ]
 
-
+admin.site.register(models.Recipe)
+admin.site.register(models.RecipePhoto)
+admin.site.register(models.RecipeStep)
+admin.site.register(models.Tag)
+admin.site.register(models.Ingredient)
+admin.site.register(models.Save)
+admin.site.register(models.Like)
+admin.site.register(models.RecipeComment)
 admin.site.register(models.User, UserAdmin)

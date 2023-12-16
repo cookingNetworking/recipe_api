@@ -1,7 +1,7 @@
 """
 Views for user API.
 """
-import random
+
 
 from rest_framework import status, generics, permissions, authentication
 from rest_framework.decorators import api_view
@@ -11,12 +11,11 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
 from django.middleware.csrf import get_token
 from django.core.cache import cache
-from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
-from django_redis import get_redis_connection
+
 
 from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
@@ -24,7 +23,7 @@ from jwt.exceptions import ExpiredSignatureError
 
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
-from user.serializer import (
+from user.serializers import (
         UserSerializer,
         UserDetailResponseSerializer,
         PasswordSerialzier,
@@ -33,6 +32,7 @@ from user.serializer import (
         Created201serializer,
         Error400Serializer,
         Error401Serializer,
+        Error403CSRFTokenmissingSerialzier,
         Error500Serializer,
         CheckEmailResponseSerializer,
         CheckUsernameResponseSerializer,
@@ -83,7 +83,7 @@ class UserListView(generics.ListAPIView):
     responses={
         201: Created201serializer,
         400: Error400Serializer,
-        403: 'CSRF token missing or incorrect.',
+        403: Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer,
     },
     examples=[
@@ -189,43 +189,43 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return super().get(request, *args, **kwargs)
 
     @extend_schema(
-            parameters=[
-                OpenApiParameter(
-                    name='X-CSRFToken',
-                    type=OpenApiTypes.STR,
-                    location=OpenApiParameter.HEADER,
-                    required=True,
-                    description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
-               ),
-                OpenApiParameter(
-                    name='Session_id',
-                    type=OpenApiTypes.STR,
-                    location=OpenApiParameter.COOKIE,
-                    required=True,
-                    description='Ensure session id is in cookie!'
-                )
-            ],
-            request=UserDetailResponseSerializer,
-            responses={
-                200:UserDetailResponseSerializer,
-                403:"Authentication credentials were not provided.",
-                500:Error500Serializer
-                },
-            examples=[
-                OpenApiExample(
-                    "Request forbbiden",
-                    value={"detail":"Authentication credentials were not provided."},
-                    response_only=True,
-                    status_codes=['403']
-                ),
-                OpenApiExample(
-                    "Request forbbiden",
-                    value={"error":"Inernal error messages"},
-                    response_only=True,
-                    status_codes=['500']
-                ),
-            ]
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+            ),
+            OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
             )
+        ],
+        request=UserDetailResponseSerializer,
+        responses={
+            200:UserDetailResponseSerializer,
+            403:"Authentication credentials were not provided.",
+            500:Error500Serializer
+            },
+        examples=[
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"error":"Inernal error messages"},
+                response_only=True,
+                status_codes=['500']
+            ),
+        ]
+    )
     @method_decorator(csrf_protect, name='dispatch')
     def put(self, request, *args, **kwargs):
         try:
@@ -280,6 +280,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         """Retrieve and return the authenticated user."""
         return self.request.user
+
 @extend_schema(
     parameters=[
           OpenApiParameter(
@@ -294,7 +295,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     responses={
         200: Ok200serializer,
         400: Error400Serializer,
-        403: 'CSRF token missing or incorrect.',
+        403: Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer
     },
     examples=[
@@ -373,7 +374,7 @@ class LoginView(APIView):
     ],
     responses={
         200: Ok200serializer,
-        403 :'CSRF token missing or incorrect.',
+        403 :Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer
     },
     examples=[
@@ -429,7 +430,7 @@ class LogoutView(APIView):
     responses={
                 200: CheckEmailResponseSerializer,
                 400: Error400Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500: Error500Serializer,},
                  examples=[
                      OpenApiExample(
@@ -491,7 +492,7 @@ def check_email_replicate(request):
     responses={
                 200: CheckUsernameResponseSerializer,
                 400: Error400Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500: Error500Serializer,},
                 examples=[
                      OpenApiExample(
@@ -540,48 +541,49 @@ def check_username_replicate(request):
 
 
 @extend_schema(
-                parameters=[
-                            OpenApiParameter(
-                            name='token',
-                            type=str,
-                            location=OpenApiParameter.QUERY,
-                            description='Your token description here',
-                            required=True
-                            ),
-                ],
-                responses={
-                            200: Ok200serializer,
-                            400: Error400Serializer,
-                            401: Error401Serializer,
-                            500: Error500Serializer,},
-                            examples=[
-                                 OpenApiExample(
-                                    'Email exist Error',
-                                    value={'message': 'User is been actived!!!', 'detail': 'Redirect to login page, please login cookNetwoking with your email and password!'},
-                                    response_only=True,
-                                    status_codes=['200']
-                                ),
-                                OpenApiExample(
-                                    'Email exist Error',
-                                    value={'error': 'Email has not been sign up , please check again!!!', 'detail': 'Please sign up again.'},
-                                    response_only=True,
-                                    status_codes=['400']
-                                ),
-                                OpenApiExample(
-                                    'Email exist Error',
-                                    value={'error': 'Username is already existed !!!', 'detail': 'Please use another username.'},
-                                    response_only=True,
-                                    status_codes=['401']
-                                ),
-                                OpenApiExample(
-                                    'Internal Error',
-                                    value={'error': 'Internal server error'},
-                                    response_only=True,
-                                    status_codes=['500']
-                                )
-                                ],
-                description='Checks activate link is correctly or not, the link will present like [/signupVertify?token="token"] ',
-            )
+    parameters=[
+        OpenApiParameter(
+            name='token',
+            type=str,
+            location=OpenApiParameter.QUERY,
+            description='Your token description here',
+            required=True
+        ),
+    ],
+    responses={
+        200: Ok200serializer,
+        400: Error400Serializer,
+        401: Error401Serializer,
+        500: Error500Serializer,
+    },
+    examples=[
+        OpenApiExample(
+            'Email exist Error',
+            value={'message': 'User is been actived!!!', 'detail': 'Redirect to login page, please login cookNetwoking with your email and password!'},
+            response_only=True,
+            status_codes=['200']
+        ),
+        OpenApiExample(
+            'Email exist Error',
+            value={'error': 'Email has not been sign up , please check again!!!', 'detail': 'Please sign up again.'},
+            response_only=True,
+            status_codes=['400']
+        ),
+        OpenApiExample(
+            'Email exist Error',
+            value={'error': 'Username is already existed !!!', 'detail': 'Please use another username.'},
+            response_only=True,
+            status_codes=['401']
+        ),
+        OpenApiExample(
+            'Internal Error',
+            value={'error': 'Internal server error'},
+            response_only=True,
+            status_codes=['500']
+        )
+    ],
+    description='Checks activate link is correctly or not, the link will present like [/signupVertify?token="token"]',
+)
 @api_view(['GET'])
 def sign_up_vertify(request):
     """Vertify token is leagal or not!"""
@@ -664,7 +666,7 @@ class ChangePassword(APIView):
     responses={
                 200: Ok200serializer,
                 401: Error401Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500 :Error500Serializer
                },
      examples=[
@@ -722,7 +724,7 @@ class ChangePassword(APIView):
     request=EmailSerializer,
     responses={
                 200: Ok200serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 400: Error400Serializer
                },
                examples=[
@@ -793,7 +795,7 @@ class EmailVertificationView(APIView):
     responses={
                 200: Ok200serializer,
                 401: Error401Serializer,
-                403 :'CSRF token missing or incorrect.',
+                403 :Error403CSRFTokenmissingSerialzier,
                 500 :Error500Serializer
                },
      examples=[

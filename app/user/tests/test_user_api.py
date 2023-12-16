@@ -346,10 +346,8 @@ class TestUser(TestCase):
         params = {
             "new_password": "newpassword123"
         }
-        print(self.exist_user.password)
         res = self.client.post(USER_CHANGE_PASSWORD_URL, params)
         self.exist_user.refresh_from_db()
-        print(self.exist_user.password)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         user = get_user_model().objects.get(pk=self.exist_user.pk)
         self.assertTrue(user.check_password("newpassword123"))
@@ -375,6 +373,6 @@ class TestUser(TestCase):
         res = self.client.get(USER_LIST_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         res_content = decode_content(res.content)
-        self.assertEqual(len(res_content), 3)
+        self.assertEqual(len(res_content['results']), 3)
     
     
