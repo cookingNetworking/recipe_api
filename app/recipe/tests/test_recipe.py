@@ -15,7 +15,8 @@ import json
 RECIPE_URL = reverse("recipe:recipe-list")
 RECIPE_COMMENT_URL = reverse("recipe:recipecomment-list")
 INGREDIENT_URL = reverse("recipe:ingredient-list")
-
+LIKE_RECIPE_URL = reverse("recipe:like-recipe")
+SAVE_ACTION_URL = reverse("recipe:save-action")
 def decode_content(content):
     """Decode response content!"""
     content_dict = json.loads(content.decode('utf-8'))
@@ -421,3 +422,329 @@ class PrivateAgentAPITests(TestCase):
             url = detail_comment_rul(recipe_comment.id)
             res = self.client.delete(url)
             self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_create_recipe_with_ingredients(self):
+        """Test add ingredient when create recipe!"""
+        payload = {
+            'title':'test_for_add_ingredients',
+            'cost_time':'20',
+            'description':'asdkioasjdf',
+            'ingredients':['banana']
+        }
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.set_hkey') as mock_set_hkey:
+            mock_set_recipe.return_value = None
+            mock_set_hkey.return_value = None
+            res = self.client.post(RECIPE_URL, payload)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            exist = Ingredient.objects.filter(name=payload['ingredients'][0])
+            self.assertTrue(exist)
+
+    def test_create_recipe_with_exist_ingredient(self):
+        """Test create recipe with exist ingredient!"""
+        Ingredient.objects.create(name='steak')
+        payload = {
+            'title':'with_exist_ingredient',
+            'cost_time':'20',
+            'description':'asjiddsjiofp;aosdg',
+            'ingredients':['steak', 'onion']
+        }
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.set_hkey') as mock_set_hkey:
+            mock_set_recipe.return_value = None
+            mock_set_hkey.return_value = None
+            res = self.client.post(RECIPE_URL, payload)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            res_content = decode_content(res.content)
+            ingredients = res_content['ingredients']
+            for ingredient in payload['ingredients']:
+                exist = Ingredient.objects.filter(name=ingredient)
+                self.assertIn(ingredient, ingredients)
+                self.assertTrue(exist)
+
+    def test_create_ingredient_on_update(self):
+        """Test creating tag when updating a recipe"""
+        recipe = create_recipe(user=self.user)
+        payload = {
+            'ingredients':['chocolate']
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+            mock_set_recipe.return_value = None
+            mock_update_hkey.return_value = None
+            res = self.client.patch(url, payload)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            exist = Ingredient.objects.filter(name=payload['ingredients'][0]).exists
+            self.assertTrue(exist)
+
+    def test_update_recipe_with_assigned_ingredients(self):
+        """Test assign an exist ingredient when update recipe! """
+        ingredient = Ingredient.objects.create(name='salt')
+        pre_ingredient = Ingredient.objects.create(name='sugar')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(pre_ingredient)
+        payload = {
+            'ingredients':['salt']
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+                mock_set_recipe.return_value = None
+                mock_update_hkey.return_value = None
+                res = self.client.patch(url, payload)
+                self.assertEqual(res.status_code, status.HTTP_200_OK)
+                recipe.refresh_from_db()
+                self.assertIn(ingredient, recipe.ingredients.all())
+                self.assertNotIn(pre_ingredient, recipe.ingredients.all())
+
+    def test_clear_recipe_ingredients(self):
+        """Test clear recipe tags!"""
+        ingredient = Ingredient.objects.create(name='chocolate')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(ingredient)
+        payload = {
+            'ingredients':[]
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+                mock_set_recipe.return_value = None
+                mock_update_hkey.return_value = None
+                res = self.client.patch(url, payload)
+                self.assertEqual(res.status_code, status.HTTP_200_OK)
+                recipe.refresh_from_db()
+                self.assertNotIn(ingredient, recipe.ingredients.all())
+
+    def test_create_recipe_with_tags(self):
+        """Test add tag when create recipe!"""
+        payload = {
+            'title':'test_for_add_ingredients',
+            'cost_time':'20',
+            'description':'asdkioasjdf',
+            'tags':['dinner']
+        }
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.set_hkey') as mock_set_hkey:
+            mock_set_recipe.return_value = None
+            mock_set_hkey.return_value = None
+            res = self.client.post(RECIPE_URL, payload)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            exist = Tag.objects.filter(name=payload['tags'][0])
+            self.assertTrue(exist)
+
+    def test_create_recipe_with_exist_tag(self):
+        """Test create recipe with exist tag!"""
+        Tag.objects.create(name='brunch')
+        payload = {
+            'title':'with_exist_ingredient',
+            'cost_time':'20',
+            'description':'asjiddsjiofp;aosdg',
+            'tags':['brunch', 'anmerico']
+        }
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.set_hkey') as mock_set_hkey:
+            mock_set_recipe.return_value = None
+            mock_set_hkey.return_value = None
+            res = self.client.post(RECIPE_URL, payload)
+            self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+            res_content = decode_content(res.content)
+            tags = res_content['tags']
+            for tag in payload['tags']:
+                exist = Tag.objects.filter(name=tag)
+                self.assertIn(tag, tags)
+                self.assertTrue(exist)
+
+    def test_create_tag_on_update(self):
+        """Test creating tag when updating a recipe"""
+        recipe = create_recipe(user=self.user)
+        payload = {
+            'tags':['lunch']
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+            mock_set_recipe.return_value = None
+            mock_update_hkey.return_value = None
+            res = self.client.patch(url, payload)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            exist = Tag.objects.filter(name=payload['tags'][0]).exists
+            self.assertTrue(exist)
+
+    def test_update_recipe_with_assigned_tags(self):
+        """Test assign an exist tag when update recipe! """
+        tag = Tag.objects.create(name='breakfast')
+        pre_tag = Tag.objects.create(name='dinner')
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(pre_tag)
+        payload = {
+            'tags':['breakfast']
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+                mock_set_recipe.return_value = None
+                mock_update_hkey.return_value = None
+                res = self.client.patch(url, payload)
+                self.assertEqual(res.status_code, status.HTTP_200_OK)
+                recipe.refresh_from_db()
+                self.assertIn(tag, recipe.tags.all())
+                self.assertNotIn(pre_tag, recipe.tags.all())
+
+    def test_clear_recipe_tags(self):
+        """Test clear recipe tags!"""
+        tag = Tag.objects.create(name='India')
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag)
+        payload = {
+            'tags':[]
+        }
+        url = detail_url(recipe.id)
+        with patch('recipe.redis_set.RedisHandler.set_recipe') as mock_set_recipe, \
+            patch('recipe.redis_set.RedisHandler.update_hkey') as mock_update_hkey:
+                mock_set_recipe.return_value = None
+                mock_update_hkey.return_value = None
+                res = self.client.patch(url, payload)
+                self.assertEqual(res.status_code, status.HTTP_200_OK)
+                recipe.refresh_from_db()
+                self.assertNotIn(tag, recipe.tags.all())
+
+    def test_like_recipe(self):
+        """Test user like recipe api!"""
+        recipe = create_recipe(user=self.user)
+        prev_recipe_like = recipe.likes
+        payload = {
+            'recipe_id':f'{recipe.id}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(LIKE_RECIPE_URL, payload)
+            recipe.refresh_from_db()
+            res_content = decode_content(res.content)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(recipe.likes, prev_recipe_like + 1)
+            self.assertEqual(res_content['message'], 'Like action successed!')
+            exist = Like.objects.filter(recipe=recipe, user=self.user)
+            self.assertTrue(exist)
+
+    def test_revoke_like_recipe(self):
+        """Test user revoke like recipe api!!"""
+        recipe = create_recipe(user=self.user, likes=1)
+        Like.objects.create(user=self.user, recipe=recipe)
+        prev_recipe_like = recipe.likes
+        payload = {
+            'recipe_id':f'{recipe.id}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(LIKE_RECIPE_URL, payload)
+            recipe.refresh_from_db()
+            res_content = decode_content(res.content)
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(recipe.likes, prev_recipe_like - 1)
+            self.assertEqual(res_content['message'], "Like action was revoke!")
+            exist = Like.objects.filter(recipe=recipe, user=self.user)
+            self.assertFalse(exist)
+
+    def test_save_recipe(self):
+        """Test user save recipe action !!!"""
+        recipe = create_recipe(user=self.user)
+        prev_recipe_save_count = recipe.save_count
+        payload = {
+            'recipe_id':recipe.id
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = decode_content(res.content)
+            recipe.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['message'], 'User save the recipe!')
+            self.assertEqual(recipe.save_count, prev_recipe_save_count + 1)
+            exist = Save.objects.filter(user=self.user, recipe=recipe)
+            self.assertTrue(exist)
+
+    def test_unsave_recipe(self):
+        """Test user unsave recipe action !!!"""
+        recipe = create_recipe(user=self.user)
+        Save.objects.create(user=self.user, recipe=recipe)
+        prev_recipe_save_count = recipe.save_count
+        payload = {
+            'recipe_id':recipe.id
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = decode_content(res.content)
+            recipe.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(recipe.save_count, prev_recipe_save_count - 1)
+            self.assertEqual(res_content['message'], 'User unsaved the recipe !')
+            exist = Save.objects.filter(user=self.user, recipe=recipe)
+            self.assertFalse(exist)
+
+    def test_save_ingredient(self):
+        """Test save ingredient!!!"""
+        ingredient = Ingredient.objects.create(name='chocolate')
+        payload = {
+            'ingredient':f'{ingredient.name}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = res_content = decode_content(res.content)
+            ingredient.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['message'], 'User save the ingredient!')
+            exist = Save.objects.filter(user=self.user, ingredient=ingredient)
+            self.assertTrue(exist)
+
+    def test_unsave_ingredient(self):
+        """Test unsave ingredients"""
+        ingredient = Ingredient.objects.create(name='chocolate')
+        Save.objects.create(ingredient=ingredient, user=self.user)
+        payload = {
+            'ingredient':f'{ingredient.name}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = res_content = decode_content(res.content)
+            ingredient.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['message'], 'User unsaved the ingredient !')
+            exist = Save.objects.filter(user=self.user, ingredient=ingredient)
+            self.assertFalse(exist)
+
+    def test_save_tag(self):
+        """Test save ingredient!!!"""
+        tag = Tag.objects.create(name='lunch')
+        payload = {
+            'tag':f'{tag.name}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = res_content = decode_content(res.content)
+            tag.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['message'], 'User save the tag!')
+            exist = Save.objects.filter(user=self.user, tag=tag)
+            self.assertTrue(exist)
+
+    def test_unsave_tag(self):
+        """Test unsave ingredients"""
+        tag = Tag.objects.create(name='breakfast')
+        Save.objects.create(tag=tag, user=self.user)
+        payload = {
+            'tag':f'{tag.name}'
+        }
+        with patch('recipe.redis_set.RedisHandler.increase_recipe_view') as mock_increase_recipe_view:
+            mock_increase_recipe_view.return_value = True
+            res = self.client.post(SAVE_ACTION_URL, payload)
+            res_content = res_content = decode_content(res.content)
+            tag.refresh_from_db()
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_content['message'], 'User unsaved the tag !')
+            exist = Save.objects.filter(user=self.user, tag=tag)
+            self.assertFalse(exist)

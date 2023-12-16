@@ -896,7 +896,7 @@ class IngredientViewSet(BaseRecipeAttrViewSet):
 @permission_classes([IsAuthenticated])
 def like_button(request):
     """Action that user like the recipe!"""
-    recipe_id = request.data.get("id")
+    recipe_id = request.data.get("recipe_id")
     recipe_redis_handler = RedisHandler(redis_client1)
     try:
         recipe = models.Recipe.objects.filter(id=recipe_id).first()
@@ -909,7 +909,6 @@ def like_button(request):
             recipe.save(update_fields=['likes'])
             recipe.refresh_from_db()
             recipe_redis_handler.increase_recipe_view(hkey_name="likes", recipe_id=recipe_id)
-            print(recipe.likes)
             return Response({"message":"Like action successed!"}, status=status.HTTP_200_OK)
         else:
             like.delete()
@@ -917,11 +916,7 @@ def like_button(request):
             recipe.save(update_fields=['likes'])
             recipe_redis_handler.increase_recipe_view(hkey_name="likes", recipe_id=recipe_id, increment_value=-1)
             recipe.refresh_from_db()
-            print(recipe.likes)
             return Response({"message":"Like action was revoke!"}, status=status.HTTP_200_OK)
-
-    except ValidationError as e :
-            return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e :
         return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -986,7 +981,6 @@ def save_button(request):
     """The function for save recipe or not !"""
     try:
         recipe = models.Recipe.objects.filter(id=request.data.get('recipe_id')).first()
-        print(recipe)
         tag = models.Tag.objects.filter(name=request.data.get('tag')).first()
         ingredient = models.Ingredient.objects.filter(name=request.data.get('ingredient')).first()
         if not recipe and not tag and not ingredient:

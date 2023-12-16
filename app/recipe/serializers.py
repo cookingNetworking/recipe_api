@@ -100,9 +100,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
         """Create recipe."""
         req_user = self.context['request'].user
         req_tags = validated_data.pop("tags", [])
-        print(req_tags)
         req_ingredients = validated_data.pop("ingredients", [])
-        print(req_ingredients)
         photos = validated_data.pop("photos", [])
         steps = validated_data.pop("steps", [])
 
@@ -158,9 +156,7 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create with serializer"""
-        print('start')
         req_user = self.context["request"].user
-        print(req_user)
         recipe = validated_data.pop("recipe",None)
         # recipe = Recipe.objects.get(id=recipe_id) if recipe_id else None
         if recipe:

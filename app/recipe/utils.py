@@ -41,12 +41,9 @@ def generate_presigned_url(bucket_name, object_name, expiration=3600):
 def saved_action(user, obj):
     """Funciton for save action."""
     recipe_redis_handler = RedisHandler(redis_client1)
-    print(obj)
     if isinstance(obj, models.Recipe):
-        print("2")
         save, created = models.Save.objects.get_or_create(user=user, recipe=obj)
         if created:
-            print(obj.save_count)
             obj.save_count = F('save_count') + 1
             obj.save(update_fields=['save_count'])
             recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id)
@@ -54,7 +51,6 @@ def saved_action(user, obj):
         elif save:
             obj.save_count =F('save_count') - 1
             obj.save(update_fields=['save_count'])
-            print(obj.id)
             save.delete()
             recipe_redis_handler.increase_recipe_view(hkey_name="save_count", recipe_id=obj.id, increment_value= -1)
             return Response({'message':'User unsaved the recipe !'}, status=status.HTTP_200_OK)
@@ -65,12 +61,12 @@ def saved_action(user, obj):
         if created:
             obj.save_count =F('save_count') + 1
             obj.save(update_fields=['save_count'])
-            return Response({'message':'User save the Tag!'}, status=status.HTTP_200_OK)
+            return Response({'message':'User save the tag!'}, status=status.HTTP_200_OK)
         elif save:
             obj.save_count =F('save_count') - 1
             obj.save(update_fields=['save_count'])
             save.delete()
-            return Response({'message':'User unsaved the Tag !'}, status=status.HTTP_200_OK)
+            return Response({'message':'User unsaved the tag !'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Unknow error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     elif isinstance(obj, models.Ingredient):
