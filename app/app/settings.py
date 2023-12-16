@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost","cookingnetwork.co","3.104.38.255",'ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com']
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
 
 
 INSTALLED_APPS = [
@@ -48,9 +48,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -222,4 +222,4 @@ CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 
-
+CROS_ORIGIN_ALLOW_ALL = True
