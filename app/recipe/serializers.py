@@ -1,12 +1,13 @@
 """Serializer for recipe!"""
 from decimal import Decimal
+from storages.backends.s3boto3 import S3Boto3Storage
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
 from .utils import CustomSlugRelatedField
 
-
+s3_storage = S3Boto3Storage()
 class UserMinimalSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
@@ -29,19 +30,27 @@ class IngredientSerialzier(serializers.ModelSerializer):
 class RecipeStepSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipeStep!"""
     recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = RecipeStep
-        fields = ['id','recipe_id', 'step', 'description', 'image']
+        fields = ['id','recipe_id', 'step', 'description', 'image', ]
         read_only_fields = ['id','recipe_id']
         extra_kwargs = {"description": {"required": True}}
+
+    def get_signed_photo_url(self, obj):
+        if obj.image :
+            return s3_storage.url(str(obj.image), expire=1800)
+        return None
 
 class RecipePhotoSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipePhoto!"""
     recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = RecipePhoto
         fields = ['id','recipe_id', 'photo', 'upload_date', 'category']
         read_only_fields = ['id','recipe_id','upload_date']
+
 
 class RecipeSerialzier(serializers.ModelSerializer):
     """Serialzier for recipe!!"""

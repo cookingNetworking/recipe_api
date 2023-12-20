@@ -22,9 +22,6 @@ RUN mkdir -p /vol/static && \
     chown nginx:nginx /etc/nginx/conf.d/default.conf && \
     chmod +x /run.sh
 
-RUN if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then \
-    certbot certonly --webroot -w /var/www/certbot -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --staging; \
-    fi
 
 VOLUME /vol/static
 
