@@ -20,6 +20,7 @@ services:
       - AWS_S3_REGION_NAME
       - AWS_CLOUDFRONT_KEY_ID
       - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
       - TZ='GMT+8'
       - PGTZ='GMT+8'
