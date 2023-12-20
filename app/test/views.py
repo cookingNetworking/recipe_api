@@ -1,12 +1,17 @@
 import boto3
+import datetime
 from botocore.config import Config
-
+from storages.backends.s3boto3 import S3Boto3Storage
 from django.conf import settings
 from django.shortcuts import render, redirect
 from .forms import ImageUploadForm
 from core.models import TestImageUpload
 # Create your views here.
-
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from botocore.signers import CloudFrontSigner
 
 def generate_presigned_url(bucket_name, object_name, expiration=3600):
     """Generate a presigned URL to share an S3 object."""
@@ -15,15 +20,42 @@ def generate_presigned_url(bucket_name, object_name, expiration=3600):
 							  region_name=settings.AWS_S3_REGION_NAME,
 							  config=Config(signature_version='s3v4')
 							  )
-    
+
     response = s3_client.generate_presigned_url('get_object',
                                                 Params={'Bucket': bucket_name,
                                                         'Key': object_name},
                                                 ExpiresIn=expiration)
     return response
 
+def rsa_signer(message):
+    """Hash the private key for singned cloudfront url!!"""
+    private_key = serialization.load_pem_private_key(
+        settings.AWS_CLOUDFRONT_KEY,
+        password = None,
+        backend=default_backend()
+    )
+
+    return private_key.sign(message, padding.PKCS1v15(), hashes.SHA256())
+
+def create_signed_url(image_path):
+    """
+    Create signed url !
+    Exprired time should be minutes !
+    """
+    url = f'https://{settings.AWS_S3_CUSTOM_DOMAIN}/{image_path}'
+    expired_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+    print(expired_time)
+    key_id = settings.AWS_CLOUDFRONT_KEY_ID
+    cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
+    print(key_id, type(key_id))
+    signed_url = cloudfront_signer.generate_presigned_url(
+                                                        url,
+                                                        date_less_than=expired_time)
+    return signed_url
+
 def test_upload_image(request):
 	"""Test upload image to aws s3."""
+	s3_storage = S3Boto3Storage()
 	if request.method == 'POST':
 		form = ImageUploadForm(request.POST, request.FILES)
 		if form.is_valid():
@@ -34,7 +66,8 @@ def test_upload_image(request):
 		form = ImageUploadForm()
 		images = TestImageUpload.objects.filter().all()
 		for image in images:
-			url = generate_presigned_url(settings.AWS_STORAGE_BUCKET_NAME, image.image.name)
-			presigned_urls.append((image.name,url))	
+			print(image.image, type(image.image))
+			url = s3_storage.url(str(image.image), expire=1800)
+			presigned_urls.append((image.name,url))
 		print(presigned_urls)
 		return render(request, 'test_upload.html',{"form":form,"images":presigned_urls})

@@ -24,8 +24,6 @@ services:
     depends_on:
       - db
       - cache
-    networks:
-      - webnet
   worker:
     build:
       context: .
@@ -77,8 +75,6 @@ services:
       - POSTGRES_PASSWORD=changeme
       - TZ='GMT+8'
       - PGTZ='GMT+8'
-    networks:
-      - webnet
   cache:
     image: redis:7.2.1-alpine
     environment:

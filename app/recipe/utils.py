@@ -1,6 +1,14 @@
 import boto3
+import datetime
+import django_redis
 
 from botocore.config import Config
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from botocore.signers import CloudFrontSigner
 
 from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
@@ -15,27 +23,31 @@ from rest_framework.pagination import PageNumberPagination
 from core import models
 from .redis_set import RedisHandler
 
-import django_redis
 
 redis_client1 = django_redis.get_redis_connection("default")
 
+def rsa_signer(message):
+    """Hash the private key for singned cloudfront url!!"""
+    private_key = serialization.load_pem_private_key(
+        settings.AWS_CLOUDFRONT_KEY,
+        password = None,
+        backend=default_backend()
+    )
+    return private_key.sign(message, padding.PKCS1v15(), hashes.SHA1())
 
-def generate_presigned_url(bucket_name, object_name, expiration=3600):
-    """Generate a presigned URL to share an S3 object."""
-    s3_client = boto3.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                              aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-							  region_name=settings.AWS_S3_REGION_NAME,
-							  config=Config(signature_version='s3v4')
-							  )
-
-    response = s3_client.generate_presigned_url('get_object',
-                                                Params={'Bucket': bucket_name,
-                                                        'Key': object_name},
-                                                ExpiresIn=expiration)
-
-    return response
-
-
+def create_signed_url(image_path, expired_time):
+    """
+    Create signed url !
+    Exprired time should be minutes!
+    """
+    url = f'https://{settings.AWS_S3_CUSTOM_DOMAIN}/{image_path}'
+    expired_time = datetime.datetime.utcnow() + datetime.timedelta(minute=30)
+    key_id = settings.AWS_CLOUDFRONT_KEY_ID
+    cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
+    signed_url = cloudfront_signer.generate_presigned_url(
+                                                        url,
+                                                        date_less_than=expired_time)
+    return signed_url
 
 
 def saved_action(user, obj):

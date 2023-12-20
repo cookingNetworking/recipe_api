@@ -30,7 +30,7 @@ def upload_image_file_path(instance, filename):
 
 def step_image_file_path(instance, filename):
     """Generate a filepath for recipe step image."""
-    return f'recipe/{instance.recipe}/{instance.step}/{filename}'
+    return f'recipes/{instance.recipe}/{instance.step}/{filename}'
 
 def comment_image_file_path(instance, filename):
     return f'recipe/{instance.recipe}/comment{filename}'
