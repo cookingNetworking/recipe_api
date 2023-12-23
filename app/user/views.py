@@ -3,13 +3,27 @@ Views for user API.
 """
 
 
-from rest_framework import status, generics, permissions, authentication
+from rest_framework import (status,
+                            generics,
+                            permissions,
+                            authentication,
+                            mixins,
+                            viewsets
+                            )
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema,OpenApiExample, OpenApiParameter, OpenApiTypes
-from django.middleware.csrf import get_token
+
+from drf_spectacular.utils import (
+                                    extend_schema,
+                                    extend_schema_view,
+                                    OpenApiExample,
+                                    OpenApiParameter,
+                                    OpenApiTypes
+                                    )
+
+
 from django.core.cache import cache
 from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
@@ -21,6 +35,7 @@ from celery.contrib.abortable import AbortableAsyncResult
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
 
+from core.models import UserFollowing
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
 from user.serializers import (
@@ -34,11 +49,13 @@ from user.serializers import (
         Error401Serializer,
         Error403CSRFTokenmissingSerialzier,
         Error500Serializer,
+        FollowSerializer,
         CheckEmailResponseSerializer,
         CheckUsernameResponseSerializer,
         EmailSerializer,
         UsernameSerializer,
         )
+
 @extend_schema(
     parameters=[
          OpenApiParameter(
@@ -520,7 +537,7 @@ def check_email_replicate(request):
                         status_codes=['500']
                     )
                     ],
-    description='Checks if an email is already taken',
+    description='Checks if username is already taken',
 )
 @api_view(['POST'])
 @csrf_protect
@@ -866,12 +883,12 @@ def time_now(request):
 @extend_schema(
     parameters=[
             OpenApiParameter(
-            name='X-CSRFToken',
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.HEADER,
-            required=True,
-            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
-          )
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
+                ),
     ],
     responses={
         201: Created201serializer,
@@ -931,3 +948,165 @@ class ResendVertifyEmail(APIView):
                 }
         sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
         return Response({'message':'Email is resend, please check your email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_200_OK)
+@method_decorator(csrf_protect, name='dispatch')
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+           OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+        ],
+        responses={
+            201: Created201serializer,
+            400: Error400Serializer,
+            401: Error401Serializer,
+            403: Error403CSRFTokenmissingSerialzier,
+            500: Error500Serializer,
+        },
+        examples=[
+            OpenApiExample(
+                'Get the follow list!',
+                value={'message': 'Get the follow list !'},
+                response_only=True,
+                status_codes=['200']
+            ),
+            OpenApiExample(
+                'Request data is invalid!',
+                value={'error': 'Request data is invalid!'},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                'User not login',
+                value={'error': 'Authentication credentials were not provided.'},
+                response_only=True,
+                status_codes=['401']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={'error': 'CSRF token missing or incorrect.'},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                'Internal Error',
+                value={'error': 'Internal server error'},
+                response_only=True,
+                status_codes=['500']
+            )
+        ],
+        ),
+    create=extend_schema(
+        parameters=[
+            OpenApiParameter(
+            name='X-CSRFToken',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken!'
+            ),
+           OpenApiParameter(
+                name='Session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+        ],
+        responses={
+            201: Created201serializer,
+            400: Error400Serializer,
+            401: Error401Serializer,
+            403: Error403CSRFTokenmissingSerialzier,
+            500: Error500Serializer,
+        },
+        examples=[
+            OpenApiExample(
+                'Unfollow the user!',
+                value={'message': 'Unfollow the user!'},
+                response_only=True,
+                status_codes=['200']
+            ),
+            OpenApiExample(
+                'Follow the user!',
+                value={'message': 'Follow the user!'},
+                response_only=True,
+                status_codes=['201']
+            ),
+            OpenApiExample(
+                'Request data is invalid!',
+                value={'error': 'Request data is invalid!'},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                'User not login',
+                value={'error': 'Authentication credentials were not provided.'},
+                response_only=True,
+                status_codes=['401']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={'error': 'CSRF token missing or incorrect.'},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                'Internal Error',
+                value={'error': 'Internal server error'},
+                response_only=True,
+                status_codes=['500']
+            )
+        ],
+        description='Follow or un follow user!')
+)
+class FollowViewSet(
+                    mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    viewsets.GenericViewSet
+                    ):
+    """Follow and un follow views for follow action!"""
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        user = self.request.user
+        return UserFollowing.objects.filter(user_id=user).order_by('create')
+
+    def list(self, request, *args, **kwargs):
+        """End point for user follow system  to show login user follow status!!!"""
+        try:
+            res = super().list(request, *args, **kwargs)
+            return res
+        except ValidationError as e:
+            return Response({'error':'Request data is invalid!'}, status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response(({'error':'Internal server error!'}, status.HTTP_500_INTERNAL_SERVER_ERROR))
+
+    def create(self, request, *args, **kwargs):
+        """End point for user follow system!!"""
+        try:
+            user = request.user
+            following_user_id = request.data.get('following_user_id')
+            following = get_user_model().objects.get(id = following_user_id)
+            follow , created= UserFollowing.objects.get_or_create(
+                                                user_id=user,
+                                                following_user_id=following
+                                                )
+            if created:
+                return Response({'message':'Follow the user!'}, status.HTTP_201_CREATED)
+            elif follow:
+                follow.delete()
+                return Response({'message':'Unfollow the user!'}, status.HTTP_200_OK)
+
+
+        except ValidationError as e:
+            return Response({'error':'Request data is invalid!'}, status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response(({'error':'Internal server error!'}, status.HTTP_500_INTERNAL_SERVER_ERROR))
+

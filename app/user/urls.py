@@ -17,5 +17,6 @@ urlpatterns = [
     path('login/',views.LoginView.as_view(), name='login'),
     path('logout/',views.LogoutView.as_view(), name='logout'),
     path('detail/',views.UserDetailView.as_view(), name='user_detail'),
-    path('change-password/', views.ChangePassword.as_view(), name='changepassword')
+    path('change-password/', views.ChangePassword.as_view(), name='changepassword'),
+    path('follow/', views.FollowViewSet.as_view({'post':'create','get':'list'}), name='follow')
 ]

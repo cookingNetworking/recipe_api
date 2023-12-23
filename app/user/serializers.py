@@ -5,12 +5,13 @@ Serialzier for User model.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.translation import gettext as _
+from core.models import UserFollowing
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["email","password","username","role","birthday","is_staff","last_login"]
-        extra_kwargs = {
+        fields = ["id","email","password","username","role","birthday","is_staff","last_login"]
+        extra_kwargs = {"id":{'read_only':True},
                         "password":{'write_only':True, "min_length" : 8,'required': True},
                         'last_login':{'read_only':True},
                         "is_staff": {'read_only': True},
@@ -59,6 +60,19 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authorization')
         attrs['user'] = user
         return attrs
+
+class FollowSerializer(serializers.ModelSerializer):
+    """Serializer of  follow action!"""
+    class Meta:
+        model = UserFollowing
+        fields = ["user_id","following_user_id","create"]
+        extra_kwargs = {
+                    "user_id":{"read_only": True},
+                    "following_user_id":{"required": True},
+                    "create": {"read_only": True},
+                    }
+
+
 
 class PasswordSerialzier(serializers.Serializer):
     new_password = serializers.CharField(required=True)

@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-
+from core.models import UserFollowing
 
 from rest_framework.test import APIClient, force_authenticate
 from rest_framework import status
@@ -24,7 +24,7 @@ LOGOUT_URL = reverse("user:logout")
 USER_DETAIL_URL = reverse("user:user_detail")
 USER_LIST_URL = reverse("user:user_list")
 USER_CHANGE_PASSWORD_URL = reverse("user:changepassword")
-
+FOLLOW_USER_URL = reverse("user:follow")
 
 def create_user(**params):
     """Create user and return."""
@@ -260,7 +260,7 @@ class TestUser(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(content_dict['detail']['user']['email'], user.email)
         self.assertEqual(content_dict['detail']['user']['username'], user.username)
-    
+
     def test_login_fail_wrong_email(self):
         """Test login with wrong eamil !"""
         payload = {
@@ -294,14 +294,14 @@ class TestUser(TestCase):
         }
         res = self.client.post(LOGIN_URL, json.dumps(params), content_type='application/json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-    
+
     def test_logout(self):
         """Test logout user!"""
         token_res = self.client.get(GET_CSRF_TOKEN_URL)
         csrf_token = token_res.cookies["csrftoken"].value
         self.client.force_authenticate(user=self.exist_user)
         res = self.client.post(LOGOUT_URL,HTTP_X_CSRFTOKEN=csrf_token)
-        
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_edit_user_email(self):
@@ -315,19 +315,19 @@ class TestUser(TestCase):
         self.exist_user.refresh_from_db()
         self.assertEqual(self.exist_user.email, res_dict['email'])
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-    
+
     def test_edit_user_username(self):
         """Test edit user username."""
         self.client.force_authenticate(user=self.exist_user)
         params = {
             'username': "editname"
-        } 
+        }
         res = self.client.patch(USER_DETAIL_URL, params)
         self.exist_user.refresh_from_db()
         res_dict = decode_content(res.content)
         self.assertEqual(self.exist_user.username, res_dict['username'])
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-    
+
     def test_edit_user_role(self):
         """Test edit user role!"""
         self.client.force_authenticate(user=self.exist_user)
@@ -374,5 +374,62 @@ class TestUser(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         res_content = decode_content(res.content)
         self.assertEqual(len(res_content['results']), 3)
-    
-    
+
+    def test_follow_user(self):
+        """Test user follow system!!"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+                "email": "test3@example.com",
+                "password": "123564qefqwgqawegdef",
+                "username": "testuser3",
+            }
+        user_2 = get_user_model().objects.create(**params)
+        payload = {"following_user_id": user_2.id}
+        res = self.client.post(FOLLOW_USER_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        exist = UserFollowing.objects.filter(
+                                            user_id=self.exist_user,
+                                            following_user_id=user_2
+                                            ).exists()
+        self.assertTrue(exist)
+
+    def test_unfollow_user(self):
+        """Test unfollow user endpoint!!"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+                "email": "test3@example.com",
+                "password": "123564qefqwgqawegdef",
+                "username": "testuser3",
+            }
+        user_2 = get_user_model().objects.create(**params)
+        follow = UserFollowing.objects.create(
+                                            user_id=self.exist_user,
+                                            following_user_id=user_2
+                                            )
+        payload = {"following_user_id": user_2.id}
+        res = self.client.post(FOLLOW_USER_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        exist = UserFollowing.objects.filter(
+                                            user_id=self.exist_user,
+                                            following_user_id=user_2
+                                            ).exists()
+        self.assertFalse(exist)
+
+    def test_follow_list(self):
+        """Test follow list for login user!!!"""
+        self.client.force_authenticate(user=self.exist_user)
+        params = {
+                "email": "test3@example.com",
+                "password": "123564qefqwgqawegdef",
+                "username": "testuser3",
+            }
+        user_2 = get_user_model().objects.create(**params)
+        follow = UserFollowing.objects.create(
+                                            user_id=self.exist_user,
+                                            following_user_id=user_2
+                                            )
+        res = self.client.get(FOLLOW_USER_URL)
+        res_content = decode_content(res.content)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_content['results']), 1)
+        self.assertEqual(res_content['results'][0]["following_user_id"], user_2.id)

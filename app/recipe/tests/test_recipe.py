@@ -336,6 +336,7 @@ class PrivateAgentAPITests(TestCase):
             url = detail_url(recipe.id)
             res_retrieve_recipe = self.client.get(url)
             res_content2 = decode_content(res_retrieve_recipe.content)
+
             self.assertEqual(res_retrieve_recipe.status_code, status.HTTP_200_OK)
             self.assertEqual(res_content2['top_five_comments'][0]['id'], res_content1['id'])
 

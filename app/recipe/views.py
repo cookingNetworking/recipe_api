@@ -1,7 +1,6 @@
 """Create recipe API end point!"""
 from rest_framework import (
         status,
-        generics,
         mixins,
         permissions,
         viewsets,
@@ -20,8 +19,7 @@ from drf_spectacular.utils import (
 )
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
-from django.db.models import Q, F, Prefetch, Count, Avg
-from django.shortcuts import get_object_or_404
+from django.db.models import Q, F,  Count, Avg
 from functools import reduce
 from operator import or_
 
@@ -477,7 +475,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             print(e)
             return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@method_decorator(csrf_protect, name='dispatch')
+
 @extend_schema_view(
     create=extend_schema(
         parameters=[
