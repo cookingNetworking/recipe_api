@@ -42,18 +42,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     #extention ap
-    "rest_framework",
     'botocore',
-    'drf_spectacular',
     'corsheaders',
+    'drf_spectacular',
+    'daphne',
     'django_extensions',
     'storages',
-    "debug_toolbar",
+    "rest_framework",
     #project app
     "core",
-    'user',
-    'test',
     'recipe'
+    'test',
+    'user',
 ]
 
 MIDDLEWARE = [
@@ -88,7 +88,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app.wsgi.application"
 
-
+ASGI_APPLICATION = "app.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 

@@ -1,14 +1,9 @@
 
 server {
     listen 80;
-    server_name cookingnetwork.co www.cookingnetwork.co; 
+    server_name cookingnetwork.co www.cookingnetwork.co;
 
 
-    location ^~ /.well-known/acme-challenge/ {
-        allow all;
-        root /var/www/certbot;
-        try_files $uri $uri/ =404;
-    }
 
     location / {
         return 301 https://$host$request_uri;
@@ -22,9 +17,9 @@ server {
         alias /vol/static;
     }
 
-   
+
     location / {
-        uwsgi_pass app:9000; 
+        uwsgi_pass app:9000;
         include /etc/nginx/uwsgi_params;
         client_max_body_size 10M;
 
@@ -37,7 +32,14 @@ server {
         add_header 'Content-Type' 'text/plain charset=UTF-8';
         add_header 'Content-Length' 0;
         return 204;
-      
-    
+
+
         }
+    location /ws/ {
+    proxy_pass http://django_daphne;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    # 其他WebSocket代理设置...
+}
 }

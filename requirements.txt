@@ -2,7 +2,7 @@ boto3
 botocore
 cryptography
 celery
-debugpy
+daphne
 Django>=3.2.4,<3.3
 djangorestframework>=3.12.4,<3.13
 django-extensions
@@ -10,6 +10,7 @@ django-environ
 django-storages
 django-debug-toolbar
 django-cors-headers
+django-channels["daphne"]
 drf-spectacular
 django-celery-results
 django-redis
