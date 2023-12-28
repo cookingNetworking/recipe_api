@@ -19,6 +19,9 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_CLOUDFRONT_KEY_ID
+      - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
       - TZ='GMT+8'
       - PGTZ='GMT+8'

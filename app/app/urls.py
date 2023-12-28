@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from user import views as user_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
@@ -37,3 +37,4 @@ urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path('resendVertify/',user_views.ResendVertifyEmail.as_view(), name='reseendertifyemail')
 ]
+

@@ -10,7 +10,7 @@ django-environ
 django-storages
 django-debug-toolbar
 django-cors-headers
-django-channels["daphne"]
+django-channels[daphne]
 drf-spectacular
 django-celery-results
 django-redis
