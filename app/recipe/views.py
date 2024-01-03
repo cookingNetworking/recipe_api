@@ -26,7 +26,7 @@ from operator import or_
 from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
-from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination
+from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination, send_notification_to_followers
 
 from rest_framework.exceptions import ValidationError
 import django_redis
@@ -372,6 +372,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                     self.recipe_redis_handler.set_hkey(hkey_name='views',recipe_id=int(recipe_id))
                     self.recipe_redis_handler.set_hkey(hkey_name='likes',recipe_id=int(recipe_id))
                     self.recipe_redis_handler.set_hkey(hkey_name='save_count',recipe_id=int(recipe_id))
+                    send_notification_to_followers(user=request.user, recipe_title=response.data.get('title',None))
                     return response
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)

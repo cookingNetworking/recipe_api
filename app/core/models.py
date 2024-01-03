@@ -191,6 +191,6 @@ class Notification(models.Model):
     message = models.TextField()
     read = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
-
+    delievered = models.BooleanField(default=False)
     def __str__(self):
         return f"Notification {self.title} to {self.client.username}"

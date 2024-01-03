@@ -2,8 +2,9 @@ import boto3
 import datetime
 import django_redis
 
-from botocore.config import Config
+from asgiref.sync import async_to_sync
 
+from channels.layers import get_channel_layer
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -14,7 +15,6 @@ from django.views.decorators.csrf import csrf_protect
 from django.conf import settings
 from django.db.models import F
 
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from rest_framework.viewsets import ModelViewSet
@@ -123,3 +123,16 @@ class CustomPagination(PageNumberPagination):
     """Customerized the page numer."""
     page_size = 30
 
+def send_notification_to_followers(user, recipe_title):
+    """Send notification to the follower of user!"""
+    channel_layer = get_channel_layer()
+    followers = models.UserFollowing.objects.filter(following_user_id=user).all().distinct()
+    for follower in followers:
+        group_name = f'user_{follower.user_id.id}_follows'
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                'type': 'send_notification',
+                'message': {'text': f' The user you follow {follower.user_id.username} has published new recipe {recipe_title}! '}
+            }
+        )
