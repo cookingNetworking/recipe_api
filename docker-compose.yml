@@ -9,6 +9,7 @@ services:
     volumes:
       - ./app:/app
       - dev-static-data:/vol/web
+      - ws-static:/tmp
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
@@ -101,7 +102,8 @@ services:
       - ./var/www/certbot:/var/www/certbot
       - ./var/log/letsencrypt:/var/log/letsencrypt
       - ./var/lib/letsencrypt:/var/lib/letsencrypt
-      - dev-static-data:/vol/static
+      - dev-static-data:/vol/web/static
+      - ws-static:/tmp
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
@@ -109,3 +111,4 @@ volumes:
   dev-db-data:
   dev-static-data:
   redis-data:
+  ws-static:

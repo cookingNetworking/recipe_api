@@ -6,7 +6,7 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from core.models import UserFollowing
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     """Connect and disconnect websocket!"""
@@ -30,5 +30,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_user_following(self, user):
         """Get user following user list"""
+        from core.models import UserFollowing
         return [follow.following_user_id for follow in UserFollowing.objects.filter(user_id=user)]
 
