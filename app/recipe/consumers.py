@@ -31,5 +31,5 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     def get_user_following(self, user):
         """Get user following user list"""
         from core.models import UserFollowing
-        return [follow.following_user_id for follow in UserFollowing.objects.filter(user_id=user)]
+        return [follow.following_user_id for follow in UserFollowing.objects.filter(user_id=user).prefetch_related('following_user_id').distinct()]
 

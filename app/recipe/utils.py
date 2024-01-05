@@ -126,7 +126,7 @@ class CustomPagination(PageNumberPagination):
 def send_notification_to_followers(user, recipe_title):
     """Send notification to the follower of user!"""
     channel_layer = get_channel_layer()
-    followers = models.UserFollowing.objects.filter(following_user_id=user).all().distinct()
+    followers = models.UserFollowing.objects.filter(following_user_id=user).prefetch_related('user_id').distinct()
     for follower in followers:
         group_name = f'user_{follower.user_id.id}_follows'
         async_to_sync(channel_layer.group_send)(
