@@ -2,11 +2,13 @@
 Logic for real time notification with websocket!!!
 """
 
-import json
+import json, logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
+
+logger = logging.getLogger(__name__)
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     """Connect and disconnect websocket!"""
@@ -17,16 +19,22 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
         if user.is_authenticated:
-            followings  = await self.get_user_following(user=user)
-            if followings is not None:
-                for followee in followings:
-                    group_name = f'user_{followee.id}_follows'
-                    self.groups.append(group_name)
-                    await self.channel_layer.group_add(
-                        group_name,
-                        self.channel_name
-                    )
-            await self.accept()
+            try:
+                followings  = await self.get_user_following(user=user)
+                if followings is not None:
+                    for followee in followings:
+                        group_name = f'user_{followee.id}_follows'
+                        self.groups.append(group_name)
+                        await self.channel_layer.group_add(
+                            group_name,
+                            self.channel_name
+                        )
+                await self.accept()        
+            except Exception as e:
+                logger.error("Error in connection %s", e)
+        else:
+            logger.info("Unauthenticated user attemptedto connect!!")
+        
 
     async def create_recipe(self):
         user = self.scope["user"]
@@ -46,7 +54,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 pass
 
     async def disconnect(self, close_code):
-        if group_name is None:
+        if self.groups is None:
            self.close()
            pass
         for group_name in self.groups:
