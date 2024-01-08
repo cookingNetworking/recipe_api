@@ -14,6 +14,7 @@ RUN apk --no-cache add certbot
 COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./no-ssl.conf.tpl /etc/nginx/no-ssl.conf.tpl
 COPY ./uwsgi_params /etc/nginx/uwsgi_params
+COPY ./proxy_params /etc/nginx/proxy_params
 COPY ./run.sh /run.sh
 
 RUN mkdir -p /vol/static && \

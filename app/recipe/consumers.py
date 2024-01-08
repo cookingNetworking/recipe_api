@@ -10,26 +10,55 @@ from channels.db import database_sync_to_async
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     """Connect and disconnect websocket!"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.groups = []
+
     async def connect(self):
         user = self.scope["user"]
         if user.is_authenticated:
             followings  = await self.get_user_following(user=user)
-            for followee in followings:
-                group_name = f'user_{followee.id}_follows'
-                await self.channel_layer.group_add(
-                    group_name,
-                    self.channel_name
-                )
+            if followings is not None:
+                for followee in followings:
+                    group_name = f'user_{followee.id}_follows'
+                    self.groups.append(group_name)
+                    await self.channel_layer.group_add(
+                        group_name,
+                        self.channel_name
+                    )
             await self.accept()
+
+    async def create_recipe(self):
+        user = self.scope["user"]
+        if user.is_authenticated:
+            followings  = await self.get_user_following(user=user)
+            if followings is not None:
+                for followee in followings:
+                    group_name = f'user_{followee.id}_follows'
+                    await self.channel_layer.group_send(
+                        group_name,
+                        {
+                            'type': 'send_notification',
+                            'message': {'text': f' The user you follow {user.username} has published new recipe! '}
+                        }
+                    )
+            else:
+                pass
+
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name
-        )
+        if group_name is None:
+           self.close()
+           pass
+        for group_name in self.groups:
+            await self.channel_layer.group_discard(
+                group_name,
+                self.channel_name
+            )
+        self.close()
 
     @database_sync_to_async
     def get_user_following(self, user):
         """Get user following user list"""
         from core.models import UserFollowing
-        return [follow.following_user_id for follow in UserFollowing.objects.filter(user_id=user).prefetch_related('following_user_id').distinct()]
+        return [follow.user_id for follow in UserFollowing.objects.filter(following_user_id=user).prefetch_related('user_id').distinct()]
 

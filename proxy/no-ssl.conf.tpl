@@ -1,5 +1,4 @@
 
-
 server {
     listen ${LISTEN_PORT};
     server_name cookingnetwork.co www.cookingnetwork.co;
@@ -24,6 +23,9 @@ server {
     location /ws/ {
         proxy_pass http://unix:/tmp/daphne.sock;
         proxy_http_version 1.1;
-
+        proxy_redirect off;
+        proxy_buffering off;
+        include /etc/nginx/proxy_params;
         }
 }
+

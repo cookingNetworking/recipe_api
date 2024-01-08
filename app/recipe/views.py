@@ -18,15 +18,16 @@ from drf_spectacular.utils import (
         OpenApiTypes
 )
 from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from django.db.models import Q, F,  Count, Avg
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models import Q, F, Count, Avg
 from functools import reduce
 from operator import or_
 
 from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
-from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination, send_notification_to_followers
+from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination
 
 from rest_framework.exceptions import ValidationError
 import django_redis
@@ -359,6 +360,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @receiver(post_save, sender=models.Recipe)
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
@@ -372,7 +374,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
                     self.recipe_redis_handler.set_hkey(hkey_name='views',recipe_id=int(recipe_id))
                     self.recipe_redis_handler.set_hkey(hkey_name='likes',recipe_id=int(recipe_id))
                     self.recipe_redis_handler.set_hkey(hkey_name='save_count',recipe_id=int(recipe_id))
-                    send_notification_to_followers(user=request.user, recipe_title=response.data.get('title',None))
                     return response
         except ValidationError as e:
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)

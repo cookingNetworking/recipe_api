@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     'daphne',
     'channels',
+    'channels_redis',
     "django.contrib.staticfiles",
     #extention ap
     'botocore',
@@ -96,7 +97,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [("cache", 6379, 3)],
         },
     },
 }
