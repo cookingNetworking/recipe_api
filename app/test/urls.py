@@ -7,6 +7,7 @@ app_name ='test'
 
 urlpatterns = [
     path('upload_image/', views.test_upload_image, name='test_upload_image'),
-    path('login/', views.notification_test_login, name='notification_test_login')
+    path('login/', views.notification_test_login, name='notification_test_login'),
+    path('notification/', views.notification_notification, name='notification_notification')
 
 ]

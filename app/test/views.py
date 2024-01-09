@@ -4,6 +4,7 @@ from botocore.config import Config
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from django.contrib.auth import authenticate, login
+from django.urls import reverse
 from django.http import HttpResponse
 from django.conf import settings
 from django.shortcuts import render, redirect
@@ -83,7 +84,7 @@ def notification_test_login(request):
         user = authenticate(request, username=email, password=passowrd)
         if user is not None:
             login(request, user)
-            return redirect('test/test_create_recipe/')
+            return redirect(reverse('test:notification_test_create_recipe'))
     elif request.method == 'GET':
         return render(request, 'notification_test_login.html')
     else:
@@ -91,3 +92,4 @@ def notification_test_login(request):
 
 def notification_test_create_recipe(request):
     """Test create recipe for notification!"""
+    return HttpResponse("wait")

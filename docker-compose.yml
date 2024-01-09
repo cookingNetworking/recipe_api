@@ -7,7 +7,9 @@ services:
       args:
         - DEV=true
     volumes:
-      - ./app:/app
+      - type: bind
+        source: ./app
+        target: /app
       - dev-static-data:/vol/web
       - ws-static:/tmp
     environment:
