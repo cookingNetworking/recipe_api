@@ -3,7 +3,6 @@ Logic for real time notification with websocket!!!
 """
 
 import json, logging
-from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
@@ -29,29 +28,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                             group_name,
                             self.channel_name
                         )
-                await self.accept()        
+                logger.info("Websocket connect!!")
+                await self.accept()
             except Exception as e:
                 logger.error("Error in connection %s", e)
         else:
             logger.info("Unauthenticated user attemptedto connect!!")
-        
-
-    async def create_recipe(self):
-        user = self.scope["user"]
-        if user.is_authenticated:
-            followings  = await self.get_user_following(user=user)
-            if followings is not None:
-                for followee in followings:
-                    group_name = f'user_{followee.id}_follows'
-                    await self.channel_layer.group_send(
-                        group_name,
-                        {
-                            'type': 'send_notification',
-                            'message': {'text': f' The user you follow {user.username} has published new recipe! '}
-                        }
-                    )
-            else:
-                pass
 
     async def disconnect(self, close_code):
         if self.groups is None:

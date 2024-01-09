@@ -2,6 +2,9 @@ import boto3
 import datetime
 from botocore.config import Config
 from storages.backends.s3boto3 import S3Boto3Storage
+
+from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 from django.conf import settings
 from django.shortcuts import render, redirect
 from .forms import ImageUploadForm
@@ -71,3 +74,20 @@ def test_upload_image(request):
 			presigned_urls.append((image.name,url))
 		print(presigned_urls)
 		return render(request, 'test_upload.html',{"form":form,"images":presigned_urls})
+
+def notification_test_login(request):
+    """Test page for notification, Login page!"""
+    if request.method == 'POST':
+        email = request.POST['email']
+        passowrd = request.POST['password']
+        user = authenticate(request, username=email, password=passowrd)
+        if user is not None:
+            login(request, user)
+            return redirect('test/test_create_recipe/')
+    elif request.method == 'GET':
+        return render(request, 'notification_test_login.html')
+    else:
+        return HttpResponse("405 Method not allowed")
+
+def notification_test_create_recipe(request):
+    """Test create recipe for notification!"""

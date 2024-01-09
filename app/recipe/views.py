@@ -360,7 +360,6 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @receiver(post_save, sender=models.Recipe)
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
