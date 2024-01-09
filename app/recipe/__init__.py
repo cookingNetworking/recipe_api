@@ -1,2 +1,2 @@
 
-default_app_config = 'recipes.apps.RecipesConfig'
+default_app_config = 'recipe.apps.RecipesConfig'
