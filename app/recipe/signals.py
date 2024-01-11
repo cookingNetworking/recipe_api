@@ -23,13 +23,16 @@ def create_recipe(sender, instance, created, **kwargs):
     if created:
         channel_layer = get_channel_layer()
         followers = get_user_following(instance.user)
+        print(followers)
         if followers is not None:
             for followee in followers:
                 group_name = f'user_{followee.id}_follows'
-                message = {'type':'send_notification', 'text':'The user you follow has publish new recipe!'}
+                event = {'type':'recipe_create', 'text':'The user you follow has publish new recipe!'}
+                print(group_name)
+                print(event)
                 async_to_sync(channel_layer.group_send(
                     group_name,
-                    message
+                    event
                 ))
         else:
             pass

@@ -5,7 +5,7 @@ Logic for real time notification with websocket!!!
 import json, logging
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-
+from asgiref.sync import async_to_sync
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                             group_name,
                             self.channel_name
                         )
+                        print(group_name)
                 logger.info("Websocket connect!!")
                 await self.accept()
             except Exception as e:
@@ -40,11 +41,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
            self.close()
            pass
         for group_name in self.groups:
-            await self.channel_layer.group_discard(
+            async_to_sync (self.channel_layer.group_discard(
                 group_name,
                 self.channel_name
-            )
+            ))
         self.close()
+    async def recipe_create(self, event):
+        self.send(text_data=event['text'])
 
     @database_sync_to_async
     def get_user_following(self, user):

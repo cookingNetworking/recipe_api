@@ -84,12 +84,12 @@ def notification_test_login(request):
         user = authenticate(request, username=email, password=passowrd)
         if user is not None:
             login(request, user)
-            return redirect(reverse('test:notification_test_create_recipe'))
+            return redirect(reverse('test:notification_notification'))
     elif request.method == 'GET':
         return render(request, 'notification_test_login.html')
     else:
         return HttpResponse("405 Method not allowed")
 
-def notification_test_create_recipe(request):
+def notification_notification(request):
     """Test create recipe for notification!"""
-    return HttpResponse("wait")
+    return render(request, 'index.html')
