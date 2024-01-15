@@ -22,20 +22,15 @@ def create_recipe(sender, instance, created, **kwargs):
     """After user create the recipe, django channel will send notification to followers!"""
     if created:
         channel_layer = get_channel_layer()
-        followers = get_user_following(instance.user)
-        print(followers)
-        if followers is not None:
-            for followee in followers:
-                group_name = f'user_{followee.id}_follows'
-                event = {'type':'recipe_create', 'text':'The user you follow has publish new recipe!'}
-                print(group_name)
-                print(event)
-                async_to_sync(channel_layer.group_send(
-                    group_name,
-                    event
-                ))
-        else:
-            pass
+
+        group_name = f'user_{instance.user.id}_follows'
+        print(group_name, 'signal')
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {'type':'test_recipe_create',
+             'text':'The user you follow has publish new recipe!'
+            }
+            )
     else:
         logger.info("Recipe not created!")
 

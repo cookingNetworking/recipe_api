@@ -78,18 +78,27 @@ def test_upload_image(request):
 
 def notification_test_login(request):
     """Test page for notification, Login page!"""
-    if request.method == 'POST':
-        email = request.POST['email']
-        passowrd = request.POST['password']
-        user = authenticate(request, username=email, password=passowrd)
-        if user is not None:
-            login(request, user)
-            return redirect(reverse('test:notification_notification'))
-    elif request.method == 'GET':
-        return render(request, 'notification_test_login.html')
+    user = request.user
+    if user.is_authenticated:
+        return redirect(reverse('test:notification_notification'))
     else:
-        return HttpResponse("405 Method not allowed")
+        if request.method == 'POST':
+            email = request.POST['email']
+            passowrd = request.POST['password']
+            user = authenticate(request, username=email, password=passowrd)
+            if user is not None:
+                login(request, user)
+                return redirect(reverse('test:notification_notification'))
+        elif request.method == 'GET':
+            return render(request, 'notification_test_login.html')
+        else:
+            return HttpResponse("405 Method not allowed")
 
 def notification_notification(request):
     """Test create recipe for notification!"""
-    return render(request, 'index.html')
+    user = request.user
+    if user.is_authenticated:
+        context = {}
+        return render(request, 'index.html', context)
+    else:
+        return redirect(reverse('test:notification_test_login'))

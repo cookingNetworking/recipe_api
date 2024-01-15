@@ -8,7 +8,7 @@ from celery import Celery
 from django.db.models import Avg, Count
 
 from .serializers import RecipeSQLDetailSerializer
-from core.models import Recipe
+from core.models import Recipe, Notification
 from .redis_set import RedisHandler
 import django_redis
 
@@ -93,3 +93,13 @@ def consist_redis_and_sql_data():
         recipes_to_update.append(recipe)
 
     Recipe.objects.bulk_update(recipes_to_update, ['views', 'likes','save_count'])
+
+@shared_task
+def create_notification(users:list, title, message):
+    """Create notification in model"""
+    for user in users:
+        Notification.objects.create(
+            client=user,
+            title=title,
+            message=message,
+        )

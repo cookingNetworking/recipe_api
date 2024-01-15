@@ -3,55 +3,66 @@ Logic for real time notification with websocket!!!
 """
 
 import json, logging
-from channels.generic.websocket import AsyncWebsocketConsumer
+
+from django.template.loader import get_template
+from channels.generic.websocket import WebsocketConsumer
 from channels.db import database_sync_to_async
 from asgiref.sync import async_to_sync
 
 logger = logging.getLogger(__name__)
 
-class NotificationConsumer(AsyncWebsocketConsumer):
+class NotificationConsumer(WebsocketConsumer):
     """Connect and disconnect websocket!"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.groups = []
 
-    async def connect(self):
+    def connect(self):
         user = self.scope["user"]
         if user.is_authenticated:
             try:
-                followings  = await self.get_user_following(user=user)
+                followings  = self.get_user_following(user=user)
                 if followings is not None:
                     for followee in followings:
                         group_name = f'user_{followee.id}_follows'
                         self.groups.append(group_name)
-                        await self.channel_layer.group_add(
+                        async_to_sync(self.channel_layer.group_add)(
                             group_name,
                             self.channel_name
                         )
-                        print(group_name)
+                        print(group_name, 'consumers')
+                        print(self.channel_name, 'consumsers')
                 logger.info("Websocket connect!!")
-                await self.accept()
+                self.accept()
             except Exception as e:
                 logger.error("Error in connection %s", e)
         else:
             logger.info("Unauthenticated user attemptedto connect!!")
 
-    async def disconnect(self, close_code):
+    def disconnect(self, close_code):
         if self.groups is None:
            self.close()
            pass
         for group_name in self.groups:
-            async_to_sync (self.channel_layer.group_discard(
+            async_to_sync(self.channel_layer.group_discard(
                 group_name,
                 self.channel_name
             ))
         self.close()
-    async def recipe_create(self, event):
-        self.send(text_data=event['text'])
+    def recipe_create(self, event):
+        self.send(text_data=json.dumps({
+        "message": event['text'],
+    }))
 
-    @database_sync_to_async
+    def test_recipe_create(self, event):
+        html = get_template('partial/notification.html').render(
+            context = {'notification': event['text']}
+        )
+        self.send(text_data=html)
+
+
     def get_user_following(self, user):
         """Get user following user list"""
         from core.models import UserFollowing
-        return [follow.user_id for follow in UserFollowing.objects.filter(following_user_id=user).prefetch_related('user_id').distinct()]
+        return [follow.following_user_id for follow in UserFollowing.objects.filter(user_id=user).prefetch_related('following_user_id').distinct()]
 

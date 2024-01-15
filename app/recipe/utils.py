@@ -97,7 +97,6 @@ def saved_action(user, obj):
     else:
         return Response({'error': 'No valid object found'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class UnsafeMethodCSRFMixin(ModelViewSet):
     """Amixin that applies CSRF protection to unsafe HTTP methods (POST, PATCH, PUT, DELETE....)"""
 
