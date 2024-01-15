@@ -39,22 +39,22 @@ from core.models import UserFollowing
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
 from user.utils import  create_jwt, decode_jwt
 from user.serializers import (
-        UserSerializer,
-        UserDetailResponseSerializer,
-        PasswordSerialzier,
-        LoginSerializer,
-        Ok200serializer,
-        Created201serializer,
-        Error400Serializer,
-        Error401Serializer,
-        Error403CSRFTokenmissingSerialzier,
-        Error500Serializer,
-        FollowSerializer,
-        CheckEmailResponseSerializer,
-        CheckUsernameResponseSerializer,
-        EmailSerializer,
-        UsernameSerializer,
-        )
+                                UserSerializer,
+                                UserDetailResponseSerializer,
+                                PasswordSerialzier,
+                                LoginSerializer,
+                                Ok200serializer,
+                                Created201serializer,
+                                Error400Serializer,
+                                Error401Serializer,
+                                Error403CSRFTokenmissingSerialzier,
+                                Error500Serializer,
+                                FollowSerializer,
+                                CheckEmailResponseSerializer,
+                                CheckUsernameResponseSerializer,
+                                EmailSerializer,
+                                UsernameSerializer,
+                                )
 
 @extend_schema(
     parameters=[

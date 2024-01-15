@@ -22,12 +22,12 @@ def sending_mail(toemail, **content):
     """Function to send email . """
     try:
         send_mail(
-        f"{content['subject']}",
-        f"{content['message']}",
-        "as2229181@gmail.com",
-        [f"{toemail}"],
-        fail_silently=False,
-        )
+                    f"{content['subject']}",
+                    f"{content['message']}",
+                    "as2229181@gmail.com",
+                    [f"{toemail}"],
+                    fail_silently=False,
+                )
         return
     except Exception as e:
         return e

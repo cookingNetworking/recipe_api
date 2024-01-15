@@ -50,16 +50,18 @@ class NotificationConsumer(WebsocketConsumer):
             ))
         self.close()
     def recipe_create(self, event):
-        self.send(text_data=json.dumps({
-        "message": event['text'],
-    }))
+        """Send message to websocket."""
+        from .tasks import create_notification
+        self.send(text_data=json.dumps({"message": event['text'],}))
+        create_notification.apply_async(args=(event['user_id'], event['text']), countdown=0)
 
     def test_recipe_create(self, event):
+        from .tasks import create_notification
         html = get_template('partial/notification.html').render(
             context = {'notification': event['text']}
         )
         self.send(text_data=html)
-
+        create_notification.apply_async(args=(event['user_id'], event['text']), countdown=0)
 
     def get_user_following(self, user):
         """Get user following user list"""
