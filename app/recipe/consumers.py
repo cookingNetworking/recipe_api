@@ -60,6 +60,8 @@ class NotificationConsumer(WebsocketConsumer):
         html = get_template('partial/notification.html').render(
             context = {'notification': event['text']}
         )
+        print(event['user_id'])
+        print(event['text'])
         self.send(text_data=html)
         create_notification.apply_async(args=(event['user_id'], event['text']), countdown=0)
 

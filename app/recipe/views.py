@@ -998,5 +998,72 @@ def save_button(request):
         return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@extend_schema_view(
+        list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+        ],
+        responses={
+            200:serializers.NotificationSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            )
+        ],
+    ))
+class NotificationViewSet(mixins.ListModelMixin,
+                          mixins.UpdateModelMixin,
+                        viewsets.GenericViewSet):
+    """Viewset for notification!"""
+    serializer_class = serializers.NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = models.Notification.objects.all().order_by("-created")
+
+    def get_queryset(self):
+        queryset = self.queryset
+        return queryset.filter(client=self.request.user).order_by("-created")
+
+    def list(self, request, *args, **kwargs):
+        """List with notification!"""
+        try:
+            response = super().list(request, *args, **kwargs)
+            return response
+        except Exception as e:
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Update notficicaiton read status!"""
+        try:
+            notificaiotn_id = request.data.get('id')
+            notification = models.Notification.objects.filter('id').update(read=True)
+            return
+        except Exception as e:
+            return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 

@@ -187,7 +187,7 @@ class TestImageUpload(models.Model):
 
 class Notification(models.Model):
     client = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
-    title = models.CharField(max_length=100),
+    title = models.CharField(max_length=100)
     message = models.TextField()
     read = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)

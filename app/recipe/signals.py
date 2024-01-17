@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_user_following(user):
     """Get user following user list"""
-    return [follow.id for follow in UserFollowing.objects.filter(user_id=user).prefetch_related('following_user_id').distinct()]
+    return [follow.id for follow in UserFollowing.objects.filter(following_user_id=user).prefetch_related('user_id').distinct()]
 
 
 @receiver(post_save, sender=Recipe)
@@ -34,7 +34,7 @@ def create_recipe(sender, instance, created, **kwargs):
                 group_name,
                 event
                 )
-            logger.info("Recipe created!")  
+            logger.info("Recipe created!")
         else:
             logger.info("Recipe not created!")
     except Exception as e:

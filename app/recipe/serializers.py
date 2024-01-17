@@ -4,7 +4,15 @@ from storages.backends.s3boto3 import S3Boto3Storage
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
-from core.models import Recipe, RecipePhoto, RecipeStep ,Tag, Ingredient, RecipeComment
+from core.models import (
+                        Recipe,
+                        RecipePhoto,
+                        RecipeStep ,
+                        Tag,
+                        Ingredient,
+                        RecipeComment,
+                        Notification
+                        )
 from .utils import CustomSlugRelatedField
 
 s3_storage = S3Boto3Storage()
@@ -186,6 +194,14 @@ class RecipeSQLDetailSerializer(RecipeSerialzier):
     def get_top_five_comments(self, obj):
         comments = obj.recipe_comment.order_by('-created_time')[:5]
         return RecipeCommentSerializer(comments, many=True).data
+
+class NotificationSerializer(serializers.ModelSerializer):
+    """Serializer for notification"""
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'read','message', 'created', 'delievered']
+        read_only_fields = ['id',  'message', 'created','delievered' ]
+
 
 class LikeRecipeAction(serializers.Serializer):
     """Serializer for like action"""

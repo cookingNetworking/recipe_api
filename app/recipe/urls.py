@@ -10,6 +10,7 @@ router.register('recipes', views.RecipeViewSet)
 router.register('tags', views.TagViewSet)
 router.register('ingredients', views.IngredientViewSet)
 router.register('comments', views.RecipeCommentViewSet)
+router.register('notifications', views.NotificationViewSet)
 urlpatterns = [
         path('',  include(router.urls)),
         path('likes', views.like_button, name="like-recipe"),

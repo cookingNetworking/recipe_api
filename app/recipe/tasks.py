@@ -99,7 +99,7 @@ def consist_redis_and_sql_data():
 def create_notification(user_ids, message):
     """Create notification instance for user."""
     try:
-        users = get_user_model.objects.filter(id__in=user_ids)
+        users = get_user_model().objects.filter(id__in=user_ids)
         for user in users:
             Notification.objects.create(
                 client=user,
