@@ -1035,7 +1035,59 @@ def save_button(request):
                 status_codes=['500']
             )
         ],
-    ))
+    ), 
+    update=extend_schema(exclude=True),
+    partial_update=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='X-CSRFToken',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.HEADER,
+                required=True,
+                description='CSRF token for request, need to get from cookies and set in header as X-CSRFToken'
+            ),
+            OpenApiParameter(
+                name='session_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.COOKIE,
+                required=True,
+                description='Ensure session id is in cookie!'
+                ),
+        ],
+        responses={
+            200:serializers.ResponseSerializer,
+            400:serializers.ResponseSerializer,
+            403:serializers.ResponseSerializer,
+            500:serializers.ResponseSerializer
+        },
+        examples=[
+            OpenApiExample(
+                "Successed",
+                value={"message":"Notification status updated successfully"},
+                response_only=True,
+                status_codes=['200']
+            ),
+            OpenApiExample(
+                "Bad request",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['400']
+            ),
+            OpenApiExample(
+                "Request forbbiden",
+                value={"detail":"Authentication credentials were not provided."},
+                response_only=True,
+                status_codes=['403']
+            ),
+            OpenApiExample(
+                "Interval server error!",
+                value={"error":"error","detail":"please check again!"},
+                response_only=True,
+                status_codes=['500']
+            )
+        ],
+    )
+    )
 class NotificationViewSet(mixins.ListModelMixin,
                           mixins.UpdateModelMixin,
                         viewsets.GenericViewSet):
@@ -1056,12 +1108,17 @@ class NotificationViewSet(mixins.ListModelMixin,
         except Exception as e:
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def update(self, request, *args, **kwargs):
+        """Not allowed put method !"""
+        pass
+
     def partial_update(self, request, *args, **kwargs):
-        """Update notficicaiton read status!"""
+        """ Only update notficicaiton read status!"""
         try:
-            notificaiotn_id = request.data.get('id')
-            notification = models.Notification.objects.filter('id').update(read=True)
-            return
+            notificaiotn_id = kwargs.get('pk')
+            models.Notification.objects.filter(id=notificaiotn_id,
+                                                client=request.user).update(read=True)
+            return Response({'message': 'Notification status updated successfully'}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

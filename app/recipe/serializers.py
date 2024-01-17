@@ -200,7 +200,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ['id', 'title', 'read','message', 'created', 'delievered']
-        read_only_fields = ['id',  'message', 'created','delievered' ]
+        read_only_fields = ['id',  'message', 'title', 'read', 'created','delievered' ]
 
 
 class LikeRecipeAction(serializers.Serializer):
