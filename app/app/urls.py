@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path(r'^auth/', include('rest_framework_social_oauth2.urls')),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('user/',include('user.urls')),
     path('signupVertify', view=user_views.sign_up_vertify, name='signupvertify' ),

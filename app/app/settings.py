@@ -51,6 +51,9 @@ INSTALLED_APPS = [
     'django_extensions',
     'storages',
     "rest_framework",
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
     #project app
     "core",
     'recipe',
@@ -83,6 +86,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -235,14 +239,37 @@ AUTH_USER_MODEL = 'core.User'
 REST_FRAMEWORK = {
     # YOUR SETTINGS
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    #DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
+    #Once the authentication is successful, it will not try the rest of the authentication classes. 
     'DEFAULT_AUTHENTICATION_CLASSES':[
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication'
+        'rest_framework.authentication.BasicAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 
 }
+
+AUTHENTICATION_BACKENDS = (
+    #First user google oauth2 to login, if not, use the default authentication backend
+    'social_core.backends.google.GoogleOAuth2',
+   'django.contrib.auth.backends.ModelBackend',
+)
+
+# django-rest-framework-social-oauth2 settings
+DRFSO2_PROPRIETARY_BACKEND_NAME = 'google-oauth2'
+
+DRFSO2_URL_NAMESPACE = 'oauth'
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'cookingNetwork',
