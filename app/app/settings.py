@@ -86,6 +86,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
             ],
         },
@@ -155,8 +156,6 @@ CACHES = {
 SESSION_COOKIE_SAMESITE = 'None'
 
 CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-SESSION_COOKIE_SAMESITE = 'None'
 
 CSRF_COOKIE_SECURE = True
 
@@ -240,7 +239,7 @@ REST_FRAMEWORK = {
     # YOUR SETTINGS
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     #DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
-    #Once the authentication is successful, it will not try the rest of the authentication classes. 
+    #Once the authentication is successful, it will not try the rest of the authentication classes.
     'DEFAULT_AUTHENTICATION_CLASSES':[
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
@@ -255,9 +254,10 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = (
     #First user google oauth2 to login, if not, use the default authentication backend
     'social_core.backends.google.GoogleOAuth2',
+    'rest_framework_social_oauth2.backends.DjangoOAuth2',
    'django.contrib.auth.backends.ModelBackend',
 )
-
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
 # django-rest-framework-social-oauth2 settings
 DRFSO2_PROPRIETARY_BACKEND_NAME = 'google-oauth2'
 
@@ -265,6 +265,9 @@ DRFSO2_URL_NAMESPACE = 'oauth'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
+GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:80/social/complete/google-oauth2/'
+SOCIAL_AUTH_GOOGLE_OAUTH2_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',

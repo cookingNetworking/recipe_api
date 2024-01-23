@@ -18,5 +18,6 @@ urlpatterns = [
     path('logout/',views.LogoutView.as_view(), name='logout'),
     path('detail/',views.UserDetailView.as_view(), name='user_detail'),
     path('change-password/', views.ChangePassword.as_view(), name='changepassword'),
-    path('follow/', views.FollowViewSet.as_view({'post':'create','get':'list'}), name='follow')
+    path('follow/', views.FollowViewSet.as_view({'post':'create','get':'list'}), name='follow'),
+    path('oauth/google/', views.google_login, name=('google_auth'))
 ]
