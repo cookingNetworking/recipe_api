@@ -254,7 +254,6 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = (
     #First user google oauth2 to login, if not, use the default authentication backend
     'social_core.backends.google.GoogleOAuth2',
-    'rest_framework_social_oauth2.backends.DjangoOAuth2',
    'django.contrib.auth.backends.ModelBackend',
 )
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
@@ -266,8 +265,8 @@ DRFSO2_URL_NAMESPACE = 'oauth'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:80/social/complete/google-oauth2/'
-SOCIAL_AUTH_GOOGLE_OAUTH2_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 
+LOGIN_URL = 'user:login'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.email',
