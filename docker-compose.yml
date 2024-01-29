@@ -25,6 +25,7 @@ services:
       - AWS_CLOUDFRONT_KEY
       - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV  
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:

@@ -32,7 +32,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 DEBUG = True
 
 ALLOWED_HOSTS = ['cookingnetwork.co','ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
-
+print(os.environ.get('DEV_ENV'))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -297,3 +297,39 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_QUERYSTRING_EXPIRE = 2100
 AWS_CLOUDFRONT_KEY_ID = env.str('AWS_CLOUDFRONT_KEY_ID').strip()
 AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii')
+
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+
+CSRF_COOKIE_HTTPONLY = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co']
+
+
+if os.environ.get('DEV_ENV') == 'true':
+    SESSION_COOKIE_DOMAIN = 'localhost'
+    CSRF_COOKIE_DOMAIN = 'localhost'
+else:
+    SESSION_COOKIE_DOMAIN = '.cookingnetwork.co'
+    CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
+
+
+CORS_ALLOW_METHODS = [
+            'GET',
+            'POST',
+            'PUT',
+            'DELETE',
+            'PATCH' ]
+
+CORS_ALLOW_HEADERS = [
+    	'accept',
+    	'accept-encoding',
+   	'authorization',
+    	'content-type',
+    	'dnt',
+    	'origin',
+    	'user-agent',
+    	'X-CSRFToken',
+    	'x-requested-with',
+        ]
