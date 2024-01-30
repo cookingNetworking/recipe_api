@@ -44,7 +44,15 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_REGION_NAME
+      - AWS_CLOUDFRONT_KEY_ID
+      - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
@@ -65,7 +73,15 @@ services:
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_REGION_NAME
+      - AWS_CLOUDFRONT_KEY_ID
+      - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV        
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:

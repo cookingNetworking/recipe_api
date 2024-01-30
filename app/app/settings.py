@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","13.211.123.24"]
 print(os.environ.get('DEV_ENV'))
 
 INSTALLED_APPS = [
@@ -65,8 +65,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    #Handle google oauth state miss problem
-    "app.custom_middleware.SocialAuthException",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -85,8 +83,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -151,20 +147,6 @@ CACHES = {
         }
     }
 }
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_COOKIE_SECURE = True
-
-SESSION_COOKIE_SECURE = True
-
-CORS_ALLOW_CREDENTIALS = True
-
-
 
 
 # Email settings
