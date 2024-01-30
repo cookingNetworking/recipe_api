@@ -14,7 +14,7 @@ server {
         client_max_body_size 10M;
 
         # CORS head
-        add_header 'Access-Control-Allow-Origin' 'https://cookingnetwork.vercel.app';
+        add_header 'Access-Control-Allow-Origin' 'https://www.cookingnetworl.co';
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
         add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
         add_header 'Access-Control-Allow-Credentials' 'true';
