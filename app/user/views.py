@@ -68,7 +68,7 @@ from user.serializers import (
         ],
         responses={
         200: UserSerializer,
-        403: 'You do not have permission to perform this action.',
+        403: Error403CSRFTokenmissingSerialzier,
 
     },
         examples=[
@@ -191,7 +191,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             request=UserDetailResponseSerializer,
             responses={
                 200:UserDetailResponseSerializer,
-                403:"Authentication credentials were not provided.",
+                403:Error403CSRFTokenmissingSerialzier,
                 },
             examples=[
                 OpenApiExample(
@@ -225,7 +225,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         request=UserDetailResponseSerializer,
         responses={
             200:UserDetailResponseSerializer,
-            403:"Authentication credentials were not provided.",
+            403:Error403CSRFTokenmissingSerialzier,
             500:Error500Serializer
             },
         examples=[
@@ -270,7 +270,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             request=UserDetailResponseSerializer,
             responses={
                 200:UserDetailResponseSerializer,
-                403:"Authentication credentials were not provided.",
+                403:Error403CSRFTokenmissingSerialzier,
                 500:Error500Serializer
                 },
             examples=[
@@ -371,7 +371,6 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             login(request, user)
-            session_id = request.session.session_key
             rotate_token(request)
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
@@ -893,7 +892,7 @@ def time_now(request):
     responses={
         201: Created201serializer,
         400: Error400Serializer,
-        403: 'CSRF token missing or incorrect.',
+        403: Error403CSRFTokenmissingSerialzier,
         500: Error500Serializer,
     },
     examples=[
