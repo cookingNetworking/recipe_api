@@ -31,8 +31,8 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-3-104-38-255.ap-southeast-2.compute.amazonaws.com',"localhost"]
-
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","13.211.123.24"]
+print(os.environ.get('DEV_ENV'))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -148,20 +148,6 @@ CACHES = {
     }
 }
 
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_COOKIE_SECURE = True
-
-SESSION_COOKIE_SECURE = True
-
-CORS_ALLOW_CREDENTIALS = True
-
-
-
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -244,6 +230,8 @@ REST_FRAMEWORK = {
 
 }
 
+
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'cookingNetwork',
     'DESCRIPTION': 'Your project description',
@@ -266,6 +254,8 @@ CELERY_TIMEZONE = 'Asia/Taipei'
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 CELERY_RESULT_EXPIRES = 1800
+#Restart celery every 20 task
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 20
 
 
 CELERY_BEAT_SCHEDULE = {
@@ -282,8 +272,6 @@ CELERY_BEAT_SCHEDULE = {
 CELERY_BEAT_SCHEDULE_FILENAME = '/home/celery/var/run/celerybeat-schedule'
 
 
-CROS_ORIGIN_ALLOW_ALL = True
-
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
@@ -297,3 +285,43 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_QUERYSTRING_EXPIRE = 2100
 AWS_CLOUDFRONT_KEY_ID = env.str('AWS_CLOUDFRONT_KEY_ID').strip()
 AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii')
+
+#csrf cookies settings
+
+CSRF_COOKIE_SECURE = False
+
+SESSION_COOKIE_SECURE = False
+
+CSRF_COOKIE_HTTPONLY = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co']
+
+
+if os.environ.get('DEV_ENV') == 'true':
+    SESSION_COOKIE_DOMAIN = 'localhost'
+    CSRF_COOKIE_DOMAIN = 'localhost'
+else:
+    SESSION_COOKIE_DOMAIN = '.cookingnetwork.co'
+    CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
+
+
+CORS_ALLOW_METHODS = [
+            'GET',
+            'POST',
+            'PUT',
+            'DELETE',
+            'PATCH' ]
+
+CORS_ALLOW_HEADERS = [
+    	'accept',
+    	'accept-encoding',
+   	'authorization',
+    	'content-type',
+    	'dnt',
+    	'origin',
+    	'user-agent',
+    	'X-CSRFToken',
+    	'x-requested-with',
+        ]

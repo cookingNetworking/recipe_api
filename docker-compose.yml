@@ -12,6 +12,12 @@ services:
         target: /app
       - dev-static-data:/vol/web
       - ws-static:/tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
@@ -25,6 +31,7 @@ services:
       - AWS_CLOUDFRONT_KEY
       - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
@@ -38,12 +45,26 @@ services:
     command: celery -A app worker --loglevel=info
     volumes:
       - dev-static-data:/vol/worker
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_REGION_NAME
+      - AWS_CLOUDFRONT_KEY_ID
+      - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
@@ -59,12 +80,26 @@ services:
     command: celery -A app beat -l info
     volumes:
       - dev-static-data:/vol/beat
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
     environment:
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=changeme
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_REGION_NAME
+      - AWS_CLOUDFRONT_KEY_ID
+      - AWS_CLOUDFRONT_KEY
+      - AWS_CLOUDFRONT_DOMAIN
       - DEBUG=1
+      - DEV_ENV
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
@@ -74,7 +109,12 @@ services:
     image: postgres:13-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
-
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
     environment:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
@@ -83,6 +123,12 @@ services:
       - PGTZ='GMT+8'
   cache:
     image: redis:7.2.1-alpine
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
@@ -99,6 +145,10 @@ services:
     ports:
       - 80:8000
       - 443:8443
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./var/www/certbot:/var/www/certbot
