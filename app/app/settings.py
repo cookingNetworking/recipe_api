@@ -68,6 +68,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    #Middleware for check session id exist or not when user trying login by google oauth
+    "app.custom_middleware.CheckSessionMiddleware",
     #Handle google oauth state miss problem
     "app.custom_middleware.SocialAuthException",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -302,14 +304,6 @@ SOCIAL_AUTH_PIPELINE = (
     # Make up a username for this person, appends a random string at the end if
     # there's any collision.
     'social_core.pipeline.user.get_username',
-
-    # Send a validation email to the user to verify its email address.
-    # Disabled by default.
-    # 'social_core.pipeline.mail.mail_validation',
-
-    # Associates the current social details with another user account with
-    # a similar email address. Disabled by default.
-    # 'social_core.pipeline.social_auth.associate_by_email',
 
     # Create a user account if we haven't found one yet.
     'social_core.pipeline.user.create_user',
