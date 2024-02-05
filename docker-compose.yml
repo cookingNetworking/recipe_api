@@ -42,13 +42,13 @@ services:
       context: .
       args:
         - DEV=true
-    command: celery -A app worker --loglevel=info
+    command: celery -A app worker --loglevel=info --concurrency=4
     volumes:
       - dev-static-data:/vol/worker
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
         reservations:
           memory: 64M
     environment:
