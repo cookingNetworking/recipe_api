@@ -26,7 +26,7 @@ from drf_spectacular.utils import (
 
 from django.core.cache import cache
 from django.contrib.auth import get_user_model, login, logout
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
 
@@ -37,7 +37,7 @@ from jwt.exceptions import ExpiredSignatureError
 
 from core.models import UserFollowing
 from user.tasks import delete_unactivate_user, sending_mail, celery_app
-from user.utils import  create_jwt, decode_jwt
+from user.utils import  create_jwt, decode_jwt, conditional_csrf_decorator
 from user.serializers import (
                                 UserSerializer,
                                 UserDetailResponseSerializer,
@@ -130,7 +130,7 @@ class UserListView(generics.ListAPIView):
     )
     ],
     description='Create a new user',)
-@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class CreateUserView(generics.CreateAPIView):
     """Create user API."""
     permission_classes = [permissions.AllowAny]
@@ -243,7 +243,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             ),
         ]
     )
-    @method_decorator(csrf_protect, name='dispatch')
+    @method_decorator(conditional_csrf_decorator, name='dispatch')
     def put(self, request, *args, **kwargs):
         try:
             return super().put(request, *args, **kwargs)
@@ -288,7 +288,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 ),
             ]
             )
-    @method_decorator(csrf_protect, name='dispatch')
+    @method_decorator(conditional_csrf_decorator, name='dispatch')
     def patch(self, request, *args, **kwargs):
         try:
             return super().patch(request, *args, **kwargs)
@@ -352,7 +352,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     ],
     description='Create a new user',
 )
-@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class LoginView(APIView):
     """Login views for user an will return a session in header"""
     permission_classes = [permissions.AllowAny,]
@@ -394,43 +394,35 @@ class LoginView(APIView):
         500: Error500Serializer
     },
     examples=[
-    OpenApiExample(
-    "Logout succeed",
-    value={'message':"Successed logout.",'detail':"Session id remove from "},
-    response_only=True,
-    status_codes=['200']
-    ),
-    OpenApiExample(
-    "Request forbbiden",
-    value={'error': 'CSRF token missing or incorrect.'},
-    response_only=True,
-    status_codes=['403']
-    ),
-    OpenApiExample(
-        'Internal Error',
-        value={'error': 'Internal server error'},
-        response_only=True,
-        status_codes=['500']
-    )
+        OpenApiExample(
+            "Logout succeed",
+            value={'message':"Successed logout.",'detail':"Session id remove from "},
+            response_only=True,
+            status_codes=['200']
+            ),
+        OpenApiExample(
+            "Request forbbiden",
+            value={'error': 'CSRF token missing or incorrect.'},
+            response_only=True,
+            status_codes=['403']
+            ),
+        OpenApiExample(
+            'Internal Error',
+            value={'error': 'Internal server error'},
+            response_only=True,
+            status_codes=['500']
+            )
     ]
 )
-@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class LogoutView(APIView):
     """Clear session id from cookies!"""
     def post(self, request):
         try:
-            print(request)
-            if not request.headers['X-CSRFToken']:
-                return Response({"error":"Loss CSRFToken in request header!","detail":"Please get csrftoken again!"}, status=status.HTTP_403_FORBIDDEN)
-            logout(request)
             return Response({'message':"Successed logout.",'detail':"Session id remove from cookies!"}, status=status.HTTP_200_OK)
         except Exception as e:
             print(e,1)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
 
 @extend_schema(
     parameters=[
@@ -477,7 +469,7 @@ class LogoutView(APIView):
     description='Checks if an email is already taken',
 )
 @api_view(['POST'])
-@csrf_protect
+@conditional_csrf_decorator
 def check_email_replicate(request):
     """Check create user request email  is existed or not."""
 
@@ -539,7 +531,7 @@ def check_email_replicate(request):
     description='Checks if username is already taken',
 )
 @api_view(['POST'])
-@csrf_protect
+@conditional_csrf_decorator
 def check_username_replicate(request):
     """Check create user request  username is existed or not."""
 
@@ -654,7 +646,7 @@ class GetCsrfToken(APIView):
         return Response({'message':'CSRF cookie set','detail': 'X-CSRFToken will return in cookies. Please set X-CSRFToken header when send post, put, update method ','csrfToken': csrf_token}, status=status.HTTP_200_OK)
 
 
-@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class ChangePassword(APIView):
     """Change password for authenticated user."""
     permission_classes = [permissions.IsAuthenticated,]
@@ -712,7 +704,7 @@ class ChangePassword(APIView):
                     ),],
          description='Change user password, please check password and recheck password is the same.Post password with hash to this api.'
 )
-    @method_decorator(ensure_csrf_cookie, name='dispatch')
+    @method_decorator(conditional_csrf_decorator, name='dispatch')
     def post(self, request):
         try:
             if request.user.is_authenticated == False:
@@ -769,7 +761,7 @@ class ChangePassword(APIView):
                         status_codes=['500']
                     ),]
                 )
-@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class EmailVertificationView(APIView):
     """(Anonymous user)Forget password first step, check email is existed then send email with reset password link!"""
     def post(self, request):
@@ -842,7 +834,7 @@ class EmailVertificationView(APIView):
                     description='Forget password , the url must be like reset-password?code="token from /foreget-password/"'
 
 )
-@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class ResetPasswordView(APIView):
     """(Anonymous user)check token is correct or not ,if correct then user can reset password! """
 
@@ -922,7 +914,7 @@ def time_now(request):
     )
     ],
     description='Create a new user',)
-@method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 class ResendVertifyEmail(APIView):
     """Resend vertify email to user!"""
     def post(self, request):
@@ -947,7 +939,8 @@ class ResendVertifyEmail(APIView):
                 }
         sending_mail.apply_async(args=(email,), kwargs=content, countdown=0)
         return Response({'message':'Email is resend, please check your email to active your account in 15 minutes !','token': f'{token}'}, status=status.HTTP_200_OK)
-@method_decorator(csrf_protect, name='dispatch')
+
+@method_decorator(conditional_csrf_decorator, name='dispatch')
 @extend_schema_view(
     list=extend_schema(
         parameters=[

@@ -32,7 +32,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 DEBUG = True
 
 ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","13.211.123.24"]
-print(os.environ.get('DEV_ENV'))
+print(env('DEV_ENV'))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -255,7 +255,7 @@ CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 CELERY_RESULT_EXPIRES = 1800
 #Restart celery every 20 task
-CELERY_WORKER_MAX_TASKS_PER_CHILD = 20
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 100
 
 
 CELERY_BEAT_SCHEDULE = {
@@ -317,7 +317,7 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_HEADERS = [
     	'accept',
     	'accept-encoding',
-   	'authorization',
+   	    'authorization',
     	'content-type',
     	'dnt',
     	'origin',
