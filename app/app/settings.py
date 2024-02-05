@@ -270,6 +270,13 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
 GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:80/social/complete/google-oauth2/'
 
+
+#Don't us e SOCIAL_AUTH_GOOGLE_PLUS_AUTH_EXTRA_ARGUMENTS, is not working!
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+
+}
+
 LOGIN_URL = 'user:login'
 
 LOGIN_REDIRECT_URL ='/'
