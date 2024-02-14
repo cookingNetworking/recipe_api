@@ -56,7 +56,7 @@ class LoginSerializer(serializers.Serializer):
             password=attrs.get('password')
             )
         if not user:
-            msg = _('Incorrect email or password.')
+            msg = _('Incorrect password.')
             raise serializers.ValidationError(msg, code='authorization')
         attrs['user'] = user
         return attrs
