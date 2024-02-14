@@ -308,6 +308,9 @@ SOCIAL_AUTH_PIPELINE = (
     # Checks if the current social-account is already associated in the site.
     'social_core.pipeline.social_auth.social_user',
 
+    #Associate current auth with a user with the same email address in the DB.
+    'social_core.pipeline.social_auth.associate_by_email',
+
     # Make up a username for this person, appends a random string at the end if
     # there's any collision.
     'social_core.pipeline.user.get_username',
