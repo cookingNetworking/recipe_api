@@ -131,7 +131,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 64M
     volumes:
       - ./etc/letsencrypt:/etc/letsencrypt
       - ./var/www/certbot:/var/www/certbot
