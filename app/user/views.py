@@ -324,9 +324,9 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         status_codes=['200']
         ),
     OpenApiExample(
-        "Value or field error",
-        value={'error': 'Error message ', 'detail': 'Please login again.'},
-        description="Probably have these error :{'field_name': ['This field is required.']},{'char_field': ['Ensure this field has no more than X characters.']}",
+        "Login failed!",
+        value={'error': 'Error message ', 'detail': 'Please login again!!Email not found!!'},
+        description="Email isn't correct!",
         response_only=True,
         status_codes=['400']
     ),
@@ -334,6 +334,20 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         "Account is not actived!",
         value={'error': 'Account is not been active!', 'detail': 'Please check your email!!'},
         description="Account is not active!",
+        response_only=True,
+        status_codes=['400']
+    ),
+    OpenApiExample(
+        "Email is empty!",
+        value={'error': 'Email is empty!', 'detail': 'Please ensure user fill in the email!!'},
+        description="Email is empty!",
+        response_only=True,
+        status_codes=['400']
+    ),
+    OpenApiExample(
+        "Password is empty!",
+        value={'error': 'Password is empty!!', 'detail': 'Please ensure user fill in  the password!!'},
+        description="Password is empty!",
         response_only=True,
         status_codes=['400']
     ),
@@ -350,7 +364,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         status_codes=['500']
     )
     ],
-    description='Create a new user',
+    description='Login user! ',
 )
 @method_decorator(conditional_csrf_decorator, name='dispatch')
 class LoginView(APIView):
