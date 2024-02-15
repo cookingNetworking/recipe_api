@@ -43,7 +43,7 @@ services:
       context: .
       args:
         - DEV=true
-    command: celery -A app worker --loglevel=info --concurrency=2
+    command: celery -A app worker --loglevel=info --concurrency=1
     volumes:
       - dev-static-data:/vol/worker
     deploy:
