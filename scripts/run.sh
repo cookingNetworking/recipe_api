@@ -4,7 +4,7 @@ set -e
 
 python manage.py wait_for_db
 python manage.py migrate
-python manage.py collectstatic
+python manage.py collectstatic --clear --noinput
 python manage.py shell_plus -c "from recipe.tasks import set_up_for_server_start; set_up_for_server_start.delay()"
 
 rm -f /tmp/daphne.sock*
