@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     "rest_framework",
     'oauth2_provider',
     'social_django',
-    'rest_framework_social_oauth2',
     #project app
     "core",
     'recipe',
@@ -261,10 +260,7 @@ AUTHENTICATION_BACKENDS = (
    'django.contrib.auth.backends.ModelBackend',
 )
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
-# django-rest-framework-social-oauth2 settings
-DRFSO2_PROPRIETARY_BACKEND_NAME = 'google-oauth2'
 
-DRFSO2_URL_NAMESPACE = 'oauth'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
@@ -340,6 +336,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Your project description',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': True,
+    'EXCLUDE_PATHS': ['/auth/convert-token/', '/auth/disconnect-backend/', 'auth/invalidate-sessions/', 'auth/revoke-token/', 'auth/token/'],
 
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

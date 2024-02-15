@@ -29,5 +29,25 @@ class CustomSpectacularAPIView(SpectacularAPIView):
                 },
             },
         }
+        schema['paths']['ws/notify/'] = {
+            'get': {
+                'operationId': 'Websocket connetion for notification',
+                'summary': 'Websocket connetion for notification',
+                'description': 'Connect the server with websocket protocol, and add to the user group!',
+                'tags': ['WS'],
+                'responses': {
+                    '101': {
+                        'description': ' Websocket connect!!',
+                    },
+                    '500'
+                    : {
+                        'description': ' Server error!',
+                    },
+                    '502':{
+                        'description': '  Unauthenticated user attempted to connect!!',
+                    }
+                },
+            },
+        }
 
         return Response(schema)

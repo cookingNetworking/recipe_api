@@ -30,8 +30,6 @@ class NotificationConsumer(WebsocketConsumer):
                             group_name,
                             self.channel_name
                         )
-                        print(group_name, 'consumers')
-                        print(self.channel_name, 'consumsers')
                 logger.info("Websocket connect!!")
                 self.accept()
             except Exception as e:
