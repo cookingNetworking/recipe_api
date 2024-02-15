@@ -378,24 +378,25 @@ class LoginView(APIView):
     def post(self, request):
         if request.user.is_authenticated:
             return Response({"error":"Already login!",'detail':'please redirect to home page!'}, status=status.HTTP_400_BAD_REQUEST)
-        email = request.data.get('email', None)
+        request_data = request.data
+        email = request.data.get('email')
         password = request.data.get('password', None)
-        
+
         #Check emaill and password is filled in or not!
         if email is None:
-            return Response({"Error:":"Email is empty!", "detail":"Please ensure user fill in the email!!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error:":"Email is empty!", "detail":"Please ensure user fill in the email!!","data":request_data}, status=status.HTTP_400_BAD_REQUEST)
         if password is None:
             return Response({"Error:":"Password is empty!", "detail":"Please ensure user fill in  the password!!"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Check email is correct or not!
         user = get_user_model().objects.filter(email=email).first()
         if not user:
             return Response({"error":"Login failed!",'detail':'Please login again!!Email not found!!'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         #Ensure user is activated!
         if user.is_active == False:
             return Response({"error":"Account is not been active!",'detail':'Please check your email!!'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         #Check passowrd is corrected or not!
         serializer = LoginSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -405,7 +406,7 @@ class LoginView(APIView):
             user_json = UserSerializer(user)
             csrf_token = request.META.get('CSRF_COOKIE', '')
 
-            return Response({'message':'Login successed!','detail':{'user':user_json.data},"csrf_token":csrf_token}, status=status.HTTP_200_OK)
+            return Response({'message':'Login successed!','detail':{'user':user_json.data},"csrf_token":csrf_token,"data":request_data}, status=status.HTTP_200_OK)
 
         return Response({'error':serializer.errors,'detail':'Please login again!'}, status=status.HTTP_400_BAD_REQUEST)
 
