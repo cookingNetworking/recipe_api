@@ -20,10 +20,13 @@ from drf_spectacular.utils import (
                                     extend_schema_view,
                                     OpenApiExample,
                                     OpenApiParameter,
-                                    OpenApiTypes
+                                    OpenApiTypes,
+                                    OpenApiResponse
                                     )
 
-
+from django.conf import settings
+from django.http import JsonResponse
+from urllib.parse import urlencode
 from django.core.cache import cache
 from django.contrib.auth import get_user_model, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt

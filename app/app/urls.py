@@ -17,14 +17,16 @@ from django.contrib import admin
 from django.urls import path, include
 from user import views as user_views
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-
+from .entend_schema import CustomSpectacularAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
      # YOUR PATTERNS
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('schema/', CustomSpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
     path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('social/', include('social_django.urls', namespace='social')),
+    path('oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('user/',include('user.urls')),
     path('signupVertify', view=user_views.sign_up_vertify, name='signupvertify' ),

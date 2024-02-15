@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'storages',
     "rest_framework",
+    'oauth2_provider',
+    'social_django',
     #project app
     "core",
     'recipe',
@@ -65,6 +67,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    #Middleware for check session id exist or not when user trying login by google oauth
+    "app.custom_middleware.CheckSessionMiddleware",
+    #Handle google oauth state miss problem
+    "app.custom_middleware.SocialAuthException",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -83,6 +89,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -147,6 +155,20 @@ CACHES = {
         }
     }
 }
+
+SESSION_COOKIE_SAMESITE = 'None'
+
+CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
+
+SESSION_COOKIE_SAMESITE = 'None'
+
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SECURE = True
+
+CORS_ALLOW_CREDENTIALS = True
+
+
 
 
 # Email settings
@@ -221,14 +243,93 @@ AUTH_USER_MODEL = 'core.User'
 REST_FRAMEWORK = {
     # YOUR SETTINGS
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    #DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
+    #Once the authentication is successful, it will not try the rest of the authentication classes.
     'DEFAULT_AUTHENTICATION_CLASSES':[
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication'
+        'rest_framework.authentication.BasicAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 
 }
+
+AUTHENTICATION_BACKENDS = (
+    #First user google oauth2 to login, if not, use the default authentication backend
+    'social_core.backends.google.GoogleOAuth2',
+   'django.contrib.auth.backends.ModelBackend',
+)
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
+GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:80/social/complete/google-oauth2/'
+
+
+#Don't us e SOCIAL_AUTH_GOOGLE_PLUS_AUTH_EXTRA_ARGUMENTS, is not working!
+SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'access_type': 'offline',
+
+}
+
+LOGIN_URL = 'user:login'
+
+LOGIN_REDIRECT_URL ='/'
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+
+
+# Python social oauth pipline
+
+SOCIAL_AUTH_PIPELINE = (
+    # Get the information we can about the user and return it in a simple
+    # format to create the user instance later. In some cases the details are
+    # already part of the auth response from the provider, but sometimes this
+    # could hit a provider API.
+    'social_core.pipeline.social_auth.social_details',
+
+    # Get the social uid from whichever service we're authing thru. The uid is
+    # the unique identifier of the given user in the provider.
+    'social_core.pipeline.social_auth.social_uid',
+
+    # Verifies that the current auth process is valid within the current
+    # project, this is where emails and domains whitelists are applied (if
+    # defined).
+    'social_core.pipeline.social_auth.auth_allowed',
+
+    # Checks if the current social-account is already associated in the site.
+    'social_core.pipeline.social_auth.social_user',
+
+    #Associate current auth with a user with the same email address in the DB.
+    'social_core.pipeline.social_auth.associate_by_email',
+
+    # Make up a username for this person, appends a random string at the end if
+    # there's any collision.
+    'social_core.pipeline.user.get_username',
+
+    # Create a user account if we haven't found one yet.
+    'social_core.pipeline.user.create_user',
+
+    # Active social user instance.
+
+    'app.custom_pipline.set_user_active',
+
+    # Create the record that associates the social account with the user.
+    'social_core.pipeline.social_auth.associate_user',
+
+    # Populate the extra_data field in the social record with the values
+    # specified by settings (and the default ones like access_token, etc).
+    'social_core.pipeline.social_auth.load_extra_data',
+
+    # Update the user record with any changed info from the auth service.
+    'social_core.pipeline.user.user_details',
+)
 
 
 
@@ -237,6 +338,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Your project description',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': True,
+    'EXCLUDE_PATHS': ['/auth/convert-token/', '/auth/disconnect-backend/', 'auth/invalidate-sessions/', 'auth/revoke-token/', 'auth/token/'],
 
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

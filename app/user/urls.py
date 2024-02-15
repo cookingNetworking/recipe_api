@@ -1,7 +1,8 @@
 """
 URL mapping for user API.
 """
-
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from social_django.views import complete
 from django.urls import path
 
 from user import views
