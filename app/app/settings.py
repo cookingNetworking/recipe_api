@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","13.211.123.24"]
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","localhost:3000","13.211.123.24"]
 print(env('DEV_ENV'))
 
 INSTALLED_APPS = [
@@ -155,20 +155,6 @@ CACHES = {
         }
     }
 }
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_COOKIE_SECURE = True
-
-SESSION_COOKIE_SECURE = True
-
-CORS_ALLOW_CREDENTIALS = True
-
-
 
 
 # Email settings
