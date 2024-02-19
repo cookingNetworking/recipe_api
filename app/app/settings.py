@@ -156,20 +156,6 @@ CACHES = {
     }
 }
 
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_TRUSTED_ORIGINS = ['https://cookingnetwork.vercel.app']
-
-SESSION_COOKIE_SAMESITE = 'None'
-
-CSRF_COOKIE_SECURE = True
-
-SESSION_COOKIE_SECURE = True
-
-CORS_ALLOW_CREDENTIALS = True
-
-
-
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

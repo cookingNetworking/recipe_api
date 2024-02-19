@@ -19,10 +19,10 @@ services:
         reservations:
           memory: 128M
     environment:
-      - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - DB_HOST
+      - DB_NAME
+      - DB_USER
+      - DB_PASS
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_STORAGE_BUCKET_NAME
@@ -37,7 +37,6 @@ services:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
-      - db
       - cache
   worker:
     build:
@@ -54,10 +53,10 @@ services:
         reservations:
           memory: 64M
     environment:
-      - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - DB_HOST
+      - DB_NAME
+      - DB_USER
+      - DB_PASS
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_STORAGE_BUCKET_NAME
@@ -70,7 +69,6 @@ services:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
-      - db
       - cache
   beat:
     image: as2229181/cooknetwork:worker_v1.0
@@ -89,10 +87,10 @@ services:
         reservations:
           memory: 64M
     environment:
-      - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - DB_HOST
+      - DB_NAME
+      - DB_USER
+      - DB_PASS
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_STORAGE_BUCKET_NAME
@@ -105,24 +103,8 @@ services:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
     depends_on:
-      - db
+
       - cache
-  db:
-    image: postgres:13-alpine
-    volumes:
-      - dev-db-data:/var/lib/postgresql/data
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 64M
-    environment:
-      - POSTGRES_DB=devdb
-      - POSTGRES_USER=devuser
-      - POSTGRES_PASSWORD=changeme
-      - TZ='GMT+8'
-      - PGTZ='GMT+8'
   cache:
     image: redis:7.2.1-alpine
     deploy:
@@ -137,7 +119,6 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/vol/redis
-
   proxy:
     build:
       context: ./proxy
@@ -162,7 +143,6 @@ services:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
 volumes:
-  dev-db-data:
   dev-static-data:
   redis-data:
   ws-static:
