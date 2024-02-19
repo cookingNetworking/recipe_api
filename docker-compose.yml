@@ -11,6 +11,7 @@ services:
         source: ./app
         target: /app
       - dev-static-data:/vol/web
+      - ws-static:/tmp
     deploy:
       resources:
         limits:

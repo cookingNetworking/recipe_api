@@ -11,6 +11,7 @@ services:
         source: ./app
         target: /app
       - dev-static-data:/vol/web
+      - ws-static:/tmp
     deploy:
       resources:
         limits:
@@ -57,7 +58,6 @@ services:
       - db
       - cache
   beat:
-    image: as2229181/cooknetwork:worker_v1.0
     build:
       context: .
       args:
@@ -110,11 +110,13 @@ services:
           memory: 128M
     volumes:
       - dev-static-data:/vol/web/static
+      - ws-static:/tmp
     environment:
       - TZ='GMT+8'
       - PGTZ='GMT+8'
 
 volumes:
+  ws-static:
   dev-db-data:
   dev-static-data:
   redis-data:
