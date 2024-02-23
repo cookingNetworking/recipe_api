@@ -42,5 +42,9 @@
 
   <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/dca3561c-218e-48da-8530-4c1b69ff9794 width=80% />
 
+### Task queue (Celery)
 
+ <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/7baea866-ca4c-48f4-a745-39f9a588f7cd width=60% />
+
+  - The system utilizes a message queue to accomplish asynchronous tasks such as sending emails, as well as scheduled tasks like synchronizing Redis and SQL database data. This setup ensures that tasks are processed efficiently without blocking the main application flow, allowing for operations that require more time, like email dispatch or database synchronization, to be handled in the background.
 
