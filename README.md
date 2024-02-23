@@ -32,4 +32,15 @@
 
   - When a user choose log in using Google OAuth, the backend server makes a request to Google's OAuth server with the client ID, scope, and redirect URL. The user is then redirected to Google's login page where they can enter their email and password. The user must also approve the requested consents. Once consent is granted, Google's OAuth server responses access and refresh tokens back the backend server. Upon receiving the tokens, the backend server creates a user account and returns a session ID to the client to maintain the user's logged-in state.
 
+### Cache & Redis
+
+- **Normal cache**
+
+  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/b7e4da27-c487-4128-bb7e-4b4226831a6e width=60% />
+
+- **High-Frequency Update Data**
+
+  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/dca3561c-218e-48da-8530-4c1b69ff9794 width=80% />
+
+
 
