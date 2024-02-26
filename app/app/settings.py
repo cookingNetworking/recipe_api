@@ -74,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'app.custom_middleware.DynamicCorsMiddleware',
 ]
 
 ROOT_URLCONF = "app.urls"
@@ -384,8 +385,13 @@ CSRF_COOKIE_HTTPONLY = True
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co']
+CORS_ALLOW_CREDENTIALS = True
 
+CSRF_COOKIE_DOMAIN = [
+            'https://www.cookingnetwork.co',
+            'https://cookingnetwork.co',
+            'http://localhost:3000'
+]
 
 if os.environ.get('DEV_ENV') == 'true':
     SESSION_COOKIE_DOMAIN = 'localhost'
@@ -395,14 +401,15 @@ else:
     CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
 
 
-CORS_ALLOW_METHODS = [
-            'GET',
-            'POST',
-            'PUT',
-            'DELETE',
-            'PATCH' ]
+CORS_ALLOW_METHODS = (
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH"
+)
 
-CORS_ALLOW_HEADERS = [
+CORS_ALLOW_HEADERS = (
     	'accept',
     	'accept-encoding',
    	    'authorization',
@@ -412,5 +419,5 @@ CORS_ALLOW_HEADERS = [
     	'user-agent',
         'sessionid',
     	'X-CSRFToken',
-    	'x-requested-with',
-        ]
+    	'x-requested-with'
+)

@@ -10,8 +10,7 @@ server {
     location / {
         uwsgi_pass app:9000;
         include /etc/nginx/uwsgi_params;
-        client_max_body_size 10M;
-	add_header 'Access-Control-Allow-Origin' 'https://www.cookingnetwork.co';
+        client_max_body_size 60M;
         add_header 'Access-Control-Allow-Credentials' 'true';
         add_header 'Access-Control-Max-Age' 1728000;
     }
