@@ -374,14 +374,12 @@ class LoginView(APIView):
     """Login views for user an will return a session in header"""
     permission_classes = [permissions.AllowAny,]
     authentication_classes = [authentication.SessionAuthentication,]
-
     def post(self, request):
         if request.user.is_authenticated:
             return Response({"error":"Already login!",'detail':'please redirect to home page!'}, status=status.HTTP_400_BAD_REQUEST)
         request_data = request.data
         email = request.data.get('email')
         password = request.data.get('password', None)
-
         #Check emaill and password is filled in or not!
         if email is None:
             return Response({"Error:":"Email is empty!", "detail":"Please ensure user fill in the email!!","data":request_data}, status=status.HTTP_400_BAD_REQUEST)

@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","localhost:3000","13.211.123.24"]
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-43-206-126-78.ap-northeast-1.compute.amazonaws.com',"localhost","localhost:3000","43.206.126.78"]
 print(env('DEV_ENV'))
 
 INSTALLED_APPS = [
@@ -74,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'app.custom_middleware.DynamicCorsMiddleware',
 ]
 
 ROOT_URLCONF = "app.urls"
@@ -376,33 +377,40 @@ AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii
 
 #csrf cookies settings
 
-CSRF_COOKIE_SECURE = False
-
-SESSION_COOKIE_SECURE = False
 
 CSRF_COOKIE_HTTPONLY = True
 
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co']
+CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co',
+                        'http://localhost:3000',
+                        'http://127.0.0.1:3000'
+                        ]
 
 
 if os.environ.get('DEV_ENV') == 'true':
-    SESSION_COOKIE_DOMAIN = 'localhost'
+    SESSION_COOKIE_DOAMIN = 'localhost'
     CSRF_COOKIE_DOMAIN = 'localhost'
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
 else:
     SESSION_COOKIE_DOMAIN = '.cookingnetwork.co'
     CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SAMESITE = 'None'
 
+CORS_ALLOW_METHODS = (
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH"
+)
 
-CORS_ALLOW_METHODS = [
-            'GET',
-            'POST',
-            'PUT',
-            'DELETE',
-            'PATCH' ]
-
-CORS_ALLOW_HEADERS = [
+CORS_ALLOW_HEADERS = (
     	'accept',
     	'accept-encoding',
    	    'authorization',
@@ -412,5 +420,5 @@ CORS_ALLOW_HEADERS = [
     	'user-agent',
         'sessionid',
     	'X-CSRFToken',
-    	'x-requested-with',
-        ]
+    	'x-requested-with'
+)

@@ -19,10 +19,10 @@ services:
         reservations:
           memory: 128M
     environment:
-      - DB_HOST
-      - DB_NAME
-      - DB_USER
-      - DB_PASS
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_STORAGE_BUCKET_NAME
@@ -38,12 +38,13 @@ services:
       - PGTZ='GMT+8'
     depends_on:
       - cache
+      - db
   worker:
     build:
       context: .
       args:
         - DEV=true
-    command: celery -A app worker --loglevel=info --concurrency=2
+    command: celery -A app worker --loglevel=info --concurrency=1
     volumes:
       - dev-static-data:/vol/worker
     environment:
