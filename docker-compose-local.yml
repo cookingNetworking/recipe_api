@@ -38,7 +38,7 @@ services:
       - PGTZ='GMT+8'
     depends_on:
       - cache
-      - db  
+      - db
   worker:
     build:
       context: .

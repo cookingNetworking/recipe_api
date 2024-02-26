@@ -28,3 +28,16 @@ class CheckSessionMiddleware(MiddlewareMixin):
             if session_id:
                 return redirect('swagger-ui')
         return None
+    
+
+
+class DynamicCorsMiddleware(MiddlewareMixin):
+    """Dynamic set allow cors origin"""
+    def process_response(self, request, response):
+        origin = request.META.get('HTTP_ORIGIN', '')
+        response['Access-Control-Allow-Origin'] = None
+        print(origin,type(origin))
+        if origin in ['http://localhost:3000', 'https://www.cookingnetwork.co']:
+            response['Access-Control-Allow-Origin'] = origin
+        return response
+
