@@ -8,8 +8,6 @@ ENV APP_PORT=9000
 ENV DOMAIN=cookingnetwork.co
 
 USER root
-# 安装 Certbot
-RUN apk --no-cache add certbot
 
 COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./no-ssl.conf.tpl /etc/nginx/no-ssl.conf.tpl

@@ -376,25 +376,32 @@ AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii
 
 #csrf cookies settings
 
-CSRF_COOKIE_SECURE = False
-
-SESSION_COOKIE_SECURE = False
 
 CSRF_COOKIE_HTTPONLY = True
 
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co']
+CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co',
+                        'http://localhost:3000',
+                        'http://127.0.0.1:3000'
+                        ]
 
 
 if os.environ.get('DEV_ENV') == 'true':
-    SESSION_COOKIE_DOMAIN = 'localhost'
+    SESSION_COOKIE_DOAMIN = 'localhost'
     CSRF_COOKIE_DOMAIN = 'localhost'
+    CROS_ALLOWED_ORIGINS=["http://localhost:3000"]
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
 else:
     SESSION_COOKIE_DOMAIN = '.cookingnetwork.co'
     CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
-
-
+    CROS_ALLOWED_ORIGINS=["https://www.cookingnetwork.co"]
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SAMESITE = 'None'
 CORS_ALLOW_METHODS = [
             'GET',
             'POST',
