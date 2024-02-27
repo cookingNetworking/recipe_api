@@ -12,11 +12,6 @@ server {
         uwsgi_pass ${APP_HOST}:${APP_PORT};
         include /etc/nginx/uwsgi_params;
         client_max_body_size 50M;
-
-        # CORS head
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
-        add_header 'Access-Control-Allow-Credentials' 'true';
-        add_header 'Access-Control-Max-Age' 1728000;
         }
     location /ws/ {
         proxy_pass http://unix:/tmp/daphne.sock;
