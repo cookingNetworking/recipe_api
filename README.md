@@ -67,3 +67,52 @@
 
 
  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/2c5591a1-8ec6-49d5-8e23-1111dd86ecb7 width=60% />
+
+
+### Backend Technique 
+
+**Infrastructure**
+  - Docker
+  - Docker-compose
+
+**Environment**
+  - Python/ django / django restframework
+
+**Database**
+   - Postgres SQL
+
+ **Cache**
+   - Redis
+
+**Cloud Service** 
+  - AWS EC2
+  - AWS RDS
+  - AWS S3
+  - AWS Cloudfront
+  - AWS Route53
+  - AWS certificate Manger
+
+**Networking**
+  - HTTP&HTTPS
+  - Websocket
+  - NGINX
+  - Domain name server(DNS)
+  - SSL
+ 
+**CI/CI** 
+  - Github Actions
+
+**Test**
+ - django test
+
+**Third pary library**
+  - celery
+  - django-channel
+
+**Version Control**
+  - Git/Git hub
+
+### Contact
+---
+ :black_nib: JI-SHIN, KUO  
+ :mailbox_with_mail: Email: as2229181@gmail.com
