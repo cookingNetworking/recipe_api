@@ -48,7 +48,17 @@
 
   - The system utilizes a message queue to accomplish asynchronous tasks such as sending emails, as well as scheduled tasks like synchronizing Redis and SQL database data. This setup ensures that tasks are processed efficiently without blocking the main application flow, allowing for operations that require more time, like email dispatch or database synchronization, to be handled in the background.
 
+
+
 ### Notificaiotn system (websocket)
-<img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/ecc57308-9207-4f7b-8d09-19a0e9d68864 width=20% />
+- **Architecture**
+
+  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/ecc57308-9207-4f7b-8d09-19a0e9d68864 width=20% />
 
   - The notification system is based on WebSocket connections, achieved by implementing Django Channels and Daphne, which enable ASGI-compliant communication.The channel layer acts as a messaging hub for sending and receiving messages across various consumer instances and WebSocket clients. 
+
+- **Notifiaction**
+
+  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/a946d568-2634-4776-be9e-06c97e8c9cdb width=60% />
+
+  -  The notification system leverages Django Channels and WebSocket technology to enable persistent connections between the user and the Django application server. The Channel Layer serves as an intermediary, handling the routing and distribution of messages and managing group and channel subscriptions to maintain WebSocket connections. When User2 creates a new recipe, a Django signal triggers a notification that is then pushed to User1, facilitating real-time communication.
