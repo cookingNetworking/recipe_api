@@ -62,3 +62,8 @@
   <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/a946d568-2634-4776-be9e-06c97e8c9cdb width=60% />
 
   -  The notification system leverages Django Channels and WebSocket technology to enable persistent connections between the user and the Django application server. The Channel Layer serves as an intermediary, handling the routing and distribution of messages and managing group and channel subscriptions to maintain WebSocket connections. When User2 creates a new recipe, a Django signal triggers a notification that is then pushed to User1, facilitating real-time communication.
+
+### Database schema
+
+
+ <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/2c5591a1-8ec6-49d5-8e23-1111dd86ecb7 width=60% />
