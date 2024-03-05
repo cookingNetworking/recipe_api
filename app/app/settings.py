@@ -31,7 +31,7 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-13-211-123-24.ap-southeast-2.compute.amazonaws.com',"localhost","localhost:3000","13.211.123.24"]
+ALLOWED_HOSTS = ['cookingnetwork.co','ec2-43-206-126-78.ap-northeast-1.compute.amazonaws.com',"localhost","localhost:3000","13.211.123.24"]
 print(env('DEV_ENV'))
 
 INSTALLED_APPS = [
@@ -379,6 +379,7 @@ AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii
 
 CSRF_COOKIE_HTTPONLY = True
 
+CORS_ALLOW_CREDENTIALS = True
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
@@ -389,7 +390,7 @@ CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co',
 
 
 if os.environ.get('DEV_ENV') == 'true':
-    SESSION_COOKIE_DOAMIN = 'localhost'
+    SESSION_COOKIE_DOMAIN = 'localhost'
     CSRF_COOKIE_DOMAIN = 'localhost'
     CORS_ALLOWED_ORIGINS=["http://localhost:3000"]
     CSRF_COOKIE_SECURE = False
@@ -402,22 +403,26 @@ else:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SAMESITE = 'None'
-CORS_ALLOW_METHODS = [
-            'GET',
-            'POST',
-            'PUT',
-            'DELETE',
-            'PATCH' ]
 
-CORS_ALLOW_HEADERS = [
-    	'accept',
-    	'accept-encoding',
-   	    'authorization',
-    	'content-type',
-    	'dnt',
-    	'origin',
-    	'user-agent',
-        'sessionid',
-    	'X-CSRFToken',
-    	'x-requested-with',
-        ]
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+CORS_ALLOW_HEADERS = (
+    	"accept",
+    	"accept-encoding",
+   	    "authorization",
+    	"content-type",
+    	"dnt",
+    	"origin",
+    	"user-agent",
+        "sessionid",
+    	"X-CSRFToken",
+    	"x-requested-with",
+        )
