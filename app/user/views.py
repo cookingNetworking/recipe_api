@@ -24,12 +24,10 @@ from drf_spectacular.utils import (
                                     OpenApiResponse
                                     )
 
-from django.conf import settings
-from django.http import JsonResponse
-from urllib.parse import urlencode
+
 from django.core.cache import cache
-from django.contrib.auth import get_user_model, login, logout
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt
+from django.contrib.auth import get_user_model, login
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.middleware.csrf import rotate_token
 

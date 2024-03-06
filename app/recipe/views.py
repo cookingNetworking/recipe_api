@@ -291,8 +291,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes = [permissions.AllowAny]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
-        elif os.environ.get("DEV_ENV") == "true":
-            permission_classes = [permissions.AllowAny]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
