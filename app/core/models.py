@@ -30,9 +30,6 @@ def step_image_file_path(instance, filename):
     """Generate a filepath for recipe step image."""
     return f'recipes/{instance.recipe}/{instance.step}/{filename}'
 
-def comment_image_file_path(instance, filename):
-    return f'recipe/{instance.recipe}/comment{filename}'
-
 class UserManager(BaseUserManager):
     """Manage for users."""
 
@@ -108,7 +105,6 @@ class RecipeComment(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="recipe_comment")
     comment = models.TextField(blank=True)
     rating = models.IntegerField(choices=RATING, default="1", help_text="rating form 1 to 5")
-    Photo = models.ImageField(null=True, blank=True, upload_to=comment_image_file_path)
     created_time = models.DateTimeField(auto_now=True)
 
 class Like(models.Model):
@@ -145,7 +141,7 @@ class Save(models.Model):
 
 class CoverImage(models.Model):
     """Recipe photo show on recipe page!"""
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="photos")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="coverimage")
     image = models.ImageField(null=True, upload_to=upload_image_file_path)
     upload_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 

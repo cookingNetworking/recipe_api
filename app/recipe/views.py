@@ -21,6 +21,7 @@ from drf_spectacular.utils import (
 from django.views.decorators.csrf import csrf_protect
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.forms.models import model_to_dict
 from django.db.models import Q, F, Count, Avg
 from functools import reduce
 from operator import or_
@@ -403,14 +404,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if not recipe_instance:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_404_NOT_FOUND)
             average_rating_result = recipe_instance.recipe_comment.aggregate(average_rating=Avg('rating'))
+            print(1)
             comment_count_result = recipe_instance.recipe_comment.aggregate(comment_count=Count('id'))
+            print(2)
             average_rating = average_rating_result.get("average_rating")
             comment_count = comment_count_result.get("comment_count")
             setattr(recipe_instance, 'average_rating', average_rating)
             setattr(recipe_instance, 'comment_count', comment_count)
+            print(model_to_dict(recipe_instance))
             recipe = serializers.RecipeSQLDetailSerializer(recipe_instance)
-            self.recipe_redis_handler.set_recipe(recipe_id=recipe_id, data=recipe.data)
-            self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=(recipe_id))
+            print(3)
+            print(recipe)
+            self.recipe_redis_handler.set_recipe(recipe_id=int(recipe_id), data=recipe.data)
+            print(4)
+            self.recipe_redis_handler.increase_recipe_view(hkey_name="views",recipe_id=int(recipe_id))
+            print(5)
             return Response(recipe.data, status.HTTP_200_OK)
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)

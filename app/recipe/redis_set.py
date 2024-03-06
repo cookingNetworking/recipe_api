@@ -25,7 +25,7 @@ class RedisHandler:
         """
         self.redis_client = redis_client
 
-    def set_recipe(self,recipe_id: int, data):
+    def set_recipe(self,recipe_id, data):
         """
         Cache recipe in redis.
 
@@ -33,6 +33,7 @@ class RedisHandler:
         :param data: The data to be stored. Must be a dict.
         Time of timeout is random set from 25 min to 30 min.
         """
+        print("In set_recipe!")
         json_data = json.dumps(data)
         timeout = random.randint(1500, 1800)
         self.redis_client.set(f'Recipe_detail_{recipe_id}',json_data, ex=timeout)

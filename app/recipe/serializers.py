@@ -1,11 +1,9 @@
 """Serializer for recipe!"""
-from decimal import Decimal
 from storages.backends.s3boto3 import S3Boto3Storage
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import UploadedFile
-from django.db.models import Avg
 from core.models import (
                         Recipe,
                         CoverImage,
@@ -19,9 +17,10 @@ from .utils import CustomSlugRelatedField
 
 s3_storage = S3Boto3Storage()
 class UserMinimalSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username']
+        fields = ['user_id', 'username']
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
@@ -77,13 +76,12 @@ class RecipeSerialzier(serializers.ModelSerializer):
         queryset=Ingredient.objects.all()
     )
     coverimage = CoverImageSerialzier(many=True, required=False)
-    steps = RecipeStepSerialzier(many=True, required=False)
     user = UserMinimalSerializer(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
     average_rating = serializers.DecimalField(max_digits=3, decimal_places=2,required=False)
     class Meta:
         model = Recipe
-        fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'coverimage', 'steps', 'comment_count', 'average_rating']
+        fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'coverimage','comment_count', 'average_rating']
         read_only_fields = ['id','comment_count', 'average_rating']
 
     def _get_or_create_tags(self, tags, recipe):
@@ -177,9 +175,10 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         slug_field='id',
         queryset=Recipe.objects.all()
     )
+    comment_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = RecipeComment
-        fields=["id", "recipe","user", "comment", "rating", "Photo", "created_time"]
+        fields=["comment_id", "recipe","user", "comment", "rating","created_time"]
         extra_kwargs = {"rating": {"required": True}}
 
 
@@ -198,15 +197,21 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
 class RecipeSQLDetailSerializer(RecipeSerialzier):
     """Serializer for recipe detail !"""
     top_five_comments = serializers.SerializerMethodField()
-
+    steps = RecipeStepSerialzier(many=True, required=False)
     class Meta(RecipeSerialzier.Meta):
-        fields = RecipeSerialzier.Meta.fields + ['create_time','likes','save_count','views', 'top_five_comments']
+        fields = RecipeSerialzier.Meta.fields + ['steps','create_time','likes','save_count','views','top_five_comments']
         read_only_fields = RecipeSerialzier.Meta.read_only_fields + ['likes','save_count','views','top_five_comments']
 
     def get_top_five_comments(self, obj):
-        comments = obj.recipe_comment.order_by('-created_time')[:5]
-        return RecipeCommentSerializer(comments, many=True).data
-
+        try:
+            print("entry_get_top_five_comments")
+            comments = obj.recipe_comment.order_by('-created_time')[:5]
+            print(comments)
+            print("end_top_five_comments")
+            data = RecipeCommentSerializer(comments, many=True).data
+            return data
+        except Exception as e:
+            print(e, "get_top_five_comments")
 class NotificationSerializer(serializers.ModelSerializer):
     """Serializer for notification"""
     class Meta:
