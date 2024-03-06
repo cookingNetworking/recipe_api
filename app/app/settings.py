@@ -232,7 +232,7 @@ REST_FRAMEWORK = {
     #DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
     #Once the authentication is successful, it will not try the rest of the authentication classes.
     'DEFAULT_AUTHENTICATION_CLASSES':[
-        'rest_framework.authentication.SessionAuthentication',
+        'app.custom_drf_authentication.CsrfExemptSessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework_social_oauth2.authentication.SocialAuthentication',

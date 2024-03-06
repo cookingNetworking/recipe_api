@@ -133,7 +133,7 @@ class UserListView(generics.ListAPIView):
     )
     ],
     description='Create a new user',)
-@method_decorator(conditional_csrf_decorator, name='dispatch')
+
 class CreateUserView(generics.CreateAPIView):
     """Create user API."""
     permission_classes = [permissions.AllowAny]
@@ -448,6 +448,7 @@ class LoginView(APIView):
 @method_decorator(conditional_csrf_decorator, name='dispatch')
 class LogoutView(APIView):
     """Clear session id from cookies!"""
+    authentication_classes = [authentication.SessionAuthentication,]
     def post(self, request):
         try:
             return Response({'message':"Successed logout.",'detail':"Session id remove from cookies!"}, status=status.HTTP_200_OK)
@@ -503,7 +504,6 @@ class LogoutView(APIView):
 @conditional_csrf_decorator
 def check_email_replicate(request):
     """Check create user request email  is existed or not."""
-
     try:
         if get_user_model().objects.filter(email=request.data.get('email')).exists():
             return Response(
@@ -514,8 +514,6 @@ def check_email_replicate(request):
     except Exception as e:
             print(e)
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 @extend_schema(
     parameters=[

@@ -1,7 +1,7 @@
 import boto3
 import datetime
 import django_redis
-
+import os
 from asgiref.sync import async_to_sync
 
 from channels.layers import get_channel_layer
@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from botocore.signers import CloudFrontSigner
 
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.conf import settings
 from django.db.models import F
 
@@ -49,6 +49,14 @@ def create_signed_url(image_path, expired_time):
                                                         date_less_than=expired_time)
     return signed_url
 
+def conditional_csrf_decorator(views):
+    """Csrf protect would set up by develop environments!"""
+    if os.environ.get('DEV_ENV') == 'true':
+        print('csrf_exempt')
+        return csrf_exempt(views)
+    else:
+        print('csrf_protect')
+        return csrf_protect(views)
 
 def saved_action(user, obj):
     """Funciton for save action."""
@@ -99,11 +107,14 @@ def saved_action(user, obj):
 
 class UnsafeMethodCSRFMixin(ModelViewSet):
     """Amixin that applies CSRF protection to unsafe HTTP methods (POST, PATCH, PUT, DELETE....)"""
-
     def dispatch(self, request, *args, **kwargs):
-        if request.method not in ['GET', 'HEAD', 'OPTIONS', 'TRASE']:
-            return csrf_protect(super().dispatch)(request, *args, **kwargs)
-        return super().dispatch(request, *args, **kwargs)
+        if os.environ.get('DEV_ENV') != 'true': # If is in develop, not use csrftoken
+            if request.method not in ['GET', 'HEAD', 'OPTIONS', 'TRASE']:
+                return csrf_protect(super().dispatch)(request, *args, **kwargs)
+            else:
+                return super().dispatch(request, *args, **kwargs)
+        return csrf_exempt(super().dispatch)(request, *args, **kwargs)
+
 
 
 class CustomSlugRelatedField(serializers.SlugRelatedField):

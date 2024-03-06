@@ -1,4 +1,5 @@
 """Create recipe API end point!"""
+import os
 from rest_framework import (
         status,
         mixins,
@@ -17,7 +18,8 @@ from drf_spectacular.utils import (
         OpenApiParameter,
         OpenApiTypes
 )
-from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q, F, Count, Avg
@@ -27,11 +29,12 @@ from operator import or_
 from core import models
 from core import permissions as Customize_permission
 from recipe import serializers
-from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination
+from .utils import UnsafeMethodCSRFMixin, saved_action, CustomPagination, conditional_csrf_decorator
 
 from rest_framework.exceptions import ValidationError
 import django_redis
 from .redis_set import RedisHandler
+
 redis_client1 = django_redis.get_redis_connection("default")
 
 
@@ -273,7 +276,7 @@ redis_client1 = django_redis.get_redis_connection("default")
         ]
     )
 )
-class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
+class RecipeViewSet(viewsets.ModelViewSet):
     """Views for manage recipe APIs."""
     serializer_class = serializers.RecipeSQLDetailSerializer
     queryset = models.Recipe.objects.all().order_by("create_time")
@@ -288,6 +291,8 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             permission_classes = [permissions.AllowAny]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [Customize_permission.IsAdminOrRecipeOwmer]
+        elif os.environ.get("DEV_ENV") == "true":
+            permission_classes = [permissions.AllowAny]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -359,7 +364,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'error':f'{e}',"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    @conditional_csrf_decorator
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
@@ -378,7 +383,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e :
             return Response({'error':f'{e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    @conditional_csrf_decorator
     def retrieve(self, request, *args, **kwargs):
         """Retrieve recipe object detail"""
         try:
@@ -409,7 +414,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
         except Exception as e :
             return Response({'error':f'{e}',"detail":"Please check again!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    @conditional_csrf_decorator
     def update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis."""
         response = super().update(request, *args, **kwargs)
@@ -432,7 +437,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
         except Exception as e:
             print(e)
             return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    @conditional_csrf_decorator
     def partial_update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis.(partial)"""
         response = super().partial_update(request, *args, **kwargs)
@@ -456,7 +461,7 @@ class RecipeViewSet(UnsafeMethodCSRFMixin, viewsets.ModelViewSet):
             print(e)
             return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+    @conditional_csrf_decorator
     def destroy(self, request, *args, **kwargs):
         """Destroy the recipe instance and clear data in Redis cache."""
         try:
@@ -1035,7 +1040,7 @@ def save_button(request):
                 status_codes=['500']
             )
         ],
-    ), 
+    ),
     update=extend_schema(exclude=True),
     partial_update=extend_schema(
         parameters=[
