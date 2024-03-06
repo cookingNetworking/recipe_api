@@ -52,10 +52,8 @@ def create_signed_url(image_path, expired_time):
 def conditional_csrf_decorator(views):
     """Csrf protect would set up by develop environments!"""
     if os.environ.get('DEV_ENV') == 'true':
-        print('csrf_exempt')
         return csrf_exempt(views)
     else:
-        print('csrf_protect')
         return csrf_protect(views)
 
 def saved_action(user, obj):

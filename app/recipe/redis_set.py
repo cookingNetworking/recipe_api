@@ -126,7 +126,7 @@ class RedisHandler:
             self.redis_client.hdel(f"Recipe_{hkey_name}", *del_id)
             return True
         except Exception as e:
-            print(e)
+            print(e, "del hkey")
             return False
 
     def del_prev_hkey(self, hkey_name: str, *recipe_id: int):

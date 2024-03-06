@@ -13,8 +13,6 @@ import uuid
 
 ROLL =( ('admin','Admin'), ('cook','Cook'), ('user','User') )
 
-PHOTO_CATEGORY = (('main','Main'),('sub_2','Sub_2'),('sub_3','Sub_3'))
-
 RATING = ((1,'*'),(2,'**'),(3,'***'),(4,'****'),(5,'*****'))
 
 def generate_prefixed_uuid():
@@ -26,7 +24,7 @@ def test_upload_image_file_path(instance, filename):
 
 def upload_image_file_path(instance, filename):
     """Generate a filepath for recipe image."""
-    return f'recipes/{instance.recipe}/{instance.category}/{filename}'
+    return f'recipes/{instance.recipe}/{filename}'
 
 def step_image_file_path(instance, filename):
     """Generate a filepath for recipe step image."""
@@ -145,12 +143,11 @@ class Save(models.Model):
             ("user", "ingredient")
         ]
 
-class RecipePhoto(models.Model):
+class CoverImage(models.Model):
     """Recipe photo show on recipe page!"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="photos")
-    photo = models.ImageField(null=True, upload_to=upload_image_file_path)
+    image = models.ImageField(null=True, upload_to=upload_image_file_path)
     upload_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    category = models.CharField(choices=PHOTO_CATEGORY,max_length=10, default='main', null=False)
 
 class RecipeStep(models.Model):
     """Step for recipe."""

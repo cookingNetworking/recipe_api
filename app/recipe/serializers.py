@@ -1,12 +1,14 @@
 """Serializer for recipe!"""
 from decimal import Decimal
 from storages.backends.s3boto3 import S3Boto3Storage
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Avg
 from core.models import (
                         Recipe,
-                        RecipePhoto,
+                        CoverImage,
                         RecipeStep ,
                         Tag,
                         Ingredient,
@@ -23,26 +25,28 @@ class UserMinimalSerializer(serializers.ModelSerializer):
 
 class TagSerialzier(serializers.ModelSerializer):
     """Serializer for recipe tags!"""
+    tag_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = Tag
-        fields = ['id', 'name', 'save_count', 'views']
-        read_only_fields = ['id']
+        fields = ['tag_id', 'name', 'save_count', 'views']
+        read_only_fields = ['tag_id']
 
 class IngredientSerialzier(serializers.ModelSerializer):
     """Serialzier for ingredient!"""
+    ingredient_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = Ingredient
-        fields = ['id', 'name', 'save_count', 'views']
-        read_only_fields = ['id']
+        fields = ['ingredient_id', 'name', 'save_count', 'views']
+        read_only_fields = ['ingredient_id']
 
 class RecipeStepSerialzier(serializers.ModelSerializer):
     """Serialzier for RecipeStep!"""
     recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
-
+    step_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = RecipeStep
-        fields = ['id','recipe_id', 'step', 'description', 'image', ]
-        read_only_fields = ['id','recipe_id']
+        fields = ['step_id','recipe_id', 'step', 'description', 'image', ]
+        read_only_fields = ['step_id','recipe_id']
         extra_kwargs = {"description": {"required": True}}
 
     def get_signed_photo_url(self, obj):
@@ -50,14 +54,14 @@ class RecipeStepSerialzier(serializers.ModelSerializer):
             return s3_storage.url(str(obj.image), expire=1800)
         return None
 
-class RecipePhotoSerialzier(serializers.ModelSerializer):
-    """Serialzier for RecipePhoto!"""
+class CoverImageSerialzier(serializers.ModelSerializer):
+    """Serialzier for CoverImage!"""
     recipe_id = serializers.PrimaryKeyRelatedField(read_only=True)
-
+    cov_img_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
-        model = RecipePhoto
-        fields = ['id','recipe_id', 'photo', 'upload_date', 'category']
-        read_only_fields = ['id','recipe_id','upload_date']
+        model = CoverImage
+        fields = ['cov_img_id','recipe_id', 'image', 'upload_date']
+        read_only_fields = ['cov_img_id','recipe_id','upload_date']
 
 
 class RecipeSerialzier(serializers.ModelSerializer):
@@ -72,14 +76,14 @@ class RecipeSerialzier(serializers.ModelSerializer):
         slug_field='name',
         queryset=Ingredient.objects.all()
     )
-    photos = RecipePhotoSerialzier(many=True, required=False)
+    coverimage = CoverImageSerialzier(many=True, required=False)
     steps = RecipeStepSerialzier(many=True, required=False)
     user = UserMinimalSerializer(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
     average_rating = serializers.DecimalField(max_digits=3, decimal_places=2,required=False)
     class Meta:
         model = Recipe
-        fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'photos', 'steps', 'comment_count', 'average_rating']
+        fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'coverimage', 'steps', 'comment_count', 'average_rating']
         read_only_fields = ['id','comment_count', 'average_rating']
 
     def _get_or_create_tags(self, tags, recipe):
@@ -98,13 +102,19 @@ class RecipeSerialzier(serializers.ModelSerializer):
             )
             recipe.ingredients.add(ingredient_obj)
 
-    def _get_or_create_photos(self, photos, recipe):
+    def _get_or_create_coverimage(self, coverimage, recipe):
         """Handle getting or creating photos as needed."""
-        for photo in photos:
-            photo_obj, created = RecipePhoto.objects.get_or_create(
-                recipe=recipe,
-                **photo
-            )
+        try:
+            print("entry_create_coverimage")
+            for image_data in coverimage :
+                print(image_data, 'asdw')
+                if image_data and isinstance(image_data, UploadedFile):
+                    photo_obj = CoverImage.objects.create(
+                        recipe=recipe,
+                        image=image_data,
+                    )
+        except Exception as e :
+            print(e)
     def _get_or_create_steps(self, steps, recipe):
         """Handle getting or creating steps as needed."""
         for step in steps:
@@ -116,15 +126,17 @@ class RecipeSerialzier(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create recipe."""
         req_user = self.context['request'].user
+        print(validated_data)
         req_tags = validated_data.pop("tags", [])
         req_ingredients = validated_data.pop("ingredients", [])
-        photos = validated_data.pop("photos", [])
+        coverimage_files = self.context['request'].FILES.getlist('cover_image')
+        print(coverimage_files,':serializer')
         steps = validated_data.pop("steps", [])
 
         recipe = Recipe.objects.create(user=req_user, **validated_data)
         self._get_or_create_tags(req_tags, recipe)
         self._get_or_create_ingredients(req_ingredients, recipe)
-        self._get_or_create_photos(photos, recipe)
+        self._get_or_create_coverimage(coverimage_files, recipe)
         self._get_or_create_steps(steps, recipe)
         return recipe
 
@@ -132,7 +144,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
         """Update recipe."""
         tags = validated_data.pop("tags", [])
         ingredients = validated_data.pop("ingredients", [])
-        photos = validated_data.pop("photos", [])
+        coverimage = validated_data.pop("cover_image", [])
         steps = validated_data.pop("steps", [])
         if tags is not None:
             instance.tags.clear()
@@ -140,9 +152,9 @@ class RecipeSerialzier(serializers.ModelSerializer):
         if ingredients is not None:
             instance.ingredients.clear()
             self._get_or_create_ingredients(ingredients, instance)
-        if photos is not None:
-            RecipePhoto.objects.filter(recipe=instance).delete()
-            self._get_or_create_photos(photos, instance)
+        if coverimage is not None:
+            CoverImage.objects.filter(recipe=instance).delete()
+            self._get_or_create_coverimage(coverimage, instance)
         if steps is not None:
             RecipeStep.objects.filter(recipe=instance).delete()
             self._get_or_create_steps(steps, instance)

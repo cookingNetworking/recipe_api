@@ -10,7 +10,7 @@ from rest_framework import (
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import (
         extend_schema,
         OpenApiExample,
@@ -18,8 +18,7 @@ from drf_spectacular.utils import (
         OpenApiParameter,
         OpenApiTypes
 )
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q, F, Count, Avg
@@ -285,6 +284,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ordering_fields = ['create_time', 'name']
     ordering = ['create_time']
     recipe_redis_handler = RedisHandler(redis_client1)
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_permissions(self):
         if self.action in ['list','retrieve']:
@@ -366,10 +366,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
+            print(request.data.get('cover_image', None), "view")
+            print(request.FILES['cover_image'])
             response = super().create(request, *args, **kwargs)
             # Extract newly create recipe instance from serializer.
             if response.data:
                 recipe_id = response.data.get('id', None)
+
                 if recipe_id is not None:
                 # Get recipe id of instance.
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=response.data)
@@ -385,6 +388,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve recipe object detail"""
         try:
+            print("retrieve")
             recipe_id = kwargs.get('pk')
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -459,20 +463,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
             print(e)
             return Response({"error":e}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @conditional_csrf_decorator
     def destroy(self, request, *args, **kwargs):
         """Destroy the recipe instance and clear data in Redis cache."""
         try:
-            instance = self.get_object()
-            recipe_id = instance.id
-            super().destroy(self, request, *args, **kwargs)
-            self.recipe_redis_handler.del_hkey(hkey_name="views", recipe_id=recipe_id)
-            self.recipe_redis_handler.del_hkey(hkey_name="likes", recipe_id=recipe_id)
-            self.recipe_redis_handler.del_hkey(hkey_name="save_count", recipe_id=recipe_id)
-            self.recipe_redis_handler.del_prev_hkey(hkey_name="views", recipe_id=recipe_id)
-            self.recipe_redis_handler.del_prev_hkey(hkey_name="likes", recipe_id=recipe_id)
-            self.recipe_redis_handler.del_prev_hkey(hkey_name="save_count", recipe_id=recipe_id)
-            return Response("No_content,Redirect to list page", status=status.HTTP_204_NO_CONTENT)
+            recipe_id = int(kwargs.get('pk'))
+            print(recipe_id, type(recipe_id))
+            cache_data = self.recipe_redis_handler.get_recipe(recipe_id=recipe_id)
+            if cache_data:
+                self.recipe_redis_handler.del_hkey("views", recipe_id)
+                self.recipe_redis_handler.del_hkey("likes", recipe_id)
+                self.recipe_redis_handler.del_hkey("save_count", recipe_id)
+                self.recipe_redis_handler.del_prev_hkey("views", recipe_id)
+                self.recipe_redis_handler.del_prev_hkey("likes", recipe_id)
+                self.recipe_redis_handler.del_prev_hkey("save_count", recipe_id)
+            response = super().destroy(request, *args, **kwargs)
+            return response
         except ValidationError as e :
             return Response({'error': str(e),"detail":"Please check again!"}, status=status.HTTP_400_INTERNAL_SERVER_ERROR)
         except Exception as e:
