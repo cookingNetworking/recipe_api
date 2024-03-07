@@ -26,7 +26,7 @@ def upload_image_file_path(instance, filename):
     """Generate a filepath for recipe image."""
     return f'recipes/{instance.recipe}/{filename}'
 
-def step_image_file_path(instance, filename):
+def step_photo_file_path(instance, filename):
     """Generate a filepath for recipe step image."""
     return f'recipes/{instance.recipe}/{instance.step}/{filename}'
 
@@ -150,7 +150,7 @@ class RecipeStep(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
     step = models.SmallIntegerField(default=1, null=False)
     description = models.TextField(max_length=500, null=False)
-    image = models.ImageField(null=True, upload_to=step_image_file_path)
+    photo = models.ImageField(null=True, upload_to=step_photo_file_path)
 
     def __str__(self):
         return f'{self.recipe}_{self.step}'

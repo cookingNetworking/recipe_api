@@ -44,7 +44,7 @@ class RecipeStepSerialzier(serializers.ModelSerializer):
     step_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = RecipeStep
-        fields = ['step_id','recipe_id', 'step', 'description', 'image', ]
+        fields = ['step_id','recipe_id', 'step', 'description', 'photo', ]
         read_only_fields = ['step_id','recipe_id']
         extra_kwargs = {"description": {"required": True}}
 
@@ -84,6 +84,21 @@ class RecipeSerialzier(serializers.ModelSerializer):
         fields = ['id','user', 'title', 'cost_time', 'description', 'ingredients', 'tags', 'coverimage','comment_count', 'average_rating']
         read_only_fields = ['id','comment_count', 'average_rating']
 
+
+    def _extract_steps_data(self, data):
+        """Extract steps data from request data."""
+        steps_data = []
+        for key in data.keys():
+            if key.startswith('steps'):
+                _, index, field = key.split('.')
+                index = int(index)
+                if len(steps_data) <= index:
+                    steps_data.append({})
+                steps_data[index][field] = data[key]
+        for i in range(len(steps_data)):
+            steps_data[i]['photo'] = self.context['request'].FILES.get(f'steps.{i}.photo')
+        return steps_data
+
     def _get_or_create_tags(self, tags, recipe):
         """Handle getting or tags as needed."""
         for tag in tags:
@@ -100,62 +115,65 @@ class RecipeSerialzier(serializers.ModelSerializer):
             )
             recipe.ingredients.add(ingredient_obj)
 
+    
     def _get_or_create_coverimage(self, coverimage, recipe):
         """Handle getting or creating photos as needed."""
         try:
-            print("entry_create_coverimage")
             for image_data in coverimage :
-                print(image_data, 'asdw')
                 if image_data and isinstance(image_data, UploadedFile):
-                    photo_obj = CoverImage.objects.create(
+                    CoverImage.objects.create(
                         recipe=recipe,
                         image=image_data,
                     )
         except Exception as e :
             print(e)
-    def _get_or_create_steps(self, steps, recipe):
+    def _get_or_create_steps(self, stepsphoto_files, recipe):
         """Handle getting or creating steps as needed."""
-        for step in steps:
-            RecipeStep.objects.get_or_create(
-                recipe=recipe,
-                **step
-            )
+        print("entry stepsphoto_files", stepsphoto_files)
+        for step_data in stepsphoto_files:
+            print("entry stepsphoto_files", stepsphoto_files)
+            if step_data and isinstance(step_data, UploadedFile):
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    **step_data
+                )
 
     def create(self, validated_data):
         """Create recipe."""
         req_user = self.context['request'].user
-        print(validated_data)
         req_tags = validated_data.pop("tags", [])
         req_ingredients = validated_data.pop("ingredients", [])
         coverimage_files = self.context['request'].FILES.getlist('cover_image')
-        print(coverimage_files,':serializer')
-        steps = validated_data.pop("steps", [])
-
+        print('create serializer')
+        print(validated_data)
+        print(self.context['request'].FILES)
+        stepsphoto_files = self.context['request'].FILES.getlist('steps')
+        print('get stepsphoto_files', stepsphoto_files)
         recipe = Recipe.objects.create(user=req_user, **validated_data)
         self._get_or_create_tags(req_tags, recipe)
         self._get_or_create_ingredients(req_ingredients, recipe)
         self._get_or_create_coverimage(coverimage_files, recipe)
-        self._get_or_create_steps(steps, recipe)
+        self._get_or_create_steps(stepsphoto_files, recipe)
         return recipe
 
     def update(self, instance, validated_data):
         """Update recipe."""
         tags = validated_data.pop("tags", [])
         ingredients = validated_data.pop("ingredients", [])
-        coverimage = validated_data.pop("cover_image", [])
-        steps = validated_data.pop("steps", [])
+        coverimage_files = self.context['request'].FILES.getlist('cover_image')
+        stepsphoto_files = self.context['request'].FILES.getlist('steps')
         if tags is not None:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
         if ingredients is not None:
             instance.ingredients.clear()
             self._get_or_create_ingredients(ingredients, instance)
-        if coverimage is not None:
+        if coverimage_files is not None:
             CoverImage.objects.filter(recipe=instance).delete()
-            self._get_or_create_coverimage(coverimage, instance)
-        if steps is not None:
+            self._get_or_create_coverimage(coverimage_files, instance)
+        if stepsphoto_files is not None:
             RecipeStep.objects.filter(recipe=instance).delete()
-            self._get_or_create_steps(steps, instance)
+            self._get_or_create_steps(stepsphoto_files, instance)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -186,7 +204,6 @@ class RecipeCommentSerializer(serializers.ModelSerializer):
         """Create with serializer"""
         req_user = self.context["request"].user
         recipe = validated_data.pop("recipe",None)
-        # recipe = Recipe.objects.get(id=recipe_id) if recipe_id else None
         if recipe:
             comment = RecipeComment.objects.create(user=req_user, recipe=recipe, **validated_data)
             return comment
@@ -204,10 +221,7 @@ class RecipeSQLDetailSerializer(RecipeSerialzier):
 
     def get_top_five_comments(self, obj):
         try:
-            print("entry_get_top_five_comments")
             comments = obj.recipe_comment.order_by('-created_time')[:5]
-            print(comments)
-            print("end_top_five_comments")
             data = RecipeCommentSerializer(comments, many=True).data
             return data
         except Exception as e:
