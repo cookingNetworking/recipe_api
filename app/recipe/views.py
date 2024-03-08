@@ -367,12 +367,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create recipe object."""
         try:
-            print(request.data.getlist('recipe'))
-            print(request.data.get('cover_image', None), "view")
-            print(request.FILES['cover_image'])
-            print(request.data.get('steps',None), "view")
             response = super().create(request, *args, **kwargs)
-            print('after create')
             # Extract newly create recipe instance from serializer.
             if response.data:
                 recipe_id = response.data.get('id', None)
@@ -392,7 +387,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve recipe object detail"""
         try:
-            print("retrieve")
             recipe_id = kwargs.get('pk')
             if not recipe_id:
                 return Response({"error":"Loss recipe id","detail":"Please provide recipe id!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -446,7 +440,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @conditional_csrf_decorator
     def partial_update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis.(partial)"""
-        print('partial update')
         response = super().partial_update(request, *args, **kwargs)
         try:
             recipe =  response.data
@@ -454,16 +447,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe_id = response.get('id')
                 if recipe_id is not None:
                 # Get recipe id of instance.
-                    print(1)
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
                 views_value = int(recipe.get("views"))
                 likes_value = int(recipe.get("likes"))
                 save_count_value = int(recipe.get("save_count"))
-                print(2)
                 self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
-                print(3)
                 self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
-                print(4)
                 self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
                 return response
         except ValidationError as e :
@@ -476,7 +465,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Destroy the recipe instance and clear data in Redis cache."""
         try:
             recipe_id = int(kwargs.get('pk'))
-            print(recipe_id, type(recipe_id))
             cache_data = self.recipe_redis_handler.get_recipe(recipe_id=recipe_id)
             if cache_data:
                 self.recipe_redis_handler.del_hkey("views", recipe_id)

@@ -1,6 +1,8 @@
 """
 Database models.
 """
+from django.dispatch import receiver
+from django.db.models.signals import pre_delete
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
@@ -145,6 +147,18 @@ class CoverImage(models.Model):
     image = models.ImageField(null=True, upload_to=upload_image_file_path)
     upload_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+@receiver(pre_delete, sender=Recipe)
+def remove_image_from_s3(sender, instance,**kwargs):
+        print("signal")
+        for coverimage in instance.coverimage.all():
+            print('asd')
+            print(coverimage.image, type(coverimage.image))
+            coverimage.image.delete(save=False)  # Delete the file before the model
+        for recipestep in instance.steps.all():
+            print('qwe')
+            print(recipestep.photo, type(recipestep.photo))
+            recipestep.photo.delete(save=False)  # Delete the file before the modele
+
 class RecipeStep(models.Model):
     """Step for recipe."""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
@@ -154,8 +168,6 @@ class RecipeStep(models.Model):
 
     def __str__(self):
         return f'{self.recipe}_{self.step}'
-
-
 class Ingredient(models.Model):
     """Ingredient for recipes."""
     name = models.CharField(max_length=50)
