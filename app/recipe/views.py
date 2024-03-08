@@ -831,13 +831,13 @@ class BaseRecipeAttrViewSet(
 class TagViewSet(BaseRecipeAttrViewSet):
     """Views of tag API include list update destroy!"""
     serializer_class = serializers.TagSerialzier
-    queryset = models.Tag.objects.all()
+    queryset = models.Tag.objects.all().order_by("-views").distinct()
 
 
 class IngredientViewSet(BaseRecipeAttrViewSet):
     """"Views of tag API include list update destroy!"""
     serializer_class = serializers.IngredientSerialzier
-    queryset= models.Ingredient.objects.all()
+    queryset= models.Ingredient.objects.all().order_by("-views").distinct()
 
 
 
