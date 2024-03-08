@@ -35,8 +35,10 @@ class RedisHandler:
         """
         print("In set_recipe!")
         json_data = json.dumps(data)
+        print(json_data)
         timeout = random.randint(1500, 1800)
         self.redis_client.set(f'Recipe_detail_{recipe_id}',json_data, ex=timeout)
+        print("Set recipe in redis!")
 
     def get_recipe(self, recipe_id):
         """
@@ -149,11 +151,11 @@ class RedisHandler:
         :param recipe_id: The ID of the recipe. Must be an integer.
         :param value: The value need to be updated. Must be an str.
         """
-        value = self.get_hkey(hkey_name, recipe_id)
-        if value is not None:
-            self.redis_client.hset(f"Recipe_{hkey_name}",f"{recipe_id}",f"{value}")
+        reids_value = self.get_hkey(hkey_name, recipe_id)
+        if reids_value is not None:
+            self.redis_client.hset(f"Recipe_{hkey_name}",f"{recipe_id}",f"{reids_value}")
         else:
-            self.set_hkey(hkey_name=hkey_name, recipe_id=recipe_id, value=value)
+            self.set_hkey(hkey_name=hkey_name, recipe_id=recipe_id, initinal_value=value)
 
     def increase_recipe_view(self, hkey_name: str, recipe_id: int, increment_value=1):
         """

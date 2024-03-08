@@ -129,14 +129,16 @@ class RecipeSerialzier(serializers.ModelSerializer):
             print(e)
     def _get_or_create_steps(self, stepsphoto_files, recipe):
         """Handle getting or creating steps as needed."""
-        print("entry stepsphoto_files", stepsphoto_files)
         for step_data in stepsphoto_files:
-            print("entry stepsphoto_files", stepsphoto_files)
-            if step_data and isinstance(step_data, UploadedFile):
-                RecipeStep.objects.create(
-                    recipe=recipe,
-                    **step_data
-                )
+            try: 
+                if step_data and isinstance(step_data['photo'], UploadedFile):
+                    print("entry if", stepsphoto_files)
+                    RecipeStep.objects.create(
+                        recipe=recipe,
+                        **step_data
+                    )
+            except Exception as e:
+                print(e)
 
     def create(self, validated_data):
         """Create recipe."""
@@ -144,11 +146,7 @@ class RecipeSerialzier(serializers.ModelSerializer):
         req_tags = validated_data.pop("tags", [])
         req_ingredients = validated_data.pop("ingredients", [])
         coverimage_files = self.context['request'].FILES.getlist('cover_image')
-        print('create serializer')
-        print(validated_data)
-        print(self.context['request'].FILES)
-        stepsphoto_files = self.context['request'].FILES.getlist('steps')
-        print('get stepsphoto_files', stepsphoto_files)
+        stepsphoto_files = validated_data.pop("steps", [])
         recipe = Recipe.objects.create(user=req_user, **validated_data)
         self._get_or_create_tags(req_tags, recipe)
         self._get_or_create_ingredients(req_ingredients, recipe)
@@ -161,17 +159,17 @@ class RecipeSerialzier(serializers.ModelSerializer):
         tags = validated_data.pop("tags", [])
         ingredients = validated_data.pop("ingredients", [])
         coverimage_files = self.context['request'].FILES.getlist('cover_image')
-        stepsphoto_files = self.context['request'].FILES.getlist('steps')
-        if tags is not None:
+        stepsphoto_files = validated_data.pop("steps", [])
+        if tags:
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
-        if ingredients is not None:
+        if ingredients:
             instance.ingredients.clear()
             self._get_or_create_ingredients(ingredients, instance)
-        if coverimage_files is not None:
+        if coverimage_files :
             CoverImage.objects.filter(recipe=instance).delete()
             self._get_or_create_coverimage(coverimage_files, instance)
-        if stepsphoto_files is not None:
+        if stepsphoto_files :
             RecipeStep.objects.filter(recipe=instance).delete()
             self._get_or_create_steps(stepsphoto_files, instance)
         for attr, value in validated_data.items():

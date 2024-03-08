@@ -446,19 +446,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @conditional_csrf_decorator
     def partial_update(self, request, *args, **kwargs):
         """Update recipe and change recipe cache in redis.(partial)"""
+        print('partial update')
         response = super().partial_update(request, *args, **kwargs)
         try:
             recipe =  response.data
             if recipe:
-                recipe_id = response.get('id', None)
+                recipe_id = response.get('id')
                 if recipe_id is not None:
                 # Get recipe id of instance.
+                    print(1)
                     self.recipe_redis_handler.set_recipe(recipe_id=recipe_id,data=recipe)
                 views_value = int(recipe.get("views"))
                 likes_value = int(recipe.get("likes"))
                 save_count_value = int(recipe.get("save_count"))
+                print(2)
                 self.recipe_redis_handler.update_hkey(hkey_name="views",recipe_id=recipe_id, value=views_value)
+                print(3)
                 self.recipe_redis_handler.update_hkey(hkey_name="likes",recipe_id=recipe_id, value=likes_value)
+                print(4)
                 self.recipe_redis_handler.update_hkey(hkey_name="save_count",recipe_id=recipe_id, value=save_count_value)
                 return response
         except ValidationError as e :
