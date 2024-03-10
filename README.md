@@ -7,7 +7,7 @@
 - Designed with REST principles!
 
 ## Core function
--  **Account Management**: Facilitate user sign-ups, sign-ins, and logouts. 
+-  **Account Management**: Facilitate user sign-up, sign-in, and logouts. 
 -  **Recipe Management**: Create , retrieve, update and delete recipe.
 -  **Community Engagement**: Post comments, rate, save and like recipes ingredients and tags, and follow other users.
 -  **Cooking Tutorials**: Access a variety of cooking tutorials with pictures.
