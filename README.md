@@ -42,6 +42,8 @@
 
   <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/dca3561c-218e-48da-8530-4c1b69ff9794 width=80% />
 
+  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/3481f44a-4c98-4fd4-a031-2f1d0254cc0b width=30% />
+
 ### Task queue (Celery)
 
  <img src=https://github.com/cookingNetworking/recipe_api/assets/122463207/7baea866-ca4c-48f4-a745-39f9a588f7cd width=60% />
