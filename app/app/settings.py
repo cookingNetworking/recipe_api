@@ -14,13 +14,14 @@ from pathlib import Path
 from celery.schedules import crontab
 import os
 import environ
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 env = environ.Env(DEBUG=(bool, False))
 
-environ.Env.read_env(BASE_DIR / '.env')
+environ.Env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -31,8 +32,14 @@ SECRET_KEY = "django-insecure-flk=0z)_qvsj$=fclze&@1082zyn3nu+1vmgp@7=hfhch5os&0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cookingnetwork.co','ec2-43-206-126-78.ap-northeast-1.compute.amazonaws.com',"localhost","localhost:3000","13.211.123.24"]
-print(env('DEV_ENV'))
+ALLOWED_HOSTS = [
+    "cookingnetwork.co",
+    "ec2-43-206-126-78.ap-northeast-1.compute.amazonaws.com",
+    "localhost",
+    "localhost:3000",
+    "13.211.123.24",
+]
+print(env("DEV_ENV"))
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -40,36 +47,36 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    'daphne',
-    'channels',
-    'channels_redis',
+    "daphne",
+    "channels",
+    "channels_redis",
     "django.contrib.staticfiles",
-    #extention ap
-    'botocore',
-    'corsheaders',
-    'drf_spectacular',
-    'django_extensions',
-    'storages',
+    # extention ap
+    "botocore",
+    "corsheaders",
+    "drf_spectacular",
+    "django_extensions",
+    "storages",
     "rest_framework",
-    'oauth2_provider',
-    'social_django',
-    #project app
+    "oauth2_provider",
+    "social_django",
+    # project app
     "core",
-    'recipe',
-    'test',
-    'user',
+    "recipe",
+    "test",
+    "user",
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    #Middleware for check session id exist or not when user trying login by google oauth
+    # Middleware for check session id exist or not when user trying login by google oauth
     "app.custom_middleware.CheckSessionMiddleware",
-    #Handle google oauth state miss problem
+    # Handle google oauth state miss problem
     "app.custom_middleware.SocialAuthException",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -81,7 +88,7 @@ ROOT_URLCONF = "app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR,'templates')],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -89,8 +96,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
+                "social_django.context_processors.backends",
+                "social_django.context_processors.login_redirect",
             ],
         },
     },
@@ -119,13 +126,13 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST"),
         "USER": os.environ.get("DB_USER"),
         "PASSWORD": os.environ.get("DB_PASS"),
-        'POOL_OPTIONS' : {
-            'POOL_SIZE': 5,
-            'MAX_OVERFLOW': 5,
-            'RECYCLE': 24 * 60 * 60,
-            'PRE_PING': True,
-            'TIMEOUT': 30
-            }
+        "POOL_OPTIONS": {
+            "POOL_SIZE": 5,
+            "MAX_OVERFLOW": 5,
+            "RECYCLE": 24 * 60 * 60,
+            "PRE_PING": True,
+            "TIMEOUT": 30,
+        },
     }
 }
 
@@ -138,9 +145,9 @@ CACHES = {
             "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
             "CONNECTION_POOL_CLASS_KWARGS": {
                 "max_connections": 50,
-                "retry_on_timeout": True
-            }
-        }
+                "retry_on_timeout": True,
+            },
+        },
     },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -150,22 +157,21 @@ CACHES = {
             "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
             "CONNECTION_POOL_CLASS_KWARGS": {
                 "max_connections": 50,
-                "retry_on_timeout": True
-            }
-        }
-    }
+                "retry_on_timeout": True,
+            },
+        },
+    },
 }
 
 
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_USE_TLS = False
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'as2229181@gmail.com'
-EMAIL_HOST_PASSWORD = 'vdbwfpyjumnvprwx'
-
+EMAIL_HOST_USER = "as2229181@gmail.com"
+EMAIL_HOST_PASSWORD = "vdbwfpyjumnvprwx"
 
 
 # Password validation
@@ -211,7 +217,7 @@ STATIC_URL = "/static/"
 MEDIA_URL = "/mdeia/"
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 MEDIA_ROOT = "/vol/web/media"
@@ -222,52 +228,49 @@ STATIC_ROOT = "/vol/web/static"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'core.User'
-
+AUTH_USER_MODEL = "core.User"
 
 
 REST_FRAMEWORK = {
     # YOUR SETTINGS
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    #DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
-    #Once the authentication is successful, it will not try the rest of the authentication classes.
-    'DEFAULT_AUTHENTICATION_CLASSES':[
-        'app.custom_drf_authentication.CsrfExemptSessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # DRF will use the default authentication classes by sequence, if the first one is not working, it will try the second one.
+    # Once the authentication is successful, it will not try the rest of the authentication classes.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "app.custom_drf_authentication.CsrfExemptSessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",
+        "rest_framework_social_oauth2.authentication.SocialAuthentication",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
 }
 
 AUTHENTICATION_BACKENDS = (
-    #First user google oauth2 to login, if not, use the default authentication backend
-    'social_core.backends.google.GoogleOAuth2',
-   'django.contrib.auth.backends.ModelBackend',
+    # First user google oauth2 to login, if not, use the default authentication backend
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
 )
-SOCIAL_AUTH_URL_NAMESPACE = 'social'
+SOCIAL_AUTH_URL_NAMESPACE = "social"
 
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY")
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET= os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
-GOOGLE_OAUTH2_REDIRECT_URI = 'http://localhost:80/social/complete/google-oauth2/'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET")
+GOOGLE_OAUTH2_REDIRECT_URI = "http://localhost:80/social/complete/google-oauth2/"
 
 
-#Don't us e SOCIAL_AUTH_GOOGLE_PLUS_AUTH_EXTRA_ARGUMENTS, is not working!
+# Don't us e SOCIAL_AUTH_GOOGLE_PLUS_AUTH_EXTRA_ARGUMENTS, is not working!
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
-    'access_type': 'offline',
-
+    "access_type": "offline",
 }
 
-LOGIN_URL = 'user:login'
+LOGIN_URL = "user:login"
 
-LOGIN_REDIRECT_URL ='/'
+LOGIN_REDIRECT_URL = "/"
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
 ]
 
 
@@ -278,103 +281,95 @@ SOCIAL_AUTH_PIPELINE = (
     # format to create the user instance later. In some cases the details are
     # already part of the auth response from the provider, but sometimes this
     # could hit a provider API.
-    'social_core.pipeline.social_auth.social_details',
-
+    "social_core.pipeline.social_auth.social_details",
     # Get the social uid from whichever service we're authing thru. The uid is
     # the unique identifier of the given user in the provider.
-    'social_core.pipeline.social_auth.social_uid',
-
+    "social_core.pipeline.social_auth.social_uid",
     # Verifies that the current auth process is valid within the current
     # project, this is where emails and domains whitelists are applied (if
     # defined).
-    'social_core.pipeline.social_auth.auth_allowed',
-
+    "social_core.pipeline.social_auth.auth_allowed",
     # Checks if the current social-account is already associated in the site.
-    'social_core.pipeline.social_auth.social_user',
-
-    #Associate current auth with a user with the same email address in the DB.
-    'social_core.pipeline.social_auth.associate_by_email',
-
+    "social_core.pipeline.social_auth.social_user",
+    # Associate current auth with a user with the same email address in the DB.
+    "social_core.pipeline.social_auth.associate_by_email",
     # Make up a username for this person, appends a random string at the end if
     # there's any collision.
-    'social_core.pipeline.user.get_username',
-
+    "social_core.pipeline.user.get_username",
     # Create a user account if we haven't found one yet.
-    'social_core.pipeline.user.create_user',
-
+    "social_core.pipeline.user.create_user",
     # Active social user instance.
-
-    'app.custom_pipline.set_user_active',
-
+    "app.custom_pipline.set_user_active",
     # Create the record that associates the social account with the user.
-    'social_core.pipeline.social_auth.associate_user',
-
+    "social_core.pipeline.social_auth.associate_user",
     # Populate the extra_data field in the social record with the values
     # specified by settings (and the default ones like access_token, etc).
-    'social_core.pipeline.social_auth.load_extra_data',
-
+    "social_core.pipeline.social_auth.load_extra_data",
     # Update the user record with any changed info from the auth service.
-    'social_core.pipeline.user.user_details',
+    "social_core.pipeline.user.user_details",
 )
 
 
-
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'cookingNetwork',
-    'DESCRIPTION': 'Your project description',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': True,
-    'EXCLUDE_PATHS': ['/auth/convert-token/', '/auth/disconnect-backend/', 'auth/invalidate-sessions/', 'auth/revoke-token/', 'auth/token/'],
-
+    "TITLE": "cookingNetwork",
+    "DESCRIPTION": "Your project description",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": True,
+    "EXCLUDE_PATHS": [
+        "/auth/convert-token/",
+        "/auth/disconnect-backend/",
+        "auth/invalidate-sessions/",
+        "auth/revoke-token/",
+        "auth/token/",
+    ],
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 SESSION_CACHE_ALIAS = "sessions"
 
 # Celery
-CELERY_IMPORTS = ('recipe.tasks',)
-CELERY_BROKER_URL = 'redis://cache:6379/1'
-CELERY_RESULT_BACKEND = 'redis://cache:6379/1'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Taipei'
+CELERY_IMPORTS = ("recipe.tasks",)
+CELERY_BROKER_URL = "redis://cache:6379/1"
+CELERY_RESULT_BACKEND = "redis://cache:6379/1"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Taipei"
 CELERY_ALWAYS_EAGER = False
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 CELERY_RESULT_EXPIRES = 1800
-#Restart celery every 20 task
+# Restart celery every 20 task
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 100
 
 
 CELERY_BEAT_SCHEDULE = {
-    'update-recipe-views': {
-        'task': 'recipe.tasks.update_recipe_views_in_redis',
-        'schedule': crontab(minute='*/30'),  # every 30 minutes
+    "update-recipe-views": {
+        "task": "recipe.tasks.update_recipe_views_in_redis",
+        "schedule": crontab(minute="*/30"),  # every 30 minutes
     },
-    'consist-recipe-to-sql':{
-        'task': 'recipe.tasks.consist_redis_and_sql_data',
-        'schedule': crontab(minute='*/15'),  # every 15 minutes
+    "consist-recipe-to-sql": {
+        "task": "recipe.tasks.consist_redis_and_sql_data",
+        "schedule": crontab(minute="*/15"),  # every 15 minutes
     },
-
 }
-CELERY_BEAT_SCHEDULE_FILENAME = '/home/celery/var/run/celerybeat-schedule'
+CELERY_BEAT_SCHEDULE_FILENAME = "/home/celery/var/run/celerybeat-schedule"
 
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME')
-AWS_S3_CUSTOM_DOMAIN = env('AWS_CLOUDFRONT_DOMAIN')
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME")
+AWS_S3_CUSTOM_DOMAIN = env("AWS_CLOUDFRONT_DOMAIN")
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
+    "CacheControl": "max-age=86400",
 }
 AWS_QUERYSTRING_EXPIRE = 2100
-AWS_CLOUDFRONT_KEY_ID = env.str('AWS_CLOUDFRONT_KEY_ID').strip()
-AWS_CLOUDFRONT_KEY = env.str('AWS_CLOUDFRONT_KEY', multiline=True).encode('ascii')
+AWS_CLOUDFRONT_KEY_ID = env.str("AWS_CLOUDFRONT_KEY_ID").strip()
+AWS_CLOUDFRONT_KEY = env.str("AWS_CLOUDFRONT_KEY", multiline=True).encode("ascii")
 
-#csrf cookies settings
+# csrf cookies settings
 
 
 CSRF_COOKIE_HTTPONLY = True
@@ -383,26 +378,27 @@ CORS_ALLOW_CREDENTIALS = True
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-CSRF_TRUSTED_ORIGINS = ['https://www.cookingnetwork.co',
-                        'http://localhost:3000',
-                        'http://127.0.0.1:3000'
-                        ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.cookingnetwork.co",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 
-if os.environ.get('DEV_ENV') == 'true':
-    SESSION_COOKIE_DOMAIN = 'localhost'
-    CSRF_COOKIE_DOMAIN = 'localhost'
-    CORS_ALLOWED_ORIGINS=["http://localhost:3000"]
+if os.environ.get("DEV_ENV") == "true":
+    SESSION_COOKIE_DOMAIN = "localhost"
+    CSRF_COOKIE_DOMAIN = "localhost"
+    CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
 else:
-    SESSION_COOKIE_DOMAIN = '.cookingnetwork.co'
-    CSRF_COOKIE_DOMAIN = '.cookingnetwork.co'
-    CORS_ALLOWED_ORIGINS=["https://www.cookingnetwork.co"]
+    SESSION_COOKIE_DOMAIN = ".cookingnetwork.co"
+    CSRF_COOKIE_DOMAIN = ".cookingnetwork.co"
+    CORS_ALLOWED_ORIGINS = ["https://www.cookingnetwork.co"]
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SAMESITE = "None"
 
 
 CORS_ALLOW_METHODS = (
@@ -415,14 +411,14 @@ CORS_ALLOW_METHODS = (
 )
 
 CORS_ALLOW_HEADERS = (
-    	"accept",
-    	"accept-encoding",
-   	    "authorization",
-    	"content-type",
-    	"dnt",
-    	"origin",
-    	"user-agent",
-        "sessionid",
-    	"X-CSRFToken",
-    	"x-requested-with",
-        )
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "sessionid",
+    "X-CSRFToken",
+    "x-requested-with",
+)
