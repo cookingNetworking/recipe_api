@@ -13,30 +13,50 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from user import views as user_views
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 from .entend_schema import CustomSpectacularAPIView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-     # YOUR PATTERNS
-    path('schema/', CustomSpectacularAPIView.as_view(), name='schema'),
+    path("admin/", admin.site.urls),
+    # YOUR PATTERNS
+    path("schema/", CustomSpectacularAPIView.as_view(), name="schema"),
     # Optional UI:
-    path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('social/', include('social_django.urls', namespace='social')),
-    path('oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('user/',include('user.urls')),
-    path('signupVertify', view=user_views.sign_up_vertify, name='signupvertify' ),
-    path('getCsrfToken/', user_views.GetCsrfToken.as_view(), name='getCsrfToken'),
-    path('forget-password/', user_views.EmailVertificationView.as_view(), name='foregetpassword'),
-    path('reset-password', user_views.ResetPasswordView.as_view(), name='resetpassword'),
-    path('time/', user_views.time_now, name='time_now'),
-    path('test/',include('test.urls')),
-    path('',include('recipe.urls')),
+    path("", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("social/", include("social_django.urls", namespace="social")),
+    path("oauth/", include("oauth2_provider.urls", namespace="oauth2_provider")),
+    path(
+        "api/schema/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
+    path("api/user/", include("user.urls")),
+    path("api/signupVertify", view=user_views.sign_up_vertify, name="signupvertify"),
+    path("api/getCsrfToken/", user_views.GetCsrfToken.as_view(), name="getCsrfToken"),
+    path(
+        "api/forget-password/",
+        user_views.EmailVertificationView.as_view(),
+        name="foregetpassword",
+    ),
+    path(
+        "api/reset-password",
+        user_views.ResetPasswordView.as_view(),
+        name="resetpassword",
+    ),
+    path("time/", user_views.time_now, name="time_now"),
+    path("test/", include("test.urls")),
+    path("api/", include("recipe.urls")),
     path("__debug__/", include("debug_toolbar.urls")),
-    path('resendVertify/',user_views.ResendVertifyEmail.as_view(), name='reseendertifyemail')
+    path(
+        "resendVertify/",
+        user_views.ResendVertifyEmail.as_view(),
+        name="reseendertifyemail",
+    ),
 ]
-
